@@ -11,6 +11,7 @@ export const ERROR_CODES = [
   'RATE_LIMITED',
   'NOT_FOUND',
   'CONFLICT',
+  'INVALID_TRANSITION',
   'INTERNAL',
 ] as const;
 

@@ -8,6 +8,7 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   RATE_LIMITED: 429,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  INVALID_TRANSITION: 409,
   INTERNAL: 500,
 };
 
@@ -19,6 +20,7 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   RATE_LIMITED: 'Demasiados intentos. Espera unos minutos y vuelve a intentar.',
   NOT_FOUND: 'No encontramos lo que buscas.',
   CONFLICT: 'Ya existe un registro con esos datos.',
+  INVALID_TRANSITION: 'Esta acción no está permitida en el estado actual.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

@@ -10,7 +10,10 @@ import { useLogout, useSession } from '../features/session/session.api';
 import { ROLE_LABELS } from '../lib/labels';
 
 /** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
-const NAV_ITEMS = [{ to: '/proveedores', label: 'Proveedores' }] as const;
+const NAV_ITEMS = [
+  { to: '/proveedores', label: 'Proveedores' },
+  { to: '/ordenes', label: 'Órdenes de compra' },
+] as const;
 
 export function AppShell() {
   const session = useSession();

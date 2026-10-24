@@ -1,6 +1,7 @@
 import Typography from '@mui/material/Typography';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { LoginPage } from '../features/session/LoginPage';
+import { PurchaseOrdersPage } from '../features/purchase-orders/PurchaseOrdersPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
 import { RequireSession } from './RequireSession';
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       // La spec 006 reemplaza esta redirección por el tablero.
       { index: true, element: <Navigate to="/proveedores" replace /> },
       { path: 'proveedores', element: <SuppliersPage /> },
+      { path: 'ordenes', element: <PurchaseOrdersPage /> },
       { path: '*', element: <Typography>No existe esta página.</Typography> },
     ],
   },

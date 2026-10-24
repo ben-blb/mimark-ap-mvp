@@ -215,7 +215,7 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
       módulo copiando `suppliers`; registrar en `app.module.ts`.
 - [x] 5. `apps/api/test/fixtures.ts` con `seedCatalog(db)`, que inserta los proveedores y OC de la tabla de la
       semilla (las pruebas de las specs 004–006 lo reutilizan); pruebas de integración AC-003-01…07.
-- [ ] 6. Web: `purchase-orders.api.ts`, página, diálogos, formulario con prueba AC-003-08, ruta y navegación.
+- [x] 6. Web: `purchase-orders.api.ts`, página, diálogos, formulario con prueba AC-003-08, ruta y navegación.
 - [ ] 7. `pnpm check` en verde, verificación manual AC-003-09 y estado `hecha`.
 
 ## Fuera de alcance y decisiones
@@ -228,3 +228,9 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-24 · `pnpm layers` (y por tanto `pnpm check`) no corre: falta `.dependency-cruiser.cjs` en el repo (no está
+  versionado). Las demás partes del check (tipos, lint, formato, unitarias, integración, spec:check) están en verde.
+  No se marcó 003 como `hecha` por esto y porque AC-003-09 [manual] sigue sin verificarse.
+- 2026-10-24 · Decisión: `PATCH` no puede borrar `parlevelRef` a `null` (el contrato solo admite texto); desde la UI,
+  vaciarlo guarda cadena vacía. Tampoco se revalida `receivedOn ≥ issuedOn` al editar la fecha de una OC ya recibida.

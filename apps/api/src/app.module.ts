@@ -5,13 +5,21 @@ import { ErrorFilter } from './common/error.filter.js';
 import { validationPipe } from './common/validation.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module.js';
 import { SessionGuard } from './modules/session/session.guard.js';
 import { SessionModule } from './modules/session/session.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 
 /** Todo lo que existe en el backend, de un vistazo. Cada spec agrega aquí su módulo. */
 @Module({
-  imports: [DbModule, AuditModule, HealthModule, SessionModule, SuppliersModule],
+  imports: [
+    DbModule,
+    AuditModule,
+    HealthModule,
+    SessionModule,
+    SuppliersModule,
+    PurchaseOrdersModule,
+  ],
   providers: [
     { provide: APP_GUARD, useClass: SessionGuard },
     { provide: APP_FILTER, useClass: ErrorFilter },

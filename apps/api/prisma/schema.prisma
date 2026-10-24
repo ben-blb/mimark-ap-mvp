@@ -30,6 +30,42 @@ model Supplier {
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+enum PurchaseOrderStatus {
+  open
+  cancelled
+}
+
+enum ReceiptStatus {
+  pending
+  received
+}
+
+/// Orden de compra y su recepción (spec 003).
+model PurchaseOrder {
+  id            String              @id @default(cuid())
+  /// Folio normalizado, p. ej. "OC-1001".
+  number        String              @unique
+  supplierId    String
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  issuedOn      DateTime            @db.Date
+  /// Total esperado CON impuestos (regla de negocio de CxP).
+  total         Decimal             @db.Decimal(14, 2)
+  currency      Currency
+  parlevelRef   String?
+  status        PurchaseOrderStatus @default(open)
+  receiptStatus ReceiptStatus       @default(pending)
+  receivedOn    DateTime?           @db.Date
+  receivedBy    String?
+  receiptNotes  String?
+  createdBy     String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([supplierId])
 }
 
 /// Registro de auditoría (spec 001). Una fila por acción relevante; nunca se edita ni se borra.

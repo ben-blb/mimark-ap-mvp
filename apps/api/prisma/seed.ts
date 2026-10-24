@@ -44,6 +44,50 @@ const suppliers = [
   },
 ] as const;
 
+/** Spec 003. Las specs 004 y 007 usan exactamente estas OC. */
+const purchaseOrders = [
+  {
+    number: 'OC-1001',
+    taxId: 'DAN010203AB1',
+    issuedOn: '2026-10-01',
+    total: '11600.00',
+    currency: 'MXN',
+    receivedOn: '2026-10-05',
+  },
+  {
+    number: 'OC-1002',
+    taxId: 'BFM980512KL3',
+    issuedOn: '2026-10-03',
+    total: '8352.00',
+    currency: 'MXN',
+    receivedOn: '2026-10-06',
+  },
+  {
+    number: 'OC-1003',
+    taxId: 'EDR150720QW9',
+    issuedOn: '2026-10-08',
+    total: '3480.00',
+    currency: 'MXN',
+    receivedOn: null,
+  },
+  {
+    number: 'OC-1004',
+    taxId: 'ISG070809MN2',
+    issuedOn: '2026-10-02',
+    total: '1250.00',
+    currency: 'USD',
+    receivedOn: '2026-10-09',
+  },
+  {
+    number: 'OC-1005',
+    taxId: 'CSM120304TR5',
+    issuedOn: '2026-10-12',
+    total: '2900.00',
+    currency: 'MXN',
+    receivedOn: '2026-10-12',
+  },
+] as const;
+
 async function main(): Promise<void> {
   for (const supplier of suppliers) {
     await db.supplier.upsert({
@@ -52,7 +96,22 @@ async function main(): Promise<void> {
       update: supplier,
     });
   }
-  console.log(`Semilla lista: ${suppliers.length} proveedores.`);
+  for (const { taxId, receivedOn, ...po } of purchaseOrders) {
+    const supplier = await db.supplier.findUniqueOrThrow({ where: { taxId } });
+    const data = {
+      ...po,
+      issuedOn: new Date(po.issuedOn),
+      supplierId: supplier.id,
+      createdBy: 'Semilla',
+      receiptStatus: receivedOn ? ('received' as const) : ('pending' as const),
+      receivedOn: receivedOn ? new Date(receivedOn) : null,
+      receivedBy: receivedOn ? 'Semilla' : null,
+    };
+    await db.purchaseOrder.upsert({ where: { number: po.number }, create: data, update: data });
+  }
+  console.log(
+    `Semilla lista: ${suppliers.length} proveedores y ${purchaseOrders.length} órdenes de compra.`,
+  );
 }
 
 try {

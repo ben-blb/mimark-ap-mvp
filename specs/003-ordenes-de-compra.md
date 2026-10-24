@@ -1,7 +1,7 @@
 ---
 id: '003'
 titulo: Órdenes de compra
-estado: lista
+estado: en-progreso
 depende_de: ['002']
 requisitos: RF-02, RF-03
 ---
@@ -208,9 +208,9 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
 
 ## Tareas
 
-- [ ] 1. Contratos `purchase-orders.ts` con pruebas (folio normalizado, total positivo); código `INVALID_TRANSITION`.
-- [ ] 2. Modelo y migración `pnpm db:migrate --name 003-ordenes-de-compra`; semilla con OC-1001…1005.
-- [ ] 3. `purchase-orders.rules.ts` con pruebas unitarias (tabla de `checkReceipt`, AC-003-03 y AC-003-05).
+- [x] 1. Contratos `purchase-orders.ts` con pruebas (folio normalizado, total positivo); código `INVALID_TRANSITION`.
+- [x] 2. Modelo y migración `pnpm db:migrate --name 003-ordenes-de-compra`; semilla con OC-1001…1005.
+- [x] 3. `purchase-orders.rules.ts` con pruebas unitarias (tabla de `checkReceipt`, AC-003-03 y AC-003-05).
 - [ ] 4. Repositorio (`list`, `findById`, `findByNumber`, `create`, `update`, `markReceived`), service, controller y
       módulo copiando `suppliers`; registrar en `app.module.ts`.
 - [ ] 5. `apps/api/test/fixtures.ts` con `seedCatalog(db)`, que inserta los proveedores y OC de la tabla de la

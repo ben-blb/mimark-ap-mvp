@@ -1,0 +1,56 @@
+// Modelo de datos. Cada spec que agrega tablas o columnas las define aquí y crea su migración:
+//   pnpm db:migrate --name <spec>-<cambio>
+// Nunca edites una migración ya aplicada; crea una nueva.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Currency {
+  MXN
+  USD
+}
+
+/// Proveedor y sus condiciones de pago (spec 002).
+model Supplier {
+  id         String   @id @default(cuid())
+  name       String
+  /// RFC normalizado (mayúsculas, sin espacios).
+  taxId      String   @unique
+  /// Días de crédito; 0 = contado.
+  creditDays Int
+  currency   Currency
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// Registro de auditoría (spec 001). Una fila por acción relevante; nunca se edita ni se borra.
+/// También sirve para cuotas de uso y para rastrear una petición por su requestId.
+model AuditEvent {
+  id         String   @id @default(cuid())
+  at         DateTime @default(now())
+  actor      String
+  role       String?
+  requestId  String
+  /// Tipo de registro afectado: "supplier", "session", "payable"...
+  entity     String
+  entityId   String?
+  /// Verbo en pasado con prefijo de entidad: "supplier.created", "session.failed"...
+  action     String
+  fromStatus String?
+  toStatus   String?
+  /// Detalle: diff de campos, modelo de IA, duración, IP... Nunca el contenido del documento.
+  data       Json?
+
+  @@index([entity, entityId])
+  @@index([action, at])
+  @@index([requestId])
+}

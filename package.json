@@ -1,0 +1,42 @@
+{
+  "name": "mimark-ap",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "postinstall": "pnpm build:contracts",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "dev": "pnpm --parallel --stream --filter @mimark/contracts --filter @mimark/api --filter @mimark/web run dev",
+    "build": "pnpm -r run build",
+    "build:contracts": "pnpm --filter @mimark/contracts run build",
+    "typecheck": "pnpm -r --parallel run typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "layers": "depcruise apps packages infra --config .dependency-cruiser.cjs --output-type err-long",
+    "spec:check": "node scripts/spec-check.mjs",
+    "test": "pnpm test:unit && pnpm test:int",
+    "test:unit": "pnpm -r --if-present run test:unit",
+    "test:int": "pnpm --filter @mimark/api run test:int",
+    "check:fast": "pnpm build:contracts && pnpm typecheck && pnpm layers && pnpm spec:check && pnpm test:unit",
+    "check": "pnpm check:fast && pnpm lint && pnpm format:check && pnpm test:int",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @mimark/api run db:migrate",
+    "db:seed": "pnpm --filter @mimark/api run db:seed",
+    "db:reset": "pnpm --filter @mimark/api run db:reset"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "dependency-cruiser": "^18.7.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0"
+  }
+}

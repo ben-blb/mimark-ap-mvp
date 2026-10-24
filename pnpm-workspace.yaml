@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - infra/*
+
+# pnpm 10 bloquea scripts de instalación de dependencias; estos son necesarios.
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - esbuild
+  - prisma

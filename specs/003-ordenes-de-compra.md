@@ -211,9 +211,9 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
 - [x] 1. Contratos `purchase-orders.ts` con pruebas (folio normalizado, total positivo); código `INVALID_TRANSITION`.
 - [x] 2. Modelo y migración `pnpm db:migrate --name 003-ordenes-de-compra`; semilla con OC-1001…1005.
 - [x] 3. `purchase-orders.rules.ts` con pruebas unitarias (tabla de `checkReceipt`, AC-003-03 y AC-003-05).
-- [ ] 4. Repositorio (`list`, `findById`, `findByNumber`, `create`, `update`, `markReceived`), service, controller y
+- [x] 4. Repositorio (`list`, `findById`, `findByNumber`, `create`, `update`, `markReceived`), service, controller y
       módulo copiando `suppliers`; registrar en `app.module.ts`.
-- [ ] 5. `apps/api/test/fixtures.ts` con `seedCatalog(db)`, que inserta los proveedores y OC de la tabla de la
+- [x] 5. `apps/api/test/fixtures.ts` con `seedCatalog(db)`, que inserta los proveedores y OC de la tabla de la
       semilla (las pruebas de las specs 004–006 lo reutilizan); pruebas de integración AC-003-01…07.
 - [ ] 6. Web: `purchase-orders.api.ts`, página, diálogos, formulario con prueba AC-003-08, ruta y navegación.
 - [ ] 7. `pnpm check` en verde, verificación manual AC-003-09 y estado `hecha`.

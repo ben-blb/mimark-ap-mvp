@@ -1,7 +1,7 @@
 ---
 id: '004'
 titulo: Procesamiento de documentos
-estado: lista
+estado: en-progreso
 depende_de: ['003']
 requisitos: RF-04…RF-12, RF-22, RF-23, CA-01…CA-05, PS-01…PS-03, PS-06
 ---

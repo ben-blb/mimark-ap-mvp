@@ -44,7 +44,7 @@ function toAppError(exception: unknown): AppError {
     if (status === 400)
       return new AppError('VALIDATION', 'La petición no tiene un formato válido.');
     if (status === 404) return new AppError('NOT_FOUND');
-    if (status === 413) return new AppError('VALIDATION', 'La petición es demasiado grande.');
+    if (status === 413) return new AppError('FILE_TOO_LARGE');
     if (status === 429) return new AppError('RATE_LIMITED');
   }
   if (isUniqueViolation(exception)) return new AppError('CONFLICT');

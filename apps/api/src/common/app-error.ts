@@ -9,6 +9,11 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   INVALID_TRANSITION: 409,
+  FILE_TOO_LARGE: 413,
+  FILE_TYPE_NOT_ALLOWED: 415,
+  QUOTA_EXCEEDED: 429,
+  AI_UNAVAILABLE: 502,
+  STALE_STATUS: 409,
   INTERNAL: 500,
 };
 
@@ -21,6 +26,11 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   NOT_FOUND: 'No encontramos lo que buscas.',
   CONFLICT: 'Ya existe un registro con esos datos.',
   INVALID_TRANSITION: 'Esta acción no está permitida en el estado actual.',
+  FILE_TOO_LARGE: 'El archivo pesa más de 4 MB. Comprímelo o súbelo en otra resolución.',
+  FILE_TYPE_NOT_ALLOWED: 'Solo se aceptan archivos PDF, PNG o JPG.',
+  QUOTA_EXCEEDED: 'Se alcanzó el límite diario de documentos procesados. Intenta mañana.',
+  AI_UNAVAILABLE: 'No pudimos leer el documento en este momento. Intenta de nuevo con «Reintentar».',
+  STALE_STATUS: 'Alguien más actualizó este expediente. Recarga para ver su estado actual.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

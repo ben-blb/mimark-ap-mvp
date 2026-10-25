@@ -5,7 +5,7 @@ import {
   PayableDto,
   PayableHistory,
   PayableList,
-  type PayableListQuery,
+  type PayableListFilters,
   type PaymentInput,
   type ScheduleInput,
 } from '@mimark/contracts/payables';
@@ -15,12 +15,12 @@ import { api, toQuery } from '../../lib/api-client';
 /** Query keys y llamadas de la feature en un solo archivo. Los componentes no hacen fetch. */
 export const payableKeys = {
   all: ['payables'] as const,
-  list: (query: Partial<PayableListQuery>) => ['payables', 'list', query] as const,
+  list: (query: PayableListFilters) => ['payables', 'list', query] as const,
   detail: (id: string) => ['payables', 'detail', id] as const,
   history: (id: string) => ['payables', 'history', id] as const,
 };
 
-export function usePayables(query: Partial<PayableListQuery>) {
+export function usePayables(query: PayableListFilters) {
   return useQuery({
     queryKey: payableKeys.list(query),
     queryFn: () => api.get(`/payables${toQuery(query)}`, PayableList),

@@ -1,5 +1,6 @@
 import Typography from '@mui/material/Typography';
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { LoginPage } from '../features/session/LoginPage';
 import { PayableDetailPage } from '../features/payables/PayableDetailPage';
 import { PayablesPage } from '../features/payables/PayablesPage';
@@ -18,8 +19,7 @@ export const router = createBrowserRouter([
       </RequireSession>
     ),
     children: [
-      // La spec 006 reemplaza esta redirección por el tablero.
-      { index: true, element: <Navigate to="/proveedores" replace /> },
+      { index: true, element: <DashboardPage /> },
       { path: 'proveedores', element: <SuppliersPage /> },
       { path: 'ordenes', element: <PurchaseOrdersPage /> },
       { path: 'expedientes', element: <PayablesPage /> },

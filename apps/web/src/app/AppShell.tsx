@@ -11,6 +11,7 @@ import { ROLE_LABELS } from '../lib/labels';
 
 /** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
 const NAV_ITEMS = [
+  { to: '/', label: 'Tablero' },
   { to: '/proveedores', label: 'Proveedores' },
   { to: '/ordenes', label: 'Órdenes de compra' },
   { to: '/expedientes', label: 'Expedientes' },
@@ -36,6 +37,7 @@ export function AppShell() {
                 key={item.to}
                 component={NavLink}
                 to={item.to}
+                end={item.to === '/'}
                 color="inherit"
                 sx={{ '&.active': { color: 'primary.main', bgcolor: 'action.selected' } }}
               >

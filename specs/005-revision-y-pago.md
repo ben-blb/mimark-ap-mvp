@@ -1,7 +1,7 @@
 ---
 id: '005'
 titulo: Revisión, confirmación y pago
-estado: en-progreso
+estado: hecha
 depende_de: ['004']
 requisitos: RF-12…RF-16, RF-18, RF-19, RF-22, CA-04, CA-06, PS-04, PS-05
 ---
@@ -253,7 +253,7 @@ En `PayableDetailPage`:
       `Promise.all`).
 - [x] 6. Web: `ActionBar` (+ prueba AC-005-14), edición de campos, diálogos de programar, pagar, documentos y
       descartar, tarjeta de pago.
-- [ ] 7. `pnpm check` en verde, verificación manual AC-005-15 y estado `hecha`.
+- [x] 7. `pnpm check` en verde, verificación manual AC-005-15 y estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -265,3 +265,34 @@ En `PayableDetailPage`:
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-25 · El módulo tiene un segundo service, `payables-review.service.ts`, para las acciones humanas
+  (corregir, confirmar, programar, pagar, documentos, descartar): `payables.service.ts` (carga e IA) ya estaba cerca
+  del límite de 300 líneas y un service no puede llamar a otro. Lo que comparten (armar el contexto de
+  `evaluatePayable` con datos frescos) vive en `payables.context.ts` (`PayableContextLoader`, solo lee).
+- 2026-10-25 · Las reglas de estado (`TRANSITIONS`, `allowedActions`, `assertTransition`, `canRetry`) están en
+  `payables.state.rules.ts` y `applyCorrection` en `payables.correction.rules.ts`, no en `payables.rules.ts` como
+  decía el diseño: ese archivo ya tenía la normalización y la evaluación. Siguen siendo `*.rules.ts` puros.
+- 2026-10-25 · **Concurrencia (AC-005-13):** cada acción humana actualiza con `updateMany` condicionado al estado
+  y al `updatedAt` que leyó la persona (`Seen`); si alguien cambió el expediente en medio, 0 filas → `STALE_STATUS`.
+  Así una corrección simultánea tampoco pisa la otra, no solo los cambios de estado.
+- 2026-10-25 · Decisión que la spec no cubría: al corregir `poNumber`, `selectedPoNumber` pasa a ser ese mismo valor.
+  Si no, una OC elegida al subir y luego corregida a otra daría `PO_MISMATCH` para siempre sin salida.
+- 2026-10-25 · «Campo corregido» (AC-005-02) = campo enviado en la corrección, aunque el valor no cambie, para poder dar
+  por visto un dato dudoso. El formulario de la web envía solo lo que cambió más los campos dudosos.
+- 2026-10-25 · UI: corregir se hace en un diálogo (`CorrectFieldsForm`) y no editando la tabla en sitio, como el
+  resto de la app y para dejar el original y la tabla a la vista. Valida con `CorrectFieldsInput` (`safeParse`) en
+  vez de `useZodForm`, porque el formulario maneja texto vacío = `null`.
+- 2026-10-25 · El selector de «Programar pago» calcula los próximos 12 miércoles y viernes en la web
+  (`pay-days.ts`); solo llena la lista, la API vuelve a validar el día.
+- 2026-10-25 · `AC-005-06` se prueba con `findLiveDuplicate` y `findLiveForPurchaseOrder` simulados en `null`: las
+  reglas ya detectan el duplicado antes de confirmar, así que la llave única de la base solo se ejercita si esa
+  revisión no lo ve (la carrera real). Hay dos pruebas: mismo UUID en paralelo y mismo RFC + folio.
+- 2026-10-25 · `prisma migrate dev` no corre sin terminal interactiva cuando avisa de un índice único nuevo; la
+  migración `005_confirmacion_y_pago` se generó en la terminal del usuario.
+- 2026-10-25 · Verificación manual AC-005-15 con `AI_PROVIDER=fake` (API compilada en :3100 y la web en :5180, sin
+  tocar el `.env` real): `factura-sin-oc.pdf` queda en revisión con `MISSING_FIELD:purchaseOrderNumber`; corregir la OC
+  a `OC-1002` dio `PO_ALREADY_INVOICED` (el expediente de la prueba con IA real sigue vivo en esa OC, correcto), así
+  que se creó la OC sintética `OC-2005` (BFM, 8352.00 MXN, recibida) y se corrigió a ella → «Por confirmar» →
+  Confirmar (vence 24 nov, sugerido vie 20 nov, selector con 12 miércoles/viernes) → Programar → Registrar pago
+  (importe fijo en el total, referencia) → Documentos (complemento recibido). El historial muestra cada paso.

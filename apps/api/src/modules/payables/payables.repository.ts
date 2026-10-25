@@ -23,10 +23,8 @@ export interface NewPayable {
   invoiceReceivedOn: LocalDate;
 }
 
-/** Resultado de las reglas, en la forma de la tabla. */
-export interface PayableEvaluation {
-  status: PayableStatus;
-  extraction: Prisma.InputJsonValue;
+/** Campos vigentes del expediente y su decisión, en la forma de la tabla. */
+export interface PayableFieldValues {
   isApDocument: boolean;
   docType: 'factura' | 'ticket' | 'remision' | 'otro' | null;
   supplierName: string | null;
@@ -44,6 +42,15 @@ export interface PayableEvaluation {
   purchaseOrderId: string | null;
   supplierId: string | null;
 }
+
+/** Salida de la IA más el resultado de las reglas (la primera evaluación). */
+export interface PayableEvaluation extends PayableFieldValues {
+  status: PayableStatus;
+  extraction: Prisma.InputJsonValue;
+}
+
+/** Lo que una acción humana leyó del expediente: si cambió desde entonces, la acción falla (STALE_STATUS). */
+export type Seen = Pick<PayableRow, 'id' | 'status' | 'updatedAt'>;
 
 const STALE = () => new AppError('STALE_STATUS');
 
@@ -163,5 +170,93 @@ export class PayablesRepository {
       data: { status: 'failed', failureCode },
     });
     if (count === 0) throw STALE();
+  }
+
+  // ── Acciones humanas (spec 005). Todas condicionadas a lo que la persona vio: estado y updatedAt. ──
+
+  private async guarded(
+    seen: Seen,
+    data: Prisma.PayableUncheckedUpdateManyInput,
+    tx: Tx,
+  ): Promise<void> {
+    const { count } = await tx.payable.updateMany({
+      where: { id: seen.id, status: seen.status, updatedAt: seen.updatedAt },
+      data,
+    });
+    if (count === 0) throw STALE();
+  }
+
+  /** Campos corregidos y su nueva decisión. */
+  saveCorrection(
+    seen: Seen,
+    data: PayableFieldValues & { status: PayableStatus; selectedPoNumber: string | null },
+    tx: Tx = this.db,
+  ): Promise<void> {
+    const { issueDate, ...rest } = data;
+    return this.guarded(seen, { ...rest, issueDate: issueDate ? toDbDate(issueDate) : null }, tx);
+  }
+
+  markReviewRequired(seen: Seen, reasons: string[], tx: Tx = this.db): Promise<void> {
+    return this.guarded(seen, { status: 'requires_review', reviewReasons: reasons }, tx);
+  }
+
+  /** pending_confirmation → confirmed. Las llaves únicas hacen que la base impida confirmar dos veces. */
+  confirm(
+    seen: Seen,
+    data: {
+      dueOn: LocalDate;
+      suggestedPayOn: LocalDate;
+      urgent: boolean;
+      uuidKey: string | null;
+      folioKey: string;
+      invoiceDocStatus: 'pending' | 'received';
+      complementStatus: 'pending' | null;
+    },
+    tx: Tx = this.db,
+  ): Promise<void> {
+    return this.guarded(
+      seen,
+      {
+        ...data,
+        status: 'confirmed',
+        reviewReasons: [],
+        dueOn: toDbDate(data.dueOn),
+        suggestedPayOn: toDbDate(data.suggestedPayOn),
+      },
+      tx,
+    );
+  }
+
+  schedule(seen: Seen, payOn: LocalDate, tx: Tx = this.db): Promise<void> {
+    return this.guarded(seen, { status: 'scheduled', scheduledPayOn: toDbDate(payOn) }, tx);
+  }
+
+  markPaid(
+    seen: Seen,
+    payment: { paidOn: LocalDate; amount: string; reference: string },
+    tx: Tx = this.db,
+  ): Promise<void> {
+    return this.guarded(
+      seen,
+      {
+        status: 'paid',
+        paidOn: toDbDate(payment.paidOn),
+        paidAmount: payment.amount,
+        paymentRef: payment.reference,
+      },
+      tx,
+    );
+  }
+
+  saveDocuments(
+    seen: Seen,
+    data: { invoiceDocStatus?: 'pending' | 'received'; complementStatus?: 'pending' | 'received' },
+    tx: Tx = this.db,
+  ): Promise<void> {
+    return this.guarded(seen, data, tx);
+  }
+
+  discard(seen: Seen, reason: string, tx: Tx = this.db): Promise<void> {
+    return this.guarded(seen, { status: 'discarded', discardReason: reason }, tx);
   }
 }

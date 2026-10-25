@@ -174,12 +174,12 @@ describe('expedientes (spec 004)', () => {
     const id = res.body.details.payableId as string;
 
     const failed = await agent.get(`/api/payables/${id}`).expect(200);
-    expect(failed.body).toMatchObject({ status: 'failed', allowedActions: ['retry'] });
+    expect(failed.body).toMatchObject({ status: 'failed', allowedActions: ['retry', 'discard'] });
     expect(storage.files.size).toBe(1);
 
     const retried = await agent.post(`/api/payables/${id}/retry`).expect(201);
     expect(retried.body.status).toBe('pending_confirmation');
-    expect(retried.body.allowedActions).toEqual([]);
+    expect(retried.body.allowedActions).toEqual(['correct', 'confirm', 'discard']);
     expect(storage.files.size).toBe(1);
     await agent.post(`/api/payables/${id}/retry`).expect(409);
   });

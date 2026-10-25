@@ -248,8 +248,8 @@ En `PayableDetailPage`:
 - [x] 2. Columnas y migración `pnpm db:migrate --name 005-confirmacion-y-pago`.
 - [x] 3. `schedule.rules.ts` con la tabla de ejemplos (AC-005-07, AC-005-08, AC-005-09) y `TRANSITIONS`,
       `allowedActions`, `assertTransition`, `applyCorrection` con pruebas (AC-005-02, AC-005-04, AC-005-12).
-- [ ] 4. Service y controller: corregir, confirmar, programar, pagar, documentos, descartar.
-- [ ] 5. Pruebas de integración AC-005-01, 03…06, 09…11 y 13 (concurrencia: dos `confirm` en paralelo con
+- [x] 4. Service y controller: corregir, confirmar, programar, pagar, documentos, descartar.
+- [x] 5. Pruebas de integración AC-005-01, 03…06, 09…11 y 13 (concurrencia: dos `confirm` en paralelo con
       `Promise.all`).
 - [ ] 6. Web: `ActionBar` (+ prueba AC-005-14), edición de campos, diálogos de programar, pagar, documentos y
       descartar, tarjeta de pago.

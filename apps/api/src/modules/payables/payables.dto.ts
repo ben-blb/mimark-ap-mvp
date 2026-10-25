@@ -2,10 +2,10 @@ import { ExtractionSchema } from '@mimark/contracts/extraction';
 import type { PayableDto, PayableSummaryDto } from '@mimark/contracts/payables';
 import type { LocalDate } from '@mimark/contracts/common';
 import { z } from 'zod';
-import { centsToMoney } from '../../common/money.js';
+import { centsToMoney, moneyToCents } from '../../common/money.js';
 import { fromDbDate } from '../../common/dates.js';
 import type { ExtractionResult } from '../../integrations/extraction.client.js';
-import type { PayableEvaluation, PayableRow } from './payables.repository.js';
+import type { PayableEvaluation, PayableFieldValues, PayableRow } from './payables.repository.js';
 import { type Facts, parseReason } from './payables.rules.js';
 import { allowedActions } from './payables.state.rules.js';
 import { isOverdue } from './schedule.rules.js';
@@ -17,6 +17,8 @@ const StoredExtraction = z.object({
   promptVersion: z.string(),
   ms: z.number(),
 });
+
+const UncertainFields = z.array(ExtractionSchema.shape.uncertainFields.element);
 
 export function toPayableDto(row: PayableRow, today: LocalDate): PayableDto {
   const stored = StoredExtraction.safeParse(row.extraction);
@@ -45,9 +47,7 @@ export function toPayableDto(row: PayableRow, today: LocalDate): PayableDto {
       currency: row.currency,
       taxUuid: row.taxUuid,
     },
-    uncertainFields: z
-      .array(ExtractionSchema.shape.uncertainFields.element)
-      .parse(row.uncertainFields),
+    uncertainFields: UncertainFields.parse(row.uncertainFields),
     reviewReasons: row.reviewReasons.map(parseReason),
     evidence: row.isApDocument === false ? [] : (extraction?.data.sourceEvidence ?? []),
     failureCode: row.failureCode,
@@ -111,25 +111,17 @@ export function toPayableSummary(row: PayableRow): PayableSummaryDto {
   };
 }
 
-/** Resultado de las reglas, en la forma de la tabla (importes en centavos → texto con 2 decimales). */
-export function toEvaluation(input: {
+const money = (cents: number | null) => (cents === null ? null : centsToMoney(cents));
+
+/** Campos vigentes y decisión de las reglas, en la forma de la tabla (centavos → texto con 2 decimales). */
+export function toFieldValues(input: {
   facts: Facts;
-  status: PayableEvaluation['status'];
   reasons: string[];
-  result: ExtractionResult;
   po: { id: string } | null;
   supplier: { id: string } | null;
-}): PayableEvaluation {
-  const { facts, result } = input;
-  const money = (cents: number | null) => (cents === null ? null : centsToMoney(cents));
+}): PayableFieldValues {
+  const { facts } = input;
   return {
-    status: input.status,
-    extraction: {
-      data: result.data,
-      model: result.model,
-      promptVersion: result.promptVersion,
-      ms: result.ms,
-    },
     isApDocument: facts.isApDocument,
     docType: facts.docType,
     supplierName: facts.supplierName,
@@ -146,5 +138,48 @@ export function toEvaluation(input: {
     reviewReasons: input.reasons,
     purchaseOrderId: input.po?.id ?? null,
     supplierId: input.supplier?.id ?? null,
+  };
+}
+
+/** Primera evaluación: la salida de la IA, sin cambios, más el resultado de las reglas. */
+export function toEvaluation(input: {
+  facts: Facts;
+  status: PayableEvaluation['status'];
+  reasons: string[];
+  result: ExtractionResult;
+  po: { id: string } | null;
+  supplier: { id: string } | null;
+}): PayableEvaluation {
+  const { result } = input;
+  return {
+    ...toFieldValues(input),
+    status: input.status,
+    extraction: {
+      data: result.data,
+      model: result.model,
+      promptVersion: result.promptVersion,
+      ms: result.ms,
+    },
+  };
+}
+
+/** Los campos vigentes de un expediente como los ven las reglas. */
+export function toFacts(row: PayableRow): Facts {
+  const cents = (value: { toFixed(digits: number): string } | null) =>
+    value === null ? null : moneyToCents(value.toFixed(2));
+  return {
+    isApDocument: row.isApDocument ?? false,
+    docType: row.docType,
+    supplierName: row.supplierName,
+    supplierTaxId: row.supplierTaxId,
+    invoiceNumber: row.invoiceNumber,
+    issueDate: row.issueDate ? fromDbDate(row.issueDate) : null,
+    poNumber: row.poNumber,
+    subtotalCents: cents(row.subtotal),
+    taxesCents: cents(row.taxes),
+    totalCents: cents(row.total),
+    currency: row.currency,
+    taxUuid: row.taxUuid,
+    uncertainFields: UncertainFields.parse(row.uncertainFields),
   };
 }

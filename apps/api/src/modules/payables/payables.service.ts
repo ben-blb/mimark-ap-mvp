@@ -11,18 +11,16 @@ import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { Db, type Tx } from '../../common/db.js';
 import { startOfLocalDay, toLocalDate } from '../../common/dates.js';
-import { moneyToCents } from '../../common/money.js';
 import { env } from '../../config/env.js';
 import { ExtractionClient, type ExtractionResult } from '../../integrations/extraction.client.js';
 import { StorageClient } from '../../integrations/storage.client.js';
 import { AuditRepository } from '../audit/audit.repository.js';
-import { PurchaseOrdersRepository } from '../purchase-orders/purchase-orders.repository.js';
-import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
 import { checkQuota, checkReceivedOn, decodeFileName, detectFileType } from './file.rules.js';
+import { PayableContextLoader } from './payables.context.js';
 import { toEvaluation, toPayableDto, toPayableSummary } from './payables.dto.js';
 import { PayablesRepository, type PayableRow } from './payables.repository.js';
 import { canRetry, RETRY_AFTER_MS } from './payables.state.rules.js';
-import { evaluatePayable, normalizeExtraction, type PayableContext } from './payables.rules.js';
+import { evaluatePayable, normalizeExtraction } from './payables.rules.js';
 
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe ese expediente.');
 
@@ -38,8 +36,7 @@ export class PayablesService {
   constructor(
     private readonly db: Db,
     private readonly payables: PayablesRepository,
-    private readonly orders: PurchaseOrdersRepository,
-    private readonly suppliers: SuppliersRepository,
+    private readonly context: PayableContextLoader,
     private readonly audit: AuditRepository,
     private readonly storage: StorageClient,
     private readonly extraction: ExtractionClient,
@@ -204,24 +201,11 @@ export class PayablesService {
     entity: Entity,
   ): Promise<void> {
     const facts = normalizeExtraction(result.data);
-    const lookup = row.selectedPoNumber ?? facts.poNumber;
-    const po = lookup ? await this.orders.findByNumber(lookup) : null;
-    const supplier =
-      po?.supplier ??
-      (facts.supplierTaxId ? await this.suppliers.findByTaxId(facts.supplierTaxId) : null);
-    const context: PayableContext = {
+    const { context, po, supplier } = await this.context.load({
+      facts,
       selectedPoNumber: row.selectedPoNumber,
-      purchaseOrder: po && {
-        number: po.number,
-        status: po.status,
-        totalCents: moneyToCents(po.total.toFixed(2)),
-        currency: po.currency,
-        receiptStatus: po.receiptStatus,
-        supplierTaxId: po.supplier.taxId,
-      },
-      duplicateOf: await this.payables.findLiveDuplicate({ ...facts, excludeId: row.id }),
-      otherPayableForPo: po ? await this.payables.findLiveForPurchaseOrder(po.id, row.id) : null,
-    };
+      excludeId: row.id,
+    });
     const { status, reasons } = evaluatePayable(facts, context);
 
     await this.db.$transaction(async (tx) => {

@@ -167,6 +167,25 @@ describe('órdenes de compra (spec 003)', () => {
     });
   });
 
+  it('AC-003-07 audita también moneda, fecha y cancelación', async () => {
+    const po = await create();
+    await agent
+      .patch(`/api/purchase-orders/${po.id}`)
+      .send({ currency: 'USD', issuedOn: '2026-10-02', status: 'cancelled' })
+      .expect(200);
+
+    const event = await t.db.auditEvent.findFirstOrThrow({
+      where: { action: 'purchase_order.updated', entityId: po.id },
+    });
+    expect(event.data).toEqual({
+      changes: {
+        currency: { from: 'MXN', to: 'USD' },
+        issuedOn: { from: '2026-10-01', to: '2026-10-02' },
+        status: { from: 'open', to: 'cancelled' },
+      },
+    });
+  });
+
   it('responde 404 para una OC que no existe', async () => {
     const res = await agent.get('/api/purchase-orders/no-existe').expect(404);
     expect(res.body.code).toBe('NOT_FOUND');

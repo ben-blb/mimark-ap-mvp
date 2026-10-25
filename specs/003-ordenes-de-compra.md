@@ -1,7 +1,7 @@
 ---
 id: '003'
 titulo: Órdenes de compra
-estado: en-progreso
+estado: hecha
 depende_de: ['002']
 requisitos: RF-02, RF-03
 ---
@@ -216,7 +216,7 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
 - [x] 5. `apps/api/test/fixtures.ts` con `seedCatalog(db)`, que inserta los proveedores y OC de la tabla de la
       semilla (las pruebas de las specs 004–006 lo reutilizan); pruebas de integración AC-003-01…07.
 - [x] 6. Web: `purchase-orders.api.ts`, página, diálogos, formulario con prueba AC-003-08, ruta y navegación.
-- [ ] 7. `pnpm check` en verde, verificación manual AC-003-09 y estado `hecha`.
+- [x] 7. `pnpm check` en verde, verificación manual AC-003-09 y estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -234,3 +234,7 @@ Agrega a `prisma/seed.ts` (upsert por folio). Las specs 004 y 007 usan exactamen
   No se marcó 003 como `hecha` por esto y porque AC-003-09 [manual] sigue sin verificarse.
 - 2026-10-24 · Decisión: `PATCH` no puede borrar `parlevelRef` a `null` (el contrato solo admite texto); desde la UI,
   vaciarlo guarda cadena vacía. Tampoco se revalida `receivedOn ≥ issuedOn` al editar la fecha de una OC ya recibida.
+- 2026-10-25 · `.dependency-cruiser.cjs` quedó versionado (81dbfc9) y `pnpm check` pasa completo; la nota anterior
+  sobre `pnpm layers` ya no aplica.
+- 2026-10-25 · AC-003-09 verificado a mano con `pnpm dev`: en `/ordenes` se creó la OC `TEST312` (en vez de `OC-2001`),
+  se confirmó su recepción y la lista mostró el nuevo estado sin recargar.

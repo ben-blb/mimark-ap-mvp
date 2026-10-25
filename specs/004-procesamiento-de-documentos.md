@@ -601,9 +601,9 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
 - [x] 4. Integraciones: dependencias, variables en `env.ts` y `.env.example`, `storage.client.ts`,
       `extraction.client.ts`, prompt v1 y modo `fake`. Prueba AC-004-12 con `MockLanguageModelV4` de `ai/test`
       (la llamada lleva solo instrucciones + un archivo y ninguna herramienta).
-- [ ] 5. Repositorio, service, controller y módulo `payables`; `AuditRepository.countSince`; registrar en
+- [x] 5. Repositorio, service, controller y módulo `payables`; `AuditRepository.countSince`; registrar en
       `app.module.ts`; exportar `PurchaseOrdersRepository` desde su módulo.
-- [ ] 6. Pruebas de integración AC-004-01…11 y AC-004-14 con `StorageClient` y `ExtractionClient` sustituidos por
+- [x] 6. Pruebas de integración AC-004-01…11 y AC-004-14 con `StorageClient` y `ExtractionClient` sustituidos por
       dobles en memoria (`createTestApp(b => b.overrideProvider(...).useValue(...))`) y el catálogo de
       `seedCatalog(db)` (spec 003) en cada prueba.
 - [ ] 7. Web: `api.upload`, `payables.api.ts`, `PayablesPage`, `UploadDialog` (+ prueba AC-004-15),

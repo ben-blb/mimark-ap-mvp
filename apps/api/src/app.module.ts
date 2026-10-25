@@ -5,6 +5,7 @@ import { ErrorFilter } from './common/error.filter.js';
 import { validationPipe } from './common/validation.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { PayablesModule } from './modules/payables/payables.module.js';
 import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module.js';
 import { SessionGuard } from './modules/session/session.guard.js';
 import { SessionModule } from './modules/session/session.module.js';
@@ -19,6 +20,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
     SessionModule,
     SuppliersModule,
     PurchaseOrdersModule,
+    PayablesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionGuard },

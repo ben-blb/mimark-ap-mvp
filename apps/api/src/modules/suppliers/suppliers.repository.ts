@@ -33,6 +33,10 @@ export class SuppliersRepository {
     return tx.supplier.findUnique({ where: { id } });
   }
 
+  findByTaxId(taxId: string, tx: Tx = this.db): Promise<Supplier | null> {
+    return tx.supplier.findUnique({ where: { taxId } });
+  }
+
   async create(data: CreateSupplierInput, tx: Tx = this.db): Promise<Supplier> {
     try {
       return await tx.supplier.create({ data });

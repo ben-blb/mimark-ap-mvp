@@ -29,7 +29,8 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   FILE_TOO_LARGE: 'El archivo pesa más de 4 MB. Comprímelo o súbelo en otra resolución.',
   FILE_TYPE_NOT_ALLOWED: 'Solo se aceptan archivos PDF, PNG o JPG.',
   QUOTA_EXCEEDED: 'Se alcanzó el límite diario de documentos procesados. Intenta mañana.',
-  AI_UNAVAILABLE: 'No pudimos leer el documento en este momento. Intenta de nuevo con «Reintentar».',
+  AI_UNAVAILABLE:
+    'No pudimos leer el documento en este momento. Intenta de nuevo con «Reintentar».',
   STALE_STATUS: 'Alguien más actualizó este expediente. Recarga para ver su estado actual.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };

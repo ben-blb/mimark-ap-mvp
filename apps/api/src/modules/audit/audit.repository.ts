@@ -28,6 +28,17 @@ export class AuditRepository {
     return this.db.auditEvent.findMany({ where: { entity, entityId }, orderBy: { at: 'asc' } });
   }
 
+  /** Cuenta eventos de una acción desde un instante, opcionalmente de un solo actor (cuotas de uso). */
+  countSince(filter: { action: string; actor?: string; since: Date }): Promise<number> {
+    return this.db.auditEvent.count({
+      where: {
+        action: filter.action,
+        at: { gte: filter.since },
+        ...(filter.actor && { actor: filter.actor }),
+      },
+    });
+  }
+
   countFailedLogins(ip: string, since: Date): Promise<number> {
     return this.db.auditEvent.count({
       where: { action: 'session.failed', at: { gte: since }, data: { path: ['ip'], equals: ip } },

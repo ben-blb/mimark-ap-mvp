@@ -1,6 +1,6 @@
 import type { PayableDto } from '@mimark/contracts/payables';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PayableDetail } from './PayableDetail';
 
 const hostile = '<img src=x onerror="alert(1)"><b>negrita</b>';
@@ -46,7 +46,6 @@ const payable: PayableDto = {
 };
 
 function setup(over: Partial<PayableDto> = {}) {
-  const onRetry = vi.fn();
   const { container } = render(
     <PayableDetail
       payable={{ ...payable, ...over }}
@@ -60,10 +59,9 @@ function setup(over: Partial<PayableDto> = {}) {
           data: null,
         },
       ]}
-      onRetry={onRetry}
     />,
   );
-  return { container, onRetry };
+  return { container };
 }
 
 describe('PayableDetail', () => {
@@ -93,11 +91,27 @@ describe('PayableDetail', () => {
     expect(screen.getByTitle('Documento original')).toHaveAttribute('src', '/api/payables/p1/file');
   });
 
-  it('solo muestra «Reintentar» si la API lo permite', () => {
+  it('AC-005-07 la tarjeta de pago muestra vencimiento, urgente y vencido', () => {
+    setup({
+      status: 'confirmed',
+      schedule: {
+        dueOn: '2026-10-08',
+        suggestedPayOn: '2026-10-21',
+        scheduledPayOn: null,
+        urgent: true,
+        overdue: true,
+      },
+      documents: { invoice: 'received', complement: 'pending' },
+    });
+    expect(screen.getByText('Urgente')).toBeInTheDocument();
+    expect(screen.getByText('Vencido')).toBeInTheDocument();
+    expect(screen.getByText(/Programado: sin programar/)).toBeInTheDocument();
+    expect(screen.getByText('Complemento: pendiente')).toBeInTheDocument();
+  });
+
+  it('muestra la barra de acciones que le pasan, y ningún botón si no le pasan nada', () => {
     const { container } = setup();
-    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
     container.remove();
-    setup({ status: 'failed', allowedActions: ['retry'] });
-    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 });

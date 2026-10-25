@@ -1,6 +1,6 @@
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
-import type { PayableStatus, REVIEW_REASON_CODES } from '@mimark/contracts/payables';
+import type { PayableDto, PayableStatus, REVIEW_REASON_CODES } from '@mimark/contracts/payables';
 import type { PurchaseOrderDto } from '@mimark/contracts/purchase-orders';
 import type { Role } from '@mimark/contracts/session';
 
@@ -78,4 +78,21 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'payable.extracted': 'Lectura con IA',
   'payable.evaluated': 'Reglas aplicadas',
   'payable.failed': 'Falló la lectura',
+  'payable.corrected': 'Datos corregidos',
+  'payable.confirmed': 'Confirmado',
+  'payable.review_required': 'Devuelto a revisión',
+  'payable.scheduled': 'Pago programado',
+  'payable.paid': 'Pago registrado',
+  'payable.documents': 'Documentos actualizados',
+  'payable.discarded': 'Descartado',
+};
+
+export const PAYABLE_ACTION_LABELS: Record<PayableDto['allowedActions'][number], string> = {
+  retry: 'Reintentar',
+  correct: 'Corregir',
+  confirm: 'Confirmar',
+  schedule: 'Programar pago',
+  pay: 'Registrar pago',
+  documents: 'Documentos',
+  discard: 'Descartar',
 };

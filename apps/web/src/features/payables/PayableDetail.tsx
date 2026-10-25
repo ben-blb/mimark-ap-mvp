@@ -1,7 +1,6 @@
 import type { ExtractedField } from '@mimark/contracts/extraction';
 import type { PayableDto, PayableHistory } from '@mimark/contracts/payables';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -13,6 +12,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import type { ReactNode } from 'react';
 import { StatusChip } from '../../components/StatusChip';
 import { formatDate, formatDateTime, formatMoney, paymentTermLabel } from '../../lib/format';
 import {
@@ -69,12 +69,11 @@ function fieldValue(payable: PayableDto, field: ExtractedField): string | null {
 export function PayableDetail(props: {
   payable: PayableDto;
   history: PayableHistory['items'];
-  retrying?: boolean;
-  onRetry: () => void;
+  /** La barra de acciones (el detalle no decide cuáles hay: las dibuja quien lo usa). */
+  actions?: ReactNode;
 }) {
   const { payable } = props;
   const fileUrl = `/api/payables/${payable.id}/file`;
-  const canRetry = payable.allowedActions.includes('retry');
 
   return (
     <Stack spacing={3}>
@@ -92,11 +91,7 @@ export function PayableDetail(props: {
         </div>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <StatusChip status={payable.status} />
-          {canRetry && (
-            <Button variant="contained" onClick={props.onRetry} loading={props.retrying}>
-              Reintentar
-            </Button>
-          )}
+          {props.actions}
         </Stack>
       </Stack>
 
@@ -197,6 +192,8 @@ export function PayableDetail(props: {
             </Paper>
           )}
 
+          <PaymentCard payable={payable} />
+
           <Paper sx={{ p: 2 }}>
             <Typography variant="h2" sx={{ mb: 1 }}>
               Orden de compra y proveedor
@@ -244,5 +241,61 @@ export function PayableDetail(props: {
         </Stack>
       </Box>
     </Stack>
+  );
+}
+
+/** Vencimiento, pago sugerido y programado, pago registrado y documentos (spec 005). */
+function PaymentCard({ payable }: { payable: PayableDto }) {
+  const { schedule, payment, documents, discardReason } = payable;
+  if (!schedule && !payment && !documents && !discardReason) return null;
+  return (
+    <Paper sx={{ p: 2 }}>
+      <Typography variant="h2" sx={{ mb: 1 }}>
+        Pago
+      </Typography>
+      {schedule && (
+        <Stack spacing={0.5}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography variant="body2">Vence: {formatDate(schedule.dueOn)}</Typography>
+            {schedule.urgent && <Chip size="small" color="warning" label="Urgente" />}
+            {schedule.overdue && <Chip size="small" color="error" label="Vencido" />}
+          </Stack>
+          <Typography variant="body2">
+            Pago sugerido: {formatDate(schedule.suggestedPayOn)}
+          </Typography>
+          <Typography variant="body2">
+            Programado:{' '}
+            {schedule.scheduledPayOn ? formatDate(schedule.scheduledPayOn) : 'sin programar'}
+          </Typography>
+        </Stack>
+      )}
+      {payment && (
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          Pagado el {formatDate(payment.paidOn)} ·{' '}
+          {formatMoney(payment.amount, payable.fields.currency ?? 'MXN')} · Ref. {payment.reference}
+        </Typography>
+      )}
+      {documents && (
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          <Chip
+            size="small"
+            variant="outlined"
+            color={documents.invoice === 'received' ? 'success' : 'default'}
+            label={`Factura: ${documents.invoice === 'received' ? 'recibida' : 'pendiente'}`}
+          />
+          {documents.complement !== null && (
+            <Chip
+              size="small"
+              variant="outlined"
+              color={documents.complement === 'received' ? 'success' : 'default'}
+              label={`Complemento: ${documents.complement === 'received' ? 'recibido' : 'pendiente'}`}
+            />
+          )}
+        </Stack>
+      )}
+      {discardReason && (
+        <Typography variant="body2">Motivo del descarte: {discardReason}</Typography>
+      )}
+    </Paper>
   );
 }

@@ -251,7 +251,7 @@ En `PayableDetailPage`:
 - [x] 4. Service y controller: corregir, confirmar, programar, pagar, documentos, descartar.
 - [x] 5. Pruebas de integración AC-005-01, 03…06, 09…11 y 13 (concurrencia: dos `confirm` en paralelo con
       `Promise.all`).
-- [ ] 6. Web: `ActionBar` (+ prueba AC-005-14), edición de campos, diálogos de programar, pagar, documentos y
+- [x] 6. Web: `ActionBar` (+ prueba AC-005-14), edición de campos, diálogos de programar, pagar, documentos y
       descartar, tarjeta de pago.
 - [ ] 7. `pnpm check` en verde, verificación manual AC-005-15 y estado `hecha`.
 

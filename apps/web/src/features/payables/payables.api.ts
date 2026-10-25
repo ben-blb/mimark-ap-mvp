@@ -1,8 +1,13 @@
 import {
+  type CorrectFieldsInput,
+  type DiscardInput,
+  type DocumentsInput,
   PayableDto,
   PayableHistory,
   PayableList,
   type PayableListQuery,
+  type PaymentInput,
+  type ScheduleInput,
 } from '@mimark/contracts/payables';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, toQuery } from '../../lib/api-client';
@@ -52,3 +57,25 @@ export function useRetryPayable(id: string) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: payableKeys.all }),
   });
 }
+
+/** Una acción de una persona sobre el expediente. Al terminar (o fallar) se recarga todo lo de expedientes. */
+function useAction<I>(run: (input: I) => Promise<unknown>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: run,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: payableKeys.all }),
+  });
+}
+
+export const useCorrectPayable = (id: string) =>
+  useAction((input: CorrectFieldsInput) => api.patch(`/payables/${id}/fields`, input, PayableDto));
+export const useConfirmPayable = (id: string) =>
+  useAction(() => api.post(`/payables/${id}/confirm`, undefined, PayableDto));
+export const useSchedulePayable = (id: string) =>
+  useAction((input: ScheduleInput) => api.post(`/payables/${id}/schedule`, input, PayableDto));
+export const usePayPayable = (id: string) =>
+  useAction((input: PaymentInput) => api.post(`/payables/${id}/payment`, input, PayableDto));
+export const useDocumentsPayable = (id: string) =>
+  useAction((input: DocumentsInput) => api.patch(`/payables/${id}/documents`, input, PayableDto));
+export const useDiscardPayable = (id: string) =>
+  useAction((input: DiscardInput) => api.post(`/payables/${id}/discard`, input, PayableDto));

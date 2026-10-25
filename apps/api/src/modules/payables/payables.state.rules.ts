@@ -58,3 +58,17 @@ export function allowedActions(status: PayableStatus, updatedAt: Date, now: Date
   if (status === 'processing') return canRetry(status, updatedAt, now) ? ['retry'] : [];
   return [...ACTIONS[status]];
 }
+
+/** El complemento de pago solo aplica a proveedores a crédito: en uno de contado es `null` y no se marca. */
+export function checkDocumentsInput(
+  current: { complementStatus: 'pending' | 'received' | null },
+  input: { invoiceDocStatus?: 'pending' | 'received'; complementStatus?: 'pending' | 'received' },
+): void {
+  if (input.complementStatus !== undefined && current.complementStatus === null) {
+    throw new AppError('VALIDATION', undefined, {
+      fieldErrors: {
+        complementStatus: 'Este proveedor es de contado: no lleva complemento de pago',
+      },
+    });
+  }
+}

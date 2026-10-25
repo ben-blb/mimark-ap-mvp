@@ -180,6 +180,32 @@ describe('expedientes: vencimiento, pago y documentos (spec 005)', () => {
     });
   });
 
+  it('AC-005-10 a un proveedor de contado no se le marca complemento: responde 400 y no cambia nada', async () => {
+    h.ai.override = {
+      supplierTaxId: 'CSM120304TR5',
+      purchaseOrderNumber: 'OC-1005',
+      subtotal: 2500,
+      taxes: 400,
+      total: 2900,
+    };
+    const cash = await confirmed('factura.pdf', 'contado');
+    expect(cash.documents?.complement).toBeNull();
+
+    const res = await h.agent
+      .patch(`/api/payables/${cash.id}/documents`)
+      .send({ complementStatus: 'received' })
+      .expect(400);
+    expect(res.body.fieldErrors).toHaveProperty('complementStatus');
+    const now = await h.agent.get(`/api/payables/${cash.id}`).expect(200);
+    expect(now.body.documents).toEqual({ invoice: 'received', complement: null });
+
+    // La factura sí se puede seguir marcando.
+    await h.agent
+      .patch(`/api/payables/${cash.id}/documents`)
+      .send({ invoiceDocStatus: 'pending' })
+      .expect(200);
+  });
+
   it('AC-005-10 no se marcan documentos antes de confirmar', async () => {
     const doc = await h.created();
     await h.agent

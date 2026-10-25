@@ -296,3 +296,10 @@ En `PayableDetailPage`:
   que se creó la OC sintética `OC-2005` (BFM, 8352.00 MXN, recibida) y se corrigió a ella → «Por confirmar» →
   Confirmar (vence 24 nov, sugerido vie 20 nov, selector con 12 miércoles/viernes) → Programar → Registrar pago
   (importe fijo en el total, referencia) → Documentos (complemento recibido). El historial muestra cada paso.
+- 2026-10-25 · Revisión independiente (`/spec-revisar 005`), corregido: `PATCH documents` rechazaba mal un
+  complemento en un proveedor de contado (debe seguir en `null`, AC-005-10); ahora responde 400 con
+  `fieldErrors.complementStatus` (`checkDocumentsInput`, regla pura). Y AC-005-13 se prueba también con un `confirm`
+  contra una versión vieja (`STALE_STATUS` determinista); en la carrera real el perdedor puede recibir
+  `STALE_STATUS` o `INVALID_TRANSITION` según el orden, y la prueba lo acepta explícitamente.
+- Pendientes menores de esa revisión: el «hoy» de la web sale del reloj del navegador (la API valida con
+  `BUSINESS_TZ`), y las pruebas AC-005-07 de integración usan el día real (la tabla fija está en `schedule.rules.test`).

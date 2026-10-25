@@ -1,7 +1,13 @@
 import { PAYABLE_STATUSES } from '@mimark/contracts/payables';
 import { describe, expect, it } from 'vitest';
 import { AppError } from '../../common/app-error.js';
-import { allowedActions, assertTransition, canRetry, TRANSITIONS } from './payables.state.rules.js';
+import {
+  allowedActions,
+  assertTransition,
+  canRetry,
+  checkDocumentsInput,
+  TRANSITIONS,
+} from './payables.state.rules.js';
 
 const now = new Date('2026-10-20T12:00:00Z');
 const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
@@ -61,5 +67,26 @@ describe('allowedActions', () => {
     expect(allowedActions('processing', ago(6), now)).toEqual(['retry']);
     expect(canRetry('processing', ago(5), now)).toBe(false);
     expect(canRetry('processing', ago(6), now)).toBe(true);
+  });
+});
+
+describe('checkDocumentsInput', () => {
+  it('AC-005-10 un proveedor de contado no lleva complemento: marcarlo es un error de validación', () => {
+    try {
+      checkDocumentsInput({ complementStatus: null }, { complementStatus: 'received' });
+      expect.unreachable();
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'VALIDATION', status: 400 });
+      expect((error as AppError).extra.fieldErrors).toHaveProperty('complementStatus');
+    }
+  });
+
+  it('AC-005-10 con complemento aplicable se puede marcar, y la factura siempre', () => {
+    expect(() =>
+      checkDocumentsInput({ complementStatus: 'pending' }, { complementStatus: 'received' }),
+    ).not.toThrow();
+    expect(() =>
+      checkDocumentsInput({ complementStatus: null }, { invoiceDocStatus: 'pending' }),
+    ).not.toThrow();
   });
 });

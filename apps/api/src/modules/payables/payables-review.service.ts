@@ -20,7 +20,12 @@ import { applyCorrection } from './payables.correction.rules.js';
 import { toFacts, toFieldValues, toPayableDto } from './payables.dto.js';
 import { PayablesRepository, type PayableRow } from './payables.repository.js';
 import { evaluatePayable } from './payables.rules.js';
-import { allowedActions, assertTransition, type PayableAction } from './payables.state.rules.js';
+import {
+  allowedActions,
+  assertTransition,
+  checkDocumentsInput,
+  type PayableAction,
+} from './payables.state.rules.js';
 import { checkPayment, checkPayOn, computeSchedule } from './schedule.rules.js';
 
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe ese expediente.');
@@ -147,6 +152,7 @@ export class PayablesReviewService {
 
   async documents(id: string, input: DocumentsInput, ctx: Ctx): Promise<PayableDto> {
     const row = await this.act(id, 'documents');
+    checkDocumentsInput(row, input);
     const changes: Record<string, { from: string | null; to: string }> = {};
     if (input.invoiceDocStatus && input.invoiceDocStatus !== row.invoiceDocStatus) {
       changes.invoiceDocStatus = { from: row.invoiceDocStatus, to: input.invoiceDocStatus };

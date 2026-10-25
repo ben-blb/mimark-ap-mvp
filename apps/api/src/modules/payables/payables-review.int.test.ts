@@ -253,6 +253,23 @@ describe('expedientes: revisión y confirmación (spec 005)', () => {
     expect(now.body.status).toBe('pending_confirmation');
   });
 
+  it('AC-005-13 si otra persona ya movió el expediente, confirmar responde STALE_STATUS y no se aplica', async () => {
+    const doc = await h.created();
+    const repo = h.t.get(PayablesRepository);
+    const snapshot = await repo.findById(doc.id);
+    // Otra persona lo corrige (mismo estado, pero cambia updatedAt) antes de que esta confirme.
+    await h.agent
+      .patch(`/api/payables/${doc.id}/fields`)
+      .send({ invoiceNumber: 'otro' })
+      .expect(200);
+
+    vi.spyOn(repo, 'findById').mockResolvedValueOnce(snapshot);
+    const stale = await h.agent.post(`/api/payables/${doc.id}/confirm`).expect(409);
+    expect(stale.body.code).toBe('STALE_STATUS');
+    const now = await h.agent.get(`/api/payables/${doc.id}`).expect(200);
+    expect(now.body.status).toBe('pending_confirmation');
+  });
+
   it('AC-005-13 dos confirmaciones simultáneas del mismo expediente: solo una se aplica', async () => {
     const doc = await h.created();
     const results = await Promise.all([
@@ -260,6 +277,9 @@ describe('expedientes: revisión y confirmación (spec 005)', () => {
       h.agent.post(`/api/payables/${doc.id}/confirm`),
     ]);
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+    // Según el orden en que lleguen, la segunda lo ve ya confirmado o choca al guardar.
+    const loser = results.find((r) => r.status === 409)!;
+    expect(['STALE_STATUS', 'INVALID_TRANSITION']).toContain(loser.body.code);
     expect(
       await h.t.db.auditEvent.count({ where: { entityId: doc.id, action: 'payable.confirmed' } }),
     ).toBe(1);

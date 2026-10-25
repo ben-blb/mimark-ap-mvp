@@ -643,7 +643,8 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
 - 2026-10-25 · AC-004-18 verificado a mano con `AI_PROVIDER=anthropic` y `claude-haiku-5-5` (prompt
   `extract-invoice@1`, 6.8 s): una factura sintética contra OC-1002 se leyó y quedó en `requires_review` porque sus
   montos no coincidían con la OC (`TOTAL_MISMATCH`), que es lo esperado para ese documento. La lectura real
-  funciona; falta correr la factura sintética válida de la spec 007 para ver `pending_confirmation` con proveedor real.
+  funciona. Después, una factura sintética válida contra la OC TEST312 terminó en `pending_confirmation` con el
+  mismo proveedor y modelo: AC-004-18 cumplido.
 - 2026-10-25 · Revisión independiente (`/spec-revisar 004`), hallazgos corregidos con prueba en
   `payables.hardening.int.test.ts`: el historial desempata por `id` cuando dos eventos comparten `at`; el reintento
   se reclama de forma atómica (`claimForRetry`: `failed`, o `processing` con más de 5 min sin cambios), así que dos

@@ -132,6 +132,21 @@ export class PayablesRepository {
     if (count === 0) throw STALE();
   }
 
+  /**
+   * Reclama un expediente para reintentarlo: `failed`, o `processing` sin cambios desde `staleBefore`.
+   * Es atómico: de dos reintentos simultáneos solo uno lo logra y el otro recibe STALE_STATUS.
+   */
+  async claimForRetry(id: string, staleBefore: Date, tx: Tx = this.db): Promise<void> {
+    const { count } = await tx.payable.updateMany({
+      where: {
+        id,
+        OR: [{ status: 'failed' }, { status: 'processing', updatedAt: { lt: staleBefore } }],
+      },
+      data: { status: 'processing' },
+    });
+    if (count === 0) throw STALE();
+  }
+
   /** processing → resultado de las reglas, con los campos vigentes. */
   async saveEvaluation(id: string, data: PayableEvaluation, tx: Tx = this.db): Promise<void> {
     const { issueDate, ...rest } = data;

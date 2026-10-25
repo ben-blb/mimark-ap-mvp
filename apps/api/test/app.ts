@@ -1,3 +1,4 @@
+import type { Type } from '@nestjs/common';
 import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import type { Role } from '@mimark/contracts/session';
 import request from 'supertest';
@@ -23,6 +24,8 @@ export async function createTestApp(configure?: (b: TestingModuleBuilder) => Tes
 
   return {
     db,
+    /** Una dependencia de la app, p. ej. para espiar un repositorio con vi.spyOn. */
+    get: <T>(token: Type<T>) => app.get(token),
     /** Cliente HTTP sin sesión. */
     http: () => request(server),
     /** Cliente HTTP con sesión iniciada (guarda la cookie entre llamadas). */

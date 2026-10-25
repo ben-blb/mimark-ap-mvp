@@ -25,7 +25,10 @@ export class AuditRepository {
   }
 
   listFor(entity: string, entityId: string): Promise<AuditEvent[]> {
-    return this.db.auditEvent.findMany({ where: { entity, entityId }, orderBy: { at: 'asc' } });
+    return this.db.auditEvent.findMany({
+      where: { entity, entityId },
+      orderBy: [{ at: 'asc' }, { id: 'asc' }],
+    });
   }
 
   /** Cuenta eventos de una acción desde un instante, opcionalmente de un solo actor (cuotas de uso). */

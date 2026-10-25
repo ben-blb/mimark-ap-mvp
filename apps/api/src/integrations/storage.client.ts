@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { get, put } from '@vercel/blob';
+import { AppError } from '../common/app-error.js';
 import { env } from '../config/env.js';
 
 const EXTENSIONS: Record<string, string> = {
@@ -10,6 +11,7 @@ const EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
 };
+const MISSING = () => new AppError('NOT_FOUND', 'No encontramos el archivo original.');
 const LOCAL_DIR = resolve(process.cwd(), '.storage');
 
 /** Archivos originales: Vercel Blob privado, o disco local (sin token) en desarrollo. */
@@ -43,9 +45,11 @@ export class StorageClient {
   async get(key: string): Promise<Buffer> {
     if (env.BLOB_READ_WRITE_TOKEN) {
       const result = await get(key, { access: 'private' });
-      if (result?.statusCode !== 200) throw new Error('Archivo no encontrado en el almacenamiento');
+      if (result?.statusCode !== 200) throw MISSING();
       return Buffer.from(await new Response(result.stream).arrayBuffer());
     }
-    return readFile(join(LOCAL_DIR, key));
+    return readFile(join(LOCAL_DIR, key)).catch((error: NodeJS.ErrnoException) => {
+      throw error.code === 'ENOENT' ? MISSING() : error;
+    });
   }
 }

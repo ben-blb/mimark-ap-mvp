@@ -34,3 +34,8 @@ export function checkQuota(
     throw new AppError('QUOTA_EXCEEDED');
   }
 }
+
+/** multer entrega el nombre como si fueran bytes latin1: se vuelven a leer como UTF-8 (ñ, á…). */
+export function decodeFileName(originalname: string): string {
+  return Buffer.from(originalname, 'latin1').toString('utf8');
+}

@@ -44,7 +44,8 @@ export interface PayableContext {
 }
 
 const UUID_PATTERN = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
-const RETRY_AFTER_MS = 5 * 60_000;
+/** Un `processing` sin cambios por más de esto se considera caído y se puede reintentar. */
+export const RETRY_AFTER_MS = 5 * 60_000;
 
 const clean = (value: string | null): string | null => value?.trim() || null;
 const compact = (value: string | null): string | null =>

@@ -640,5 +640,15 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
   de la extracción; `error-ia.pdf` → 502 `AI_UNAVAILABLE` con `details.payableId`, expediente `failed` con el botón
   «Reintentar» visible en su detalle. El reintento de un archivo llamado `error-ia` vuelve a fallar a propósito
   (el modo fake depende del nombre); el reintento exitoso está cubierto por la prueba AC-004-08.
-- 2026-10-25 · **Pendiente: AC-004-18** (proveedor real). No hay llave de IA en este entorno; se verifica al
-  configurar `AI_PROVIDER=anthropic|google` con la factura sintética de la spec 007.
+- 2026-10-25 · AC-004-18 verificado a mano con `AI_PROVIDER=anthropic` y `claude-haiku-5-5` (prompt
+  `extract-invoice@1`, 6.8 s): una factura sintética contra OC-1002 se leyó y quedó en `requires_review` porque sus
+  montos no coincidían con la OC (`TOTAL_MISMATCH`), que es lo esperado para ese documento. La lectura real
+  funciona; falta correr la factura sintética válida de la spec 007 para ver `pending_confirmation` con proveedor real.
+- 2026-10-25 · Revisión independiente (`/spec-revisar 004`), hallazgos corregidos con prueba en
+  `payables.hardening.int.test.ts`: el historial desempata por `id` cuando dos eventos comparten `at`; el reintento
+  se reclama de forma atómica (`claimForRetry`: `failed`, o `processing` con más de 5 min sin cambios), así que dos
+  reintentos simultáneos gastan la IA una vez; si algo falla después de la IA el expediente queda `failed` con
+  `failureCode: PROCESSING_ERROR` y la llamada sí cuenta para la cuota; el nombre del archivo se decodifica de
+  latin1 a UTF-8 (`decodeFileName`); un original que ya no está en el almacenamiento responde 404.
+- 2026-10-25 · Límite conocido: la cuota diaria no es atómica; dos cargas simultáneas justo en el límite pueden
+  pasar ambas. Aceptable para el MVP (a lo más se excede por la concurrencia de una ráfaga).

@@ -9,27 +9,29 @@ import type {
 } from '@mimark/contracts/payables';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
-import { Db } from '../../common/db.js';
+import { Db, type Tx } from '../../common/db.js';
 import { startOfLocalDay, toLocalDate } from '../../common/dates.js';
-import { centsToMoney, moneyToCents } from '../../common/money.js';
+import { moneyToCents } from '../../common/money.js';
 import { env } from '../../config/env.js';
-import { ExtractionClient } from '../../integrations/extraction.client.js';
+import { ExtractionClient, type ExtractionResult } from '../../integrations/extraction.client.js';
 import { StorageClient } from '../../integrations/storage.client.js';
 import { AuditRepository } from '../audit/audit.repository.js';
 import { PurchaseOrdersRepository } from '../purchase-orders/purchase-orders.repository.js';
 import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
-import { checkQuota, checkReceivedOn, detectFileType } from './file.rules.js';
-import { toPayableDto } from './payables.dto.js';
+import { checkQuota, checkReceivedOn, decodeFileName, detectFileType } from './file.rules.js';
+import { toEvaluation, toPayableDto, toPayableSummary } from './payables.dto.js';
 import { PayablesRepository, type PayableRow } from './payables.repository.js';
 import {
   canRetry,
+  RETRY_AFTER_MS,
   evaluatePayable,
   normalizeExtraction,
-  parseReason,
   type PayableContext,
 } from './payables.rules.js';
 
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe ese expediente.');
+
+type Entity = Ctx & { entity: string; entityId: string };
 
 interface UploadedFile {
   buffer: Buffer;
@@ -51,19 +53,7 @@ export class PayablesService {
   async list(query: PayableListQuery): Promise<PayableList> {
     const rows = await this.payables.list(query);
     return {
-      items: rows.map((row) => ({
-        id: row.id,
-        status: row.status,
-        createdAt: row.createdAt.toISOString(),
-        createdBy: row.createdBy,
-        reviewReasons: row.reviewReasons.map(parseReason),
-        fileName: row.fileName,
-        supplierName: row.supplierName,
-        invoiceNumber: row.invoiceNumber,
-        poNumber: row.poNumber,
-        total: row.total?.toFixed(2) ?? null,
-        currency: row.currency,
-      })),
+      items: rows.map(toPayableSummary),
     };
   }
 
@@ -96,6 +86,7 @@ export class PayablesService {
   }
 
   async upload(file: UploadedFile, input: UploadPayableInput, ctx: Ctx): Promise<PayableDto> {
+    const fileName = decodeFileName(file.originalname);
     const mimeType = detectFileType(file.buffer);
     if (!mimeType) throw new AppError('FILE_TYPE_NOT_ALLOWED');
     const today = this.today();
@@ -109,7 +100,7 @@ export class PayablesService {
         {
           createdBy: ctx.actor,
           fileKey,
-          fileName: file.originalname,
+          fileName,
           mimeType,
           fileSize: file.buffer.length,
           selectedPoNumber: input.purchaseOrderNumber ?? null,
@@ -124,14 +115,19 @@ export class PayablesService {
           entityId: created.id,
           action: 'payable.uploaded',
           toStatus: 'uploaded',
-          data: { fileName: file.originalname, mimeType, fileSize: file.buffer.length },
+          data: { fileName, mimeType, fileSize: file.buffer.length },
         },
         tx,
       );
       return created;
     });
 
-    return this.process(row, file.buffer, ['uploaded'], ctx);
+    return this.process(
+      row,
+      file.buffer,
+      (tx) => this.payables.moveStatus(row.id, ['uploaded'], 'processing', tx),
+      ctx,
+    );
   }
 
   async retry(id: string, ctx: Ctx): Promise<PayableDto> {
@@ -141,19 +137,25 @@ export class PayablesService {
     }
     await this.checkQuota(ctx.actor);
     const bytes = await this.storage.get(row.fileKey);
-    return this.process(row, bytes, ['failed', 'processing'], ctx);
+    const staleBefore = new Date(Date.now() - RETRY_AFTER_MS);
+    return this.process(
+      row,
+      bytes,
+      (tx) => this.payables.claimForRetry(row.id, staleBefore, tx),
+      ctx,
+    );
   }
 
-  /** Pasos 6–11 del flujo: lo comparten la carga y el reintento. */
+  /** Pasos 6–11 del flujo: lo comparten la carga y el reintento. `claim` pasa el expediente a processing. */
   private async process(
     row: PayableRow,
     bytes: Buffer,
-    from: ('uploaded' | 'failed' | 'processing')[],
+    claim: (tx: Tx) => Promise<void>,
     ctx: Ctx,
   ): Promise<PayableDto> {
     const entity = { ...ctx, entity: 'payable', entityId: row.id };
     await this.db.$transaction(async (tx) => {
-      await this.payables.moveStatus(row.id, from, 'processing', tx);
+      await claim(tx);
       await this.audit.log(
         { ...entity, action: 'payable.processing', fromStatus: row.status, toStatus: 'processing' },
         tx,
@@ -190,6 +192,22 @@ export class PayablesService {
       throw new AppError('AI_UNAVAILABLE', undefined, { details: { payableId: row.id } });
     }
 
+    try {
+      await this.evaluateAndSave(row, result, entity);
+    } catch (error) {
+      await this.failAfterExtraction(row.id, result, entity, error);
+      throw error;
+    }
+
+    return this.get(row.id);
+  }
+
+  /** Pasos 8–11: normaliza, carga el contexto, decide y guarda todo en una transacción. */
+  private async evaluateAndSave(
+    row: PayableRow,
+    result: ExtractionResult,
+    entity: Entity,
+  ): Promise<void> {
     const facts = normalizeExtraction(result.data);
     const lookup = row.selectedPoNumber ?? facts.poNumber;
     const po = lookup ? await this.orders.findByNumber(lookup) : null;
@@ -211,35 +229,10 @@ export class PayablesService {
     };
     const { status, reasons } = evaluatePayable(facts, context);
 
-    const money = (cents: number | null) => (cents === null ? null : centsToMoney(cents));
     await this.db.$transaction(async (tx) => {
       await this.payables.saveEvaluation(
         row.id,
-        {
-          status,
-          extraction: {
-            data: result.data,
-            model: result.model,
-            promptVersion: result.promptVersion,
-            ms: result.ms,
-          },
-          isApDocument: facts.isApDocument,
-          docType: facts.docType,
-          supplierName: facts.supplierName,
-          supplierTaxId: facts.supplierTaxId,
-          invoiceNumber: facts.invoiceNumber,
-          issueDate: facts.issueDate,
-          poNumber: facts.poNumber,
-          subtotal: money(facts.subtotalCents),
-          taxes: money(facts.taxesCents),
-          total: money(facts.totalCents),
-          currency: facts.currency,
-          taxUuid: facts.taxUuid,
-          uncertainFields: facts.uncertainFields,
-          reviewReasons: reasons,
-          purchaseOrderId: po?.id ?? null,
-          supplierId: supplier?.id ?? null,
-        },
+        toEvaluation({ facts, status, reasons, result, po, supplier }),
         tx,
       );
       await this.audit.log(
@@ -266,8 +259,49 @@ export class PayablesService {
         tx,
       );
     });
+  }
 
-    return this.get(row.id);
+  /**
+   * Algo falló después de la IA: la llamada ya se hizo, así que se registra (cuenta para la cuota) y el
+   * expediente queda `failed` para poder reintentarlo, en vez de quedarse 5 minutos en `processing`.
+   */
+  private async failAfterExtraction(
+    id: string,
+    result: ExtractionResult,
+    entity: Entity,
+    error: unknown,
+  ): Promise<void> {
+    // STALE_STATUS: otro proceso ya movió el expediente y es dueño de su estado.
+    if (error instanceof AppError && error.code === 'STALE_STATUS') return;
+    await this.db
+      .$transaction(async (tx) => {
+        await this.audit.log(
+          {
+            ...entity,
+            action: 'payable.extracted',
+            data: {
+              ok: true,
+              model: result.model,
+              promptVersion: result.promptVersion,
+              ms: result.ms,
+            },
+          },
+          tx,
+        );
+        await this.payables.markFailed(id, 'PROCESSING_ERROR', tx);
+        await this.audit.log(
+          {
+            ...entity,
+            action: 'payable.failed',
+            fromStatus: 'processing',
+            toStatus: 'failed',
+            data: { failureCode: 'PROCESSING_ERROR' },
+          },
+          tx,
+        );
+      })
+      // Si tampoco se puede registrar, se conserva el error original.
+      .catch(() => undefined);
   }
 
   private async find(id: string): Promise<PayableRow> {

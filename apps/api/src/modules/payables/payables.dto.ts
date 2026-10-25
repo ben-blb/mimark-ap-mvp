@@ -1,9 +1,11 @@
 import { ExtractionSchema } from '@mimark/contracts/extraction';
-import type { PayableDto } from '@mimark/contracts/payables';
+import type { PayableDto, PayableSummaryDto } from '@mimark/contracts/payables';
 import { z } from 'zod';
+import { centsToMoney } from '../../common/money.js';
 import { fromDbDate } from '../../common/dates.js';
-import type { PayableRow } from './payables.repository.js';
-import { allowedActions, parseReason } from './payables.rules.js';
+import type { ExtractionResult } from '../../integrations/extraction.client.js';
+import type { PayableEvaluation, PayableRow } from './payables.repository.js';
+import { allowedActions, type Facts, parseReason } from './payables.rules.js';
 
 /** Lo que se guarda de la llamada a la IA, tal cual y sin cambios. */
 const StoredExtraction = z.object({
@@ -65,5 +67,59 @@ export function toPayableDto(row: PayableRow): PayableDto {
       ms: extraction.ms,
     },
     allowedActions: allowedActions(row.status, row.updatedAt, new Date()),
+  };
+}
+
+export function toPayableSummary(row: PayableRow): PayableSummaryDto {
+  return {
+    id: row.id,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    createdBy: row.createdBy,
+    reviewReasons: row.reviewReasons.map(parseReason),
+    fileName: row.fileName,
+    supplierName: row.supplierName,
+    invoiceNumber: row.invoiceNumber,
+    poNumber: row.poNumber,
+    total: row.total?.toFixed(2) ?? null,
+    currency: row.currency,
+  };
+}
+
+/** Resultado de las reglas, en la forma de la tabla (importes en centavos → texto con 2 decimales). */
+export function toEvaluation(input: {
+  facts: Facts;
+  status: PayableEvaluation['status'];
+  reasons: string[];
+  result: ExtractionResult;
+  po: { id: string } | null;
+  supplier: { id: string } | null;
+}): PayableEvaluation {
+  const { facts, result } = input;
+  const money = (cents: number | null) => (cents === null ? null : centsToMoney(cents));
+  return {
+    status: input.status,
+    extraction: {
+      data: result.data,
+      model: result.model,
+      promptVersion: result.promptVersion,
+      ms: result.ms,
+    },
+    isApDocument: facts.isApDocument,
+    docType: facts.docType,
+    supplierName: facts.supplierName,
+    supplierTaxId: facts.supplierTaxId,
+    invoiceNumber: facts.invoiceNumber,
+    issueDate: facts.issueDate,
+    poNumber: facts.poNumber,
+    subtotal: money(facts.subtotalCents),
+    taxes: money(facts.taxesCents),
+    total: money(facts.totalCents),
+    currency: facts.currency,
+    taxUuid: facts.taxUuid,
+    uncertainFields: facts.uncertainFields,
+    reviewReasons: input.reasons,
+    purchaseOrderId: input.po?.id ?? null,
+    supplierId: input.supplier?.id ?? null,
   };
 }

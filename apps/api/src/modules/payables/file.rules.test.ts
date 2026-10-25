@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '../../common/app-error.js';
-import { checkQuota, checkReceivedOn, detectFileType } from './file.rules.js';
+import { checkQuota, checkReceivedOn, decodeFileName, detectFileType } from './file.rules.js';
 
 function errorOf(fn: () => void): AppError {
   try {
@@ -56,5 +56,13 @@ describe('checkQuota', () => {
 
   it('AC-004-09 bloquea al llegar al límite global', () => {
     expect(errorOf(() => checkQuota({ actor: 1, total: 200 }, limits)).code).toBe('QUOTA_EXCEEDED');
+  });
+});
+
+describe('decodeFileName', () => {
+  it('AC-004-04 recupera los acentos que multer entrega como latin1', () => {
+    const asMulterGivesIt = Buffer.from('Factura ñandú.pdf', 'utf8').toString('latin1');
+    expect(decodeFileName(asMulterGivesIt)).toBe('Factura ñandú.pdf');
+    expect(decodeFileName('factura.pdf')).toBe('factura.pdf');
   });
 });

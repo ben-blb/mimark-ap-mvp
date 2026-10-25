@@ -13,6 +13,11 @@ export type PayableRow = Prisma.PayableGetPayload<{ include: typeof WITH_RELATIO
 const NOT_LIVE: PayableStatus[] = ['out_of_scope', 'failed', 'discarded'];
 const LIST_LIMIT = 200;
 
+/** Quien llegó antes manda: un expediente más nuevo y todavía sin confirmar no bloquea a uno más viejo. */
+const olderOrConfirmed = (createdAt: Date): Prisma.PayableWhereInput => ({
+  OR: [{ createdAt: { lt: createdAt } }, { status: { in: ['confirmed', 'scheduled', 'paid'] } }],
+});
+
 export interface NewPayable {
   createdBy: string;
   fileKey: string;
@@ -114,12 +119,16 @@ export class PayablesRepository {
     });
   }
 
-  /** Id de otro expediente vivo con el mismo UUID fiscal, o el mismo RFC + número de factura. */
+  /**
+   * Id de otro expediente vivo con el mismo UUID fiscal, o el mismo RFC + número de factura. Solo cuenta uno
+   * más antiguo o ya confirmado: así una copia subida después no bloquea a la original.
+   */
   async findLiveDuplicate(match: {
     taxUuid: string | null;
     supplierTaxId: string | null;
     invoiceNumber: string | null;
     excludeId: string;
+    createdAt: Date;
   }): Promise<string | null> {
     const or: Prisma.PayableWhereInput[] = [];
     if (match.taxUuid) or.push({ taxUuid: match.taxUuid });
@@ -128,20 +137,31 @@ export class PayablesRepository {
     }
     if (or.length === 0) return null;
     const found = await this.db.payable.findFirst({
-      where: { OR: or, id: { not: match.excludeId }, status: { notIn: NOT_LIVE } },
+      where: {
+        OR: or,
+        id: { not: match.excludeId },
+        status: { notIn: NOT_LIVE },
+        AND: [olderOrConfirmed(match.createdAt)],
+      },
       select: { id: true },
       orderBy: { createdAt: 'asc' },
     });
     return found?.id ?? null;
   }
 
-  /** Id de otro expediente vivo ligado a la misma OC. */
+  /** Id de otro expediente vivo ligado a la misma OC (más antiguo o ya confirmado, como en los duplicados). */
   async findLiveForPurchaseOrder(
     purchaseOrderId: string,
     excludeId: string,
+    createdAt: Date,
   ): Promise<string | null> {
     const found = await this.db.payable.findFirst({
-      where: { purchaseOrderId, id: { not: excludeId }, status: { notIn: NOT_LIVE } },
+      where: {
+        purchaseOrderId,
+        id: { not: excludeId },
+        status: { notIn: NOT_LIVE },
+        AND: [olderOrConfirmed(createdAt)],
+      },
       select: { id: true },
       orderBy: { createdAt: 'asc' },
     });

@@ -52,7 +52,7 @@ export class PayablesReviewService {
     const { context, po, supplier } = await this.context.load({
       facts,
       selectedPoNumber,
-      excludeId: id,
+      self: row,
     });
     const { status, reasons } = evaluatePayable(facts, context);
     assertTransition(row.status, status);
@@ -76,7 +76,7 @@ export class PayablesReviewService {
     const { context, po } = await this.context.load({
       facts,
       selectedPoNumber: row.selectedPoNumber,
-      excludeId: id,
+      self: row,
     });
     const { status, reasons } = evaluatePayable(facts, context);
     if (status !== 'pending_confirmation' || !po) {

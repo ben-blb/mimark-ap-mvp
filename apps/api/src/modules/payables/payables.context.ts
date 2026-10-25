@@ -17,8 +17,13 @@ export class PayableContextLoader {
     private readonly suppliers: SuppliersRepository,
   ) {}
 
-  async load(input: { facts: Facts; selectedPoNumber: string | null; excludeId: string }) {
-    const { facts, selectedPoNumber, excludeId } = input;
+  async load(input: {
+    facts: Facts;
+    selectedPoNumber: string | null;
+    /** El expediente que se evalúa: no se compara consigo mismo y solo lo bloquean los más antiguos. */
+    self: { id: string; createdAt: Date };
+  }) {
+    const { facts, selectedPoNumber, self } = input;
     const lookup = selectedPoNumber ?? facts.poNumber;
     const po = lookup ? await this.orders.findByNumber(lookup) : null;
     const supplier =
@@ -34,8 +39,14 @@ export class PayableContextLoader {
         receiptStatus: po.receiptStatus,
         supplierTaxId: po.supplier.taxId,
       },
-      duplicateOf: await this.payables.findLiveDuplicate({ ...facts, excludeId }),
-      otherPayableForPo: po ? await this.payables.findLiveForPurchaseOrder(po.id, excludeId) : null,
+      duplicateOf: await this.payables.findLiveDuplicate({
+        ...facts,
+        excludeId: self.id,
+        createdAt: self.createdAt,
+      }),
+      otherPayableForPo: po
+        ? await this.payables.findLiveForPurchaseOrder(po.id, self.id, self.createdAt)
+        : null,
     };
     return { context, po, supplier };
   }

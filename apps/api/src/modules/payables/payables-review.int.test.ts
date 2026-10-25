@@ -127,6 +127,30 @@ describe('expedientes: revisión y confirmación (spec 005)', () => {
     expect(actions).toContain('payable.review_required');
   });
 
+  it('AC-005-05 un duplicado subido después no impide confirmar la factura original', async () => {
+    const original = await h.created('factura.pdf', 'repetida');
+    const duplicate = await h.created('factura.pdf', 'repetida');
+    expect(reasons(duplicate)).toEqual(['PO_ALREADY_INVOICED', 'DUPLICATE']);
+
+    // La original sigue limpia y se confirma: su "duplicado" es el más nuevo, no ella.
+    const confirmed = await h.agent.post(`/api/payables/${original.id}/confirm`).expect(201);
+    expect(confirmed.body).toMatchObject({ status: 'confirmed', reviewReasons: [] });
+
+    // El duplicado sigue bloqueado: ahora la original ya está confirmada.
+    const fixed = await h.agent.patch(`/api/payables/${duplicate.id}/fields`).send({}).expect(200);
+    expect(fixed.body.status).toBe('requires_review');
+    expect(reasons(fixed.body)).toEqual(['PO_ALREADY_INVOICED', 'DUPLICATE']);
+  });
+
+  it('AC-005-05 mientras la original siga viva, el duplicado más nuevo no puede pasar', async () => {
+    const original = await h.created('factura.pdf', 'repetida');
+    const duplicate = await h.created('factura.pdf', 'repetida');
+    const res = await h.agent.patch(`/api/payables/${duplicate.id}/fields`).send({}).expect(200);
+    expect(res.body.status).toBe('requires_review');
+    const now = await h.agent.get(`/api/payables/${original.id}`).expect(200);
+    expect(now.body.status).toBe('pending_confirmation');
+  });
+
   it('AC-005-06 dos confirmaciones de la misma factura a la vez: la base deja pasar solo una', async () => {
     // Sin la revisión de duplicados de las reglas, para probar la red de seguridad de la base.
     const repo = h.t.get(PayablesRepository);

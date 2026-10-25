@@ -204,7 +204,7 @@ export class PayablesService {
     const { context, po, supplier } = await this.context.load({
       facts,
       selectedPoNumber: row.selectedPoNumber,
-      excludeId: row.id,
+      self: row,
     });
     const { status, reasons } = evaluatePayable(facts, context);
 

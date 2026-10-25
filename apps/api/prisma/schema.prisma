@@ -32,6 +32,7 @@ model Supplier {
   updatedAt  DateTime @updatedAt
 
   purchaseOrders PurchaseOrder[]
+  payables       Payable[]
 }
 
 enum PurchaseOrderStatus {
@@ -65,7 +66,75 @@ model PurchaseOrder {
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
+  payables      Payable[]
+
   @@index([supplierId])
+}
+
+enum PayableStatus {
+  uploaded
+  processing
+  requires_review
+  pending_confirmation
+  confirmed
+  scheduled
+  paid
+  out_of_scope
+  failed
+  discarded
+}
+
+enum DocType {
+  factura
+  ticket
+  remision
+  otro
+}
+
+/// Expediente de cuentas por pagar: un documento, su extracción, la decisión y (spec 005) el pago.
+model Payable {
+  id                String         @id @default(cuid())
+  status            PayableStatus  @default(uploaded)
+  createdBy         String
+  /// Archivo original, nunca se modifica. La llave no incluye el nombre del archivo.
+  fileKey           String
+  fileName          String
+  mimeType          String
+  fileSize          Int
+  /// Datos que da quien sube.
+  selectedPoNumber  String?
+  /// Fecha en que CxP recibió el documento; base del vencimiento (spec 005).
+  invoiceReceivedOn DateTime       @db.Date
+  /// Salida de la IA tal cual: { data, model, promptVersion, ms }. Inmutable.
+  extraction        Json?
+  /// Campos vigentes (la spec 005 permite corregirlos).
+  isApDocument      Boolean?
+  docType           DocType?
+  supplierName      String?
+  supplierTaxId     String?
+  invoiceNumber     String?
+  issueDate         DateTime?      @db.Date
+  poNumber          String?
+  subtotal          Decimal?       @db.Decimal(14, 2)
+  taxes             Decimal?       @db.Decimal(14, 2)
+  total             Decimal?       @db.Decimal(14, 2)
+  currency          Currency?
+  taxUuid           String?
+  uncertainFields   String[]       @default([])
+  /// Decisión de las reglas, p. ej. ["MISSING_FIELD:total", "RECEIPT_NOT_CONFIRMED"].
+  reviewReasons     String[]       @default([])
+  failureCode       String?
+  purchaseOrderId   String?
+  purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  supplierId        String?
+  supplier          Supplier?      @relation(fields: [supplierId], references: [id])
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+  @@index([taxUuid])
+  @@index([supplierTaxId, invoiceNumber])
+  @@index([purchaseOrderId])
 }
 
 /// Registro de auditoría (spec 001). Una fila por acción relevante; nunca se edita ni se borra.

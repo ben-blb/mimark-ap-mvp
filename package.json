@@ -18,6 +18,8 @@
     "format:check": "prettier --check .",
     "layers": "depcruise apps packages infra --config .dependency-cruiser.cjs --output-type err-long",
     "spec:check": "node scripts/spec-check.mjs",
+    "probador": "pnpm --filter @mimark/probador run probador",
+    "eval": "pnpm --filter @mimark/probador run eval",
     "test": "pnpm test:unit && pnpm test:int",
     "test:unit": "pnpm -r --if-present run test:unit",
     "test:int": "pnpm --filter @mimark/api run test:int",

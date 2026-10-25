@@ -1,7 +1,7 @@
 ---
 id: '007'
 titulo: Evidencia de entrega
-estado: lista
+estado: en-progreso
 depende_de: ['006']
 requisitos: CA-01…CA-06, PS-01…PS-06, entregables del curso
 ---
@@ -110,9 +110,9 @@ prompt (del detalle del expediente) para poder comparar corridas.
 
 ## Tareas
 
-- [ ] 1. Paquete `infra/probador` (package.json, tsconfig, vitest) y scripts en la raíz.
-- [ ] 2. `fixtures.ts` con los documentos de los casos y de la evaluación.
-- [ ] 3. `report.ts` y `score.ts` con pruebas (AC-007-04).
+- [x] 1. Paquete `infra/probador` (package.json, tsconfig, vitest) y scripts en la raíz.
+- [x] 2. `fixtures.ts` con los documentos de los casos y de la evaluación.
+- [x] 3. `report.ts` y `score.ts` con pruebas (AC-007-04).
 - [ ] 4. `api.ts`, `cases.ts` y `probador.ts` (AC-007-01, AC-007-02); correr contra local con un proveedor real.
 - [ ] 5. `eval.ts` (AC-007-03) y primera corrida.
 - [ ] 6. `docs/entrega` completa (AC-007-05); revisar que nada tenga secretos o datos reales.

@@ -1,7 +1,7 @@
 ---
 id: '006'
 titulo: Cartera y tablero
-estado: en-progreso
+estado: hecha
 depende_de: ['005']
 requisitos: RF-17, RF-20, RF-21
 ---
@@ -126,7 +126,7 @@ Ejemplo (hoy 2026-10-20, horizonte 7): A vence 10-15 (MXN 1000.00), B vence 10-2
 - [x] 3. `dashboard.repository.ts`, service, controller y módulo; filtros nuevos en `payables.repository.list`.
 - [x] 4. Pruebas de integración AC-006-01 y AC-006-04.
 - [x] 5. Web: `DashboardPage` (+ prueba AC-006-06), filtros en la URL, ruta índice y navegación.
-- [ ] 6. `pnpm check` en verde, verificación manual AC-006-07 y estado `hecha`.
+- [x] 6. `pnpm check` en verde, verificación manual AC-006-07 y estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -135,3 +135,24 @@ Ejemplo (hoy 2026-10-20, horizonte 7): A vence 10-15 (MXN 1000.00), B vence 10-2
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-25 · `PayableListQuery.status` ahora es una lista separada por comas (salida: arreglo de estados); lo que
+  llega por la URL se tipa como `PayableListFilters` (`z.input`). Un solo estado sigue funcionando igual.
+- 2026-10-25 · El filtro `due` (y el tablero) miran solo lo que sigue por pagar (`confirmed` y `scheduled`) y usan las
+  mismas fechas: `overdue` = `dueOn < hoy`; `7|15|30` = `hoy ≤ dueOn ≤ hoy + N`. Por eso los totales del tablero cuadran
+  con la lista filtrada (hay una prueba que lo comprueba).
+- 2026-10-25 · «Por día de pago» agrupa todo lo por pagar (`pending`), no solo el horizonte, como dice la spec
+  («lo por pagar»); la lista de expedientes sí se limita al horizonte y a lo vencido.
+- 2026-10-25 · `summarizePortfolio` recibe además `inReview` (el conteo lo da la base), y el repositorio duplica la forma
+  de la fila porque un repositorio no puede importar reglas.
+- 2026-10-25 · Los filtros de la lista viven en la URL (`useSearchParams`); se añadieron las opciones «Por revisar»
+  (`requires_review,pending_confirmation`, a donde enlaza el tablero) y «Por pagar» (`confirmed,scheduled`).
+- 2026-10-25 · AC-006-05 se prueba con `vi.useFakeTimers({ toFake: ['Date'] })` a las 03:30 UTC del 21 (21:30 del 20 en
+  Monterrey): lo que vence el 20 no está vencido ni en el tablero ni en `?due=overdue`.
+- 2026-10-25 · `test/payable-rows.ts` inserta expedientes ya confirmados/pagados directo en la base para las pruebas
+  de tablero y filtros (sin IA).
+- 2026-10-25 · Verificación manual AC-006-07 (`AI_PROVIDER=fake`, backend en :3100, web en :5180): con las OC sintéticas
+  `OC-4001…4003` se subieron tres `factura-sin-oc-N.pdf`, se corrigió su OC y se confirmaron; una quedó confirmada, una
+  programada y una pagada. El tablero mostró por pagar 2 / $16,704.00 MXN, vencidos 0, próximos 2 y pagados del mes 2
+  (incluye el pago de una prueba anterior), y su tabla coincide con `/expedientes?status=confirmed,scheduled&due=15`
+  (mismos dos folios y mismo total). Cambiar 7/15/30 días no recargó la página.

@@ -596,7 +596,7 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
 - [x] 1. Contratos `extraction.ts` y `payables.ts`; errores nuevos en `errors.ts`, `app-error.ts` y el mapeo de 413
       en `error.filter.ts`.
 - [x] 2. Modelo `Payable` y migración `pnpm db:migrate --name 004-expedientes`.
-- [ ] 3. Reglas con pruebas primero: `file.rules.ts` (AC-004-07, AC-004-09) y `payables.rules.ts`
+- [x] 3. Reglas con pruebas primero: `file.rules.ts` (AC-004-07, AC-004-09) y `payables.rules.ts`
       (`normalizeExtraction` AC-004-13; `evaluatePayable` con la tabla de ejemplos AC-004-01…06; `canRetry`).
 - [ ] 4. Integraciones: dependencias, variables en `env.ts` y `.env.example`, `storage.client.ts`,
       `extraction.client.ts`, prompt v1 y modo `fake`. Prueba AC-004-12 con `MockLanguageModelV4` de `ai/test`

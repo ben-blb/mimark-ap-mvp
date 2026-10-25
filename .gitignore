@@ -21,3 +21,4 @@ yarn-debug.log*
 
 .DS_Store
 .claude/.headroom_wrap_marker.json
+apps/api/.storage/

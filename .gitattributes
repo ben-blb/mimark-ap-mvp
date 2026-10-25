@@ -1,0 +1,5 @@
+# Fin de línea LF en todos los sistemas (Prettier y los scripts lo esperan, también en Windows).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

@@ -1,7 +1,7 @@
 ---
 id: '004'
 titulo: Procesamiento de documentos
-estado: en-progreso
+estado: hecha
 depende_de: ['003']
 requisitos: RF-04…RF-12, RF-22, RF-23, CA-01…CA-05, PS-01…PS-03, PS-06
 ---
@@ -608,7 +608,7 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
       `seedCatalog(db)` (spec 003) en cada prueba.
 - [x] 7. Web: `api.upload`, `payables.api.ts`, `PayablesPage`, `UploadDialog` (+ prueba AC-004-15),
       `PayableDetailPage` (+ prueba AC-004-16 de razones y evidencia como texto), etiquetas, ruta y navegación.
-- [ ] 8. `pnpm check` en verde, verificación manual AC-004-17 (y AC-004-18 si hay llave de IA) y estado `hecha`.
+- [x] 8. `pnpm check` en verde, verificación manual AC-004-17 (y AC-004-18 si hay llave de IA) y estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -622,3 +622,23 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-25 · `MAX_FILE_BYTES`, `ALLOWED_MIME_TYPES` y `FILE_REJECTION_MESSAGES` viven en `contracts/payables.ts`:
+  la API (mensajes por defecto de `FILE_TOO_LARGE` y `FILE_TYPE_NOT_ALLOWED`) y `UploadForm` usan el mismo texto
+  (AC-004-15).
+- 2026-10-25 · `normalizeExtraction` deja todos los campos en `null` cuando `isAccountsPayableDocument` es `false`,
+  para que AC-004-03 («sin campos de factura») no dependa de que el modelo obedezca el prompt.
+- 2026-10-25 · Facts guarda los importes en centavos; el service los pasa a `Money` con `centsToMoney` al guardar.
+- 2026-10-25 · En `payable.extracted` con falla solo se registra el nombre del error, no su mensaje: el mensaje del
+  proveedor podría traer texto del documento (AC-004-10).
+- 2026-10-25 · El mapeo fila → `PayableDto` está en `payables.dto.ts` (el service pasaba el límite de 300 líneas).
+- 2026-10-25 · Los dobles de prueba (`MemoryStorage`, `FakeExtraction`) están en `apps/api/test/doubles.ts`.
+- 2026-10-25 · `UploadForm` y `PayableDetail` son componentes puros (sin API) para poder probar AC-004-15/16;
+  `UploadDialog` y `PayableDetailPage` los conectan.
+- 2026-10-25 · Verificación manual AC-004-17 (`AI_PROVIDER=fake`, Postgres local, disco local): con `pnpm dev`, login
+  y alta por la web en `/expedientes`; `factura.pdf` → `pending_confirmation` ligado a OC-1001 con evidencia y datos
+  de la extracción; `error-ia.pdf` → 502 `AI_UNAVAILABLE` con `details.payableId`, expediente `failed` con el botón
+  «Reintentar» visible en su detalle. El reintento de un archivo llamado `error-ia` vuelve a fallar a propósito
+  (el modo fake depende del nombre); el reintento exitoso está cubierto por la prueba AC-004-08.
+- 2026-10-25 · **Pendiente: AC-004-18** (proveedor real). No hay llave de IA en este entorno; se verifica al
+  configurar `AI_PROVIDER=anthropic|google` con la factura sintética de la spec 007.

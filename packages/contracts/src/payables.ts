@@ -93,6 +93,24 @@ export const PayableDto = z.object({
     .object({ id: Id, name: z.string(), taxId: z.string(), creditDays: z.number().int() })
     .nullable(),
   extraction: z.object({ model: z.string(), promptVersion: z.string(), ms: z.number() }).nullable(),
+  schedule: z
+    .object({
+      dueOn: LocalDate,
+      suggestedPayOn: LocalDate,
+      scheduledPayOn: LocalDate.nullable(),
+      urgent: z.boolean(),
+      /** dueOn < hoy y todavía no se paga. */
+      overdue: z.boolean(),
+    })
+    .nullable(),
+  payment: z.object({ paidOn: LocalDate, amount: Money, reference: z.string() }).nullable(),
+  documents: z
+    .object({
+      invoice: z.enum(['pending', 'received']).nullable(),
+      complement: z.enum(['pending', 'received']).nullable(),
+    })
+    .nullable(),
+  discardReason: z.string().nullable(),
   allowedActions: z.array(z.enum(PAYABLE_ACTIONS)),
 });
 export type PayableDto = z.infer<typeof PayableDto>;
@@ -141,6 +159,33 @@ export const PayableHistory = listOf(
   }),
 );
 export type PayableHistory = z.infer<typeof PayableHistory>;
+
+/** Corrección humana de los campos vigentes. Solo viajan los campos que cambian. */
+export const CorrectFieldsInput = PayableFields.partial().extend({
+  isApDocument: z.boolean().optional(),
+});
+export type CorrectFieldsInput = z.infer<typeof CorrectFieldsInput>;
+
+export const ScheduleInput = z.object({ payOn: LocalDate.optional() });
+export type ScheduleInput = z.infer<typeof ScheduleInput>;
+
+export const PaymentInput = z.object({
+  paidOn: LocalDate,
+  amount: Money,
+  reference: z.string().trim().min(3, 'Escribe la referencia del pago').max(60),
+});
+export type PaymentInput = z.infer<typeof PaymentInput>;
+
+export const DocumentsInput = z.object({
+  invoiceDocStatus: z.enum(['pending', 'received']).optional(),
+  complementStatus: z.enum(['pending', 'received']).optional(),
+});
+export type DocumentsInput = z.infer<typeof DocumentsInput>;
+
+export const DiscardInput = z.object({
+  reason: z.string().trim().min(5, 'Explica el motivo').max(300),
+});
+export type DiscardInput = z.infer<typeof DiscardInput>;
 
 /** Tipos y tamaño de archivo aceptados; los usan la API y el diálogo de carga con el mismo mensaje. */
 export const MAX_FILE_BYTES = 4 * 1024 * 1024;

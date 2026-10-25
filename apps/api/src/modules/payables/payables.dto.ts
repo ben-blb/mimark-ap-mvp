@@ -1,11 +1,14 @@
 import { ExtractionSchema } from '@mimark/contracts/extraction';
 import type { PayableDto, PayableSummaryDto } from '@mimark/contracts/payables';
+import type { LocalDate } from '@mimark/contracts/common';
 import { z } from 'zod';
 import { centsToMoney } from '../../common/money.js';
 import { fromDbDate } from '../../common/dates.js';
 import type { ExtractionResult } from '../../integrations/extraction.client.js';
 import type { PayableEvaluation, PayableRow } from './payables.repository.js';
-import { allowedActions, type Facts, parseReason } from './payables.rules.js';
+import { type Facts, parseReason } from './payables.rules.js';
+import { allowedActions } from './payables.state.rules.js';
+import { isOverdue } from './schedule.rules.js';
 
 /** Lo que se guarda de la llamada a la IA, tal cual y sin cambios. */
 const StoredExtraction = z.object({
@@ -15,7 +18,7 @@ const StoredExtraction = z.object({
   ms: z.number(),
 });
 
-export function toPayableDto(row: PayableRow): PayableDto {
+export function toPayableDto(row: PayableRow, today: LocalDate): PayableDto {
   const stored = StoredExtraction.safeParse(row.extraction);
   const extraction = stored.success ? stored.data : null;
   const money = (value: { toFixed(digits: number): string } | null) => value?.toFixed(2) ?? null;
@@ -66,6 +69,28 @@ export function toPayableDto(row: PayableRow): PayableDto {
       promptVersion: extraction.promptVersion,
       ms: extraction.ms,
     },
+    schedule:
+      row.dueOn && row.suggestedPayOn
+        ? {
+            dueOn: fromDbDate(row.dueOn),
+            suggestedPayOn: fromDbDate(row.suggestedPayOn),
+            scheduledPayOn: row.scheduledPayOn ? fromDbDate(row.scheduledPayOn) : null,
+            urgent: row.urgent,
+            overdue: row.status !== 'paid' && isOverdue(fromDbDate(row.dueOn), today),
+          }
+        : null,
+    payment:
+      row.paidOn && row.paidAmount && row.paymentRef
+        ? {
+            paidOn: fromDbDate(row.paidOn),
+            amount: row.paidAmount.toFixed(2),
+            reference: row.paymentRef,
+          }
+        : null,
+    documents: row.invoiceDocStatus
+      ? { invoice: row.invoiceDocStatus, complement: row.complementStatus }
+      : null,
+    discardReason: row.discardReason,
     allowedActions: allowedActions(row.status, row.updatedAt, new Date()),
   };
 }

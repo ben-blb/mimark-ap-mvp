@@ -5,7 +5,7 @@ import {
   type Extraction,
   type ExtractedField,
 } from '@mimark/contracts/extraction';
-import { ReviewReason, type PayableStatus } from '@mimark/contracts/payables';
+import { ReviewReason } from '@mimark/contracts/payables';
 import { PoNumber } from '@mimark/contracts/purchase-orders';
 import { numberToCents } from '../../common/money.js';
 
@@ -44,11 +44,9 @@ export interface PayableContext {
 }
 
 const UUID_PATTERN = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
-/** Un `processing` sin cambios por más de esto se considera caído y se puede reintentar. */
-export const RETRY_AFTER_MS = 5 * 60_000;
 
-const clean = (value: string | null): string | null => value?.trim() || null;
-const compact = (value: string | null): string | null =>
+export const clean = (value: string | null): string | null => value?.trim() || null;
+export const compact = (value: string | null): string | null =>
   clean(value)?.replace(/\s+/g, '').toUpperCase() || null;
 
 export function normalizeExtraction(raw: Extraction): Facts {
@@ -162,19 +160,6 @@ export function evaluatePayable(
   if (ctx.duplicateOf !== null) reasons.push('DUPLICATE');
 
   return { status: reasons.length === 0 ? 'pending_confirmation' : 'requires_review', reasons };
-}
-
-/** `failed`, o `processing` sin cambios por más de 5 minutos (la función se cayó a la mitad). */
-export function canRetry(status: PayableStatus, updatedAt: Date, now: Date): boolean {
-  return (
-    status === 'failed' ||
-    (status === 'processing' && now.getTime() - updatedAt.getTime() > RETRY_AFTER_MS)
-  );
-}
-
-/** La spec 005 completa la tabla de acciones. */
-export function allowedActions(status: PayableStatus, updatedAt: Date, now: Date): 'retry'[] {
-  return canRetry(status, updatedAt, now) ? ['retry'] : [];
 }
 
 /** "MISSING_FIELD:total" → { code, field }. Las razones se guardan como texto. */

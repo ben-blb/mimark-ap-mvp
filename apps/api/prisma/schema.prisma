@@ -84,6 +84,11 @@ enum PayableStatus {
   discarded
 }
 
+enum DocStatus {
+  pending
+  received
+}
+
 enum DocType {
   factura
   ticket
@@ -128,6 +133,21 @@ model Payable {
   purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
   supplierId        String?
   supplier          Supplier?      @relation(fields: [supplierId], references: [id])
+  /// Spec 005: vencimiento y ciclo de pago (miércoles y viernes).
+  dueOn             DateTime?      @db.Date
+  suggestedPayOn    DateTime?      @db.Date
+  urgent            Boolean        @default(false)
+  scheduledPayOn    DateTime?      @db.Date
+  /// Se llenan al confirmar. Únicos: la base impide confirmar dos veces la misma factura.
+  uuidKey           String?        @unique
+  /// "RFC|FOLIO"
+  folioKey          String?        @unique
+  paidOn            DateTime?      @db.Date
+  paidAmount        Decimal?       @db.Decimal(14, 2)
+  paymentRef        String?
+  invoiceDocStatus  DocStatus?
+  complementStatus  DocStatus?
+  discardReason     String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 

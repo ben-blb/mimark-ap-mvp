@@ -38,6 +38,10 @@ const payable: PayableDto = {
   purchaseOrder: null,
   supplier: null,
   extraction: { model: 'fake', promptVersion: 'fake', ms: 1500 },
+  schedule: null,
+  payment: null,
+  documents: null,
+  discardReason: null,
   allowedActions: [],
 };
 

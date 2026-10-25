@@ -15,6 +15,8 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   QUOTA_EXCEEDED: 429,
   AI_UNAVAILABLE: 502,
   STALE_STATUS: 409,
+  REVIEW_REQUIRED: 409,
+  DUPLICATE_INVOICE: 409,
   INTERNAL: 500,
 };
 
@@ -32,6 +34,8 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   AI_UNAVAILABLE:
     'No pudimos leer el documento en este momento. Intenta de nuevo con «Reintentar».',
   STALE_STATUS: 'Alguien más actualizó este expediente. Recarga para ver su estado actual.',
+  REVIEW_REQUIRED: 'Antes de confirmar hay que revisar el expediente.',
+  DUPLICATE_INVOICE: 'Esta factura ya está confirmada en otro expediente.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

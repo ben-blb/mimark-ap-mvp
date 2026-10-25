@@ -1,8 +1,6 @@
 import type { Extraction } from '@mimark/contracts/extraction';
 import { describe, expect, it } from 'vitest';
 import {
-  allowedActions,
-  canRetry,
   evaluatePayable,
   normalizeExtraction,
   parseReason,
@@ -258,28 +256,6 @@ describe('evaluatePayable', () => {
     expect(evaluatePayable(facts({ totalCents: null }), baseCtx).reasons).toEqual([
       'MISSING_FIELD:total',
     ]);
-  });
-});
-
-describe('canRetry y allowedActions', () => {
-  const now = new Date('2026-10-20T12:00:00Z');
-  const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
-
-  it('AC-004-08 un expediente failed se puede reintentar', () => {
-    expect(canRetry('failed', ago(0), now)).toBe(true);
-    expect(allowedActions('failed', ago(0), now)).toEqual(['retry']);
-  });
-
-  it('AC-004-08 processing solo si lleva más de 5 minutos sin cambios', () => {
-    expect(canRetry('processing', ago(5), now)).toBe(false);
-    expect(canRetry('processing', ago(6), now)).toBe(true);
-    expect(allowedActions('processing', ago(6), now)).toEqual(['retry']);
-  });
-
-  it('los demás estados no tienen acciones todavía', () => {
-    expect(allowedActions('requires_review', ago(60), now)).toEqual([]);
-    expect(allowedActions('pending_confirmation', ago(60), now)).toEqual([]);
-    expect(canRetry('uploaded', ago(60), now)).toBe(false);
   });
 });
 

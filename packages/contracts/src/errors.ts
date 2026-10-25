@@ -17,6 +17,8 @@ export const ERROR_CODES = [
   'QUOTA_EXCEEDED',
   'AI_UNAVAILABLE',
   'STALE_STATUS',
+  'REVIEW_REQUIRED',
+  'DUPLICATE_INVOICE',
   'INTERNAL',
 ] as const;
 

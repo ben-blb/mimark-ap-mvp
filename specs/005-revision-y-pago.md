@@ -1,7 +1,7 @@
 ---
 id: '005'
 titulo: Revisión, confirmación y pago
-estado: lista
+estado: en-progreso
 depende_de: ['004']
 requisitos: RF-12…RF-16, RF-18, RF-19, RF-22, CA-04, CA-06, PS-04, PS-05
 ---
@@ -244,9 +244,9 @@ En `PayableDetailPage`:
 
 ## Tareas
 
-- [ ] 1. Contratos (entradas, `PayableDto` ampliado) y errores `REVIEW_REQUIRED`, `DUPLICATE_INVOICE`.
-- [ ] 2. Columnas y migración `pnpm db:migrate --name 005-confirmacion-y-pago`.
-- [ ] 3. `schedule.rules.ts` con la tabla de ejemplos (AC-005-07, AC-005-08, AC-005-09) y `TRANSITIONS`,
+- [x] 1. Contratos (entradas, `PayableDto` ampliado) y errores `REVIEW_REQUIRED`, `DUPLICATE_INVOICE`.
+- [x] 2. Columnas y migración `pnpm db:migrate --name 005-confirmacion-y-pago`.
+- [x] 3. `schedule.rules.ts` con la tabla de ejemplos (AC-005-07, AC-005-08, AC-005-09) y `TRANSITIONS`,
       `allowedActions`, `assertTransition`, `applyCorrection` con pruebas (AC-005-02, AC-005-04, AC-005-12).
 - [ ] 4. Service y controller: corregir, confirmar, programar, pagar, documentos, descartar.
 - [ ] 5. Pruebas de integración AC-005-01, 03…06, 09…11 y 13 (concurrencia: dos `confirm` en paralelo con

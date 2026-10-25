@@ -21,13 +21,8 @@ import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
 import { checkQuota, checkReceivedOn, decodeFileName, detectFileType } from './file.rules.js';
 import { toEvaluation, toPayableDto, toPayableSummary } from './payables.dto.js';
 import { PayablesRepository, type PayableRow } from './payables.repository.js';
-import {
-  canRetry,
-  RETRY_AFTER_MS,
-  evaluatePayable,
-  normalizeExtraction,
-  type PayableContext,
-} from './payables.rules.js';
+import { canRetry, RETRY_AFTER_MS } from './payables.state.rules.js';
+import { evaluatePayable, normalizeExtraction, type PayableContext } from './payables.rules.js';
 
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe ese expediente.');
 
@@ -58,7 +53,7 @@ export class PayablesService {
   }
 
   async get(id: string): Promise<PayableDto> {
-    return toPayableDto(await this.find(id));
+    return toPayableDto(await this.find(id), this.today());
   }
 
   async file(id: string): Promise<{ bytes: Buffer; mimeType: string; fileName: string }> {

@@ -4,6 +4,7 @@ import { DbModule } from './common/db.js';
 import { ErrorFilter } from './common/error.filter.js';
 import { validationPipe } from './common/validation.js';
 import { AuditModule } from './modules/audit/audit.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { PayablesModule } from './modules/payables/payables.module.js';
 import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module.js';
@@ -21,6 +22,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
     SuppliersModule,
     PurchaseOrdersModule,
     PayablesModule,
+    DashboardModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionGuard },

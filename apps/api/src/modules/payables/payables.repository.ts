@@ -3,7 +3,7 @@ import type { Currency, LocalDate } from '@mimark/contracts/common';
 import type { PayableListQuery, PayableStatus } from '@mimark/contracts/payables';
 import { AppError } from '../../common/app-error.js';
 import { Db, type Tx } from '../../common/db.js';
-import { toDbDate } from '../../common/dates.js';
+import { addDays, toDbDate } from '../../common/dates.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 const WITH_RELATIONS = { purchaseOrder: true, supplier: true } satisfies Prisma.PayableInclude;
@@ -70,21 +70,44 @@ export class PayablesRepository {
     return tx.payable.findUnique({ where: { id }, include: WITH_RELATIONS });
   }
 
-  list(query: PayableListQuery): Promise<PayableRow[]> {
-    const where: Prisma.PayableWhereInput = {};
-    if (query.status) where.status = query.status;
-    if (query.createdBy) where.createdBy = { equals: query.createdBy, mode: 'insensitive' };
+  /**
+   * Los filtros se combinan (todos deben cumplirse). `due` mira solo lo que sigue por pagar (confirmado o
+   * programado), con las mismas fechas que el tablero: así los totales del tablero cuadran con la lista.
+   */
+  list(query: PayableListQuery, today: LocalDate): Promise<PayableRow[]> {
+    const contains = (value: string) => ({ contains: value, mode: 'insensitive' }) as const;
+    const and: Prisma.PayableWhereInput[] = [];
+    if (query.status) and.push({ status: { in: query.status } });
+    if (query.createdBy) and.push({ createdBy: { equals: query.createdBy, mode: 'insensitive' } });
+    if (query.supplierId) and.push({ supplierId: query.supplierId });
+    if (query.invoiceNumber) and.push({ invoiceNumber: contains(query.invoiceNumber) });
+    if (query.poNumber) {
+      and.push({
+        OR: [
+          { poNumber: contains(query.poNumber) },
+          { purchaseOrder: { number: contains(query.poNumber) } },
+        ],
+      });
+    }
+    if (query.due) {
+      const dueOn =
+        query.due === 'overdue'
+          ? { lt: toDbDate(today) }
+          : { gte: toDbDate(today), lte: toDbDate(addDays(today, Number(query.due))) };
+      and.push({ status: { in: ['confirmed', 'scheduled'] }, dueOn });
+    }
     if (query.search) {
-      const contains = { contains: query.search, mode: 'insensitive' } as const;
-      where.OR = [
-        { supplierName: contains },
-        { invoiceNumber: contains },
-        { poNumber: contains },
-        { fileName: contains },
-      ];
+      and.push({
+        OR: [
+          { supplierName: contains(query.search) },
+          { invoiceNumber: contains(query.search) },
+          { poNumber: contains(query.search) },
+          { fileName: contains(query.search) },
+        ],
+      });
     }
     return this.db.payable.findMany({
-      where,
+      where: { AND: and },
       include: WITH_RELATIONS,
       orderBy: { createdAt: 'desc' },
       take: LIST_LIMIT,

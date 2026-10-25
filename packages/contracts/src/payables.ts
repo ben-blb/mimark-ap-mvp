@@ -134,11 +134,31 @@ export type PayableSummaryDto = z.infer<typeof PayableSummaryDto>;
 export const PayableList = listOf(PayableSummaryDto);
 export type PayableList = z.infer<typeof PayableList>;
 
+/** `status=confirmed,scheduled`: uno o varios estados separados por comas. */
+const StatusList = z
+  .string()
+  .transform((value) =>
+    value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )
+  .pipe(z.array(PayableStatus).min(1));
+
+export const DUE_FILTERS = ['overdue', '7', '15', '30'] as const;
+
 export const PayableListQuery = z.object({
-  status: PayableStatus.optional(),
+  status: StatusList.optional(),
   search: z.string().trim().max(100).optional(),
   createdBy: z.string().trim().max(60).optional(),
+  supplierId: Id.optional(),
+  poNumber: z.string().trim().max(30).optional(),
+  invoiceNumber: z.string().trim().max(60).optional(),
+  /** Vencimiento de lo que sigue por pagar: ya vencido o dentro de 7, 15 o 30 días. */
+  due: z.enum(DUE_FILTERS).optional(),
 });
+/** Lo que llega por la URL (texto); `PayableListQuery` es lo que entiende la API ya validado. */
+export type PayableListFilters = z.input<typeof PayableListQuery>;
 export type PayableListQuery = z.infer<typeof PayableListQuery>;
 
 /** Campos de texto del multipart; el archivo va aparte. */

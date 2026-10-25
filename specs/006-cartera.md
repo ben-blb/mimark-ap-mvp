@@ -1,7 +1,7 @@
 ---
 id: '006'
 titulo: Cartera y tablero
-estado: lista
+estado: en-progreso
 depende_de: ['005']
 requisitos: RF-17, RF-20, RF-21
 ---
@@ -121,11 +121,11 @@ Ejemplo (hoy 2026-10-20, horizonte 7): A vence 10-15 (MXN 1000.00), B vence 10-2
 
 ## Tareas
 
-- [ ] 1. Contratos `dashboard.ts` y filtros ampliados de `PayableListQuery`.
-- [ ] 2. `dashboard.rules.ts` con pruebas (tabla de buckets, AC-006-02, AC-006-03, AC-006-05).
-- [ ] 3. `dashboard.repository.ts`, service, controller y módulo; filtros nuevos en `payables.repository.list`.
-- [ ] 4. Pruebas de integración AC-006-01 y AC-006-04.
-- [ ] 5. Web: `DashboardPage` (+ prueba AC-006-06), filtros en la URL, ruta índice y navegación.
+- [x] 1. Contratos `dashboard.ts` y filtros ampliados de `PayableListQuery`.
+- [x] 2. `dashboard.rules.ts` con pruebas (tabla de buckets, AC-006-02, AC-006-03, AC-006-05).
+- [x] 3. `dashboard.repository.ts`, service, controller y módulo; filtros nuevos en `payables.repository.list`.
+- [x] 4. Pruebas de integración AC-006-01 y AC-006-04.
+- [x] 5. Web: `DashboardPage` (+ prueba AC-006-06), filtros en la URL, ruta índice y navegación.
 - [ ] 6. `pnpm check` en verde, verificación manual AC-006-07 y estado `hecha`.
 
 ## Fuera de alcance y decisiones

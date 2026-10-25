@@ -43,7 +43,7 @@ export class PayablesService {
   ) {}
 
   async list(query: PayableListQuery): Promise<PayableList> {
-    const rows = await this.payables.list(query);
+    const rows = await this.payables.list(query, this.today());
     return {
       items: rows.map(toPayableSummary),
     };

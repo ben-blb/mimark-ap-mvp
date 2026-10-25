@@ -1,43 +1,11 @@
-import type { Extraction } from '@mimark/contracts/extraction';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from '../../../test/app.js';
+import { FakeExtraction, MemoryStorage } from '../../../test/doubles.js';
 import { seedCatalog } from '../../../test/fixtures.js';
 import { ExtractionClient } from '../../integrations/extraction.client.js';
-import { fakeExtraction } from '../../integrations/fake-extraction.js';
 import { StorageClient } from '../../integrations/storage.client.js';
 
 type Agent = Awaited<ReturnType<TestApp['agent']>>;
-
-/** Almacenamiento en memoria. */
-class MemoryStorage {
-  files = new Map<string, Buffer>();
-  async put(bytes: Buffer): Promise<string> {
-    const key = `test/${this.files.size + 1}`;
-    this.files.set(key, bytes);
-    return key;
-  }
-  async get(key: string): Promise<Buffer> {
-    const bytes = this.files.get(key);
-    if (!bytes) throw new Error('no existe');
-    return bytes;
-  }
-}
-
-/** IA simulada: por defecto el modo fake; cada prueba puede fijar la respuesta o hacerla fallar. */
-class FakeExtraction {
-  calls = 0;
-  failNext = 0;
-  override: Partial<Extraction> | null = null;
-  async extract(input: { bytes: Buffer; fileName: string }) {
-    this.calls += 1;
-    if (this.failNext > 0) {
-      this.failNext -= 1;
-      throw new Error('contenido del documento que no debe registrarse');
-    }
-    const data = { ...fakeExtraction(input.bytes, input.fileName), ...this.override };
-    return { data, model: 'fake', promptVersion: 'fake', ms: 3 };
-  }
-}
 
 const pdf = (label: string) => Buffer.from(`%PDF-1.7 ${label}`);
 

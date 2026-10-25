@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { LocalDate } from '@mimark/contracts/common';
-import { ExtractionSchema } from '@mimark/contracts/extraction';
 import type {
   PayableDto,
   PayableHistory,
@@ -8,11 +7,10 @@ import type {
   PayableListQuery,
   UploadPayableInput,
 } from '@mimark/contracts/payables';
-import { z } from 'zod';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { Db } from '../../common/db.js';
-import { fromDbDate, startOfLocalDay, toLocalDate } from '../../common/dates.js';
+import { startOfLocalDay, toLocalDate } from '../../common/dates.js';
 import { centsToMoney, moneyToCents } from '../../common/money.js';
 import { env } from '../../config/env.js';
 import { ExtractionClient } from '../../integrations/extraction.client.js';
@@ -21,9 +19,9 @@ import { AuditRepository } from '../audit/audit.repository.js';
 import { PurchaseOrdersRepository } from '../purchase-orders/purchase-orders.repository.js';
 import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
 import { checkQuota, checkReceivedOn, detectFileType } from './file.rules.js';
+import { toPayableDto } from './payables.dto.js';
 import { PayablesRepository, type PayableRow } from './payables.repository.js';
 import {
-  allowedActions,
   canRetry,
   evaluatePayable,
   normalizeExtraction,
@@ -32,14 +30,6 @@ import {
 } from './payables.rules.js';
 
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe ese expediente.');
-
-/** Lo que se guarda de la llamada a la IA, tal cual y sin cambios. */
-const StoredExtraction = z.object({
-  data: ExtractionSchema,
-  model: z.string(),
-  promptVersion: z.string(),
-  ms: z.number(),
-});
 
 interface UploadedFile {
   buffer: Buffer;
@@ -302,59 +292,4 @@ export class PayablesService {
   private today(): LocalDate {
     return toLocalDate(new Date(), env.BUSINESS_TZ);
   }
-}
-
-function toPayableDto(row: PayableRow): PayableDto {
-  const stored = StoredExtraction.safeParse(row.extraction);
-  const extraction = stored.success ? stored.data : null;
-  const money = (value: { toFixed(digits: number): string } | null) => value?.toFixed(2) ?? null;
-  return {
-    id: row.id,
-    status: row.status,
-    createdBy: row.createdBy,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-    file: { name: row.fileName, mimeType: row.mimeType, size: row.fileSize },
-    invoiceReceivedOn: fromDbDate(row.invoiceReceivedOn),
-    selectedPoNumber: row.selectedPoNumber,
-    isApDocument: row.isApDocument,
-    fields: {
-      docType: row.docType,
-      supplierName: row.supplierName,
-      supplierTaxId: row.supplierTaxId,
-      invoiceNumber: row.invoiceNumber,
-      issueDate: row.issueDate ? fromDbDate(row.issueDate) : null,
-      poNumber: row.poNumber,
-      subtotal: money(row.subtotal),
-      taxes: money(row.taxes),
-      total: money(row.total),
-      currency: row.currency,
-      taxUuid: row.taxUuid,
-    },
-    uncertainFields: z
-      .array(ExtractionSchema.shape.uncertainFields.element)
-      .parse(row.uncertainFields),
-    reviewReasons: row.reviewReasons.map(parseReason),
-    evidence: row.isApDocument === false ? [] : (extraction?.data.sourceEvidence ?? []),
-    failureCode: row.failureCode,
-    purchaseOrder: row.purchaseOrder && {
-      id: row.purchaseOrder.id,
-      number: row.purchaseOrder.number,
-      total: row.purchaseOrder.total.toFixed(2),
-      currency: row.purchaseOrder.currency,
-      receiptStatus: row.purchaseOrder.receiptStatus,
-    },
-    supplier: row.supplier && {
-      id: row.supplier.id,
-      name: row.supplier.name,
-      taxId: row.supplier.taxId,
-      creditDays: row.supplier.creditDays,
-    },
-    extraction: extraction && {
-      model: extraction.model,
-      promptVersion: extraction.promptVersion,
-      ms: extraction.ms,
-    },
-    allowedActions: allowedActions(row.status, row.updatedAt, new Date()),
-  };
 }

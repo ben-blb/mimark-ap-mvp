@@ -1,6 +1,8 @@
 import Typography from '@mui/material/Typography';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { LoginPage } from '../features/session/LoginPage';
+import { PayableDetailPage } from '../features/payables/PayableDetailPage';
+import { PayablesPage } from '../features/payables/PayablesPage';
 import { PurchaseOrdersPage } from '../features/purchase-orders/PurchaseOrdersPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
@@ -20,6 +22,8 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/proveedores" replace /> },
       { path: 'proveedores', element: <SuppliersPage /> },
       { path: 'ordenes', element: <PurchaseOrdersPage /> },
+      { path: 'expedientes', element: <PayablesPage /> },
+      { path: 'expedientes/:id', element: <PayableDetailPage /> },
       { path: '*', element: <Typography>No existe esta página.</Typography> },
     ],
   },

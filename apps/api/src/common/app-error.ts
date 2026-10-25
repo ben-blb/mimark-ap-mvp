@@ -1,4 +1,5 @@
 import type { ErrorCode } from '@mimark/contracts/errors';
+import { FILE_REJECTION_MESSAGES } from '@mimark/contracts/payables';
 
 /** Estado HTTP de cada código. Al agregar un código en contracts, TypeScript exige ponerlo aquí. */
 const HTTP_STATUS: Record<ErrorCode, number> = {
@@ -26,8 +27,7 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   NOT_FOUND: 'No encontramos lo que buscas.',
   CONFLICT: 'Ya existe un registro con esos datos.',
   INVALID_TRANSITION: 'Esta acción no está permitida en el estado actual.',
-  FILE_TOO_LARGE: 'El archivo pesa más de 4 MB. Comprímelo o súbelo en otra resolución.',
-  FILE_TYPE_NOT_ALLOWED: 'Solo se aceptan archivos PDF, PNG o JPG.',
+  ...FILE_REJECTION_MESSAGES,
   QUOTA_EXCEEDED: 'Se alcanzó el límite diario de documentos procesados. Intenta mañana.',
   AI_UNAVAILABLE:
     'No pudimos leer el documento en este momento. Intenta de nuevo con «Reintentar».',

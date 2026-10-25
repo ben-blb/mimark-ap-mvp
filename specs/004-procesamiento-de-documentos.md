@@ -606,7 +606,7 @@ desde `startOfLocalDay(hoy, BUSINESS_TZ)`.
 - [x] 6. Pruebas de integración AC-004-01…11 y AC-004-14 con `StorageClient` y `ExtractionClient` sustituidos por
       dobles en memoria (`createTestApp(b => b.overrideProvider(...).useValue(...))`) y el catálogo de
       `seedCatalog(db)` (spec 003) en cada prueba.
-- [ ] 7. Web: `api.upload`, `payables.api.ts`, `PayablesPage`, `UploadDialog` (+ prueba AC-004-15),
+- [x] 7. Web: `api.upload`, `payables.api.ts`, `PayablesPage`, `UploadDialog` (+ prueba AC-004-15),
       `PayableDetailPage` (+ prueba AC-004-16 de razones y evidencia como texto), etiquetas, ruta y navegación.
 - [ ] 8. `pnpm check` en verde, verificación manual AC-004-17 (y AC-004-18 si hay llave de IA) y estado `hecha`.
 

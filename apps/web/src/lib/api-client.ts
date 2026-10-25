@@ -84,6 +84,9 @@ export const api = {
   get: <S extends z.ZodType>(path: string, schema: S) => call('GET', path, schema),
   post: <S extends z.ZodType>(path: string, body: unknown, schema: S) =>
     call('POST', path, schema, body),
+  /** POST multipart (archivo + campos). El navegador pone el content-type con su boundary. */
+  upload: <S extends z.ZodType>(path: string, form: FormData, schema: S) =>
+    call('POST', path, schema, form),
   patch: <S extends z.ZodType>(path: string, body: unknown, schema: S) =>
     call('PATCH', path, schema, body),
   delete: (path: string) => call('DELETE', path, null),

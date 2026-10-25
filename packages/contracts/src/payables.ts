@@ -145,3 +145,9 @@ export type PayableHistory = z.infer<typeof PayableHistory>;
 /** Tipos y tamaño de archivo aceptados; los usan la API y el diálogo de carga con el mismo mensaje. */
 export const MAX_FILE_BYTES = 4 * 1024 * 1024;
 export const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg'] as const;
+
+/** Mensajes de rechazo de archivo: la API y el diálogo de carga dicen exactamente lo mismo. */
+export const FILE_REJECTION_MESSAGES = {
+  FILE_TOO_LARGE: 'El archivo pesa más de 4 MB. Comprímelo o súbelo en otra resolución.',
+  FILE_TYPE_NOT_ALLOWED: 'Solo se aceptan archivos PDF, PNG o JPG.',
+} as const;

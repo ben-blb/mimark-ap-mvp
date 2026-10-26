@@ -30,6 +30,7 @@ export default defineConfig(
   globalIgnores([
     '**/dist/**',
     '**/generated/**',
+    '**/.vercel/**',
     '**/node_modules/**',
     '**/coverage/**',
     'apps/api/.storage/**',

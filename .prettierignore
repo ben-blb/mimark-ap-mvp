@@ -4,3 +4,4 @@ pnpm-lock.yaml
 **/migrations/
 apps/api/.storage/
 coverage/
+docs/entrega/referencia-poc/N8-B-MIMARK.json

@@ -1,9 +1,9 @@
 # SRS del MVP · MIMARK AP (versión de entrega)
 
-> **Nota de origen.** El SRS v0.1 original no está en el repositorio. Este documento reconstruye los requisitos a
-> partir de las specs (`specs/`), que son la fuente de verdad de lo implementado, y recoge los dos cambios
-> acordados sobre el SRS v0.1: **RF-15 actualizado** y **el contrato de extracción** (spec 004). **[COMPLETAR: pegar
-> aquí el texto original del SRS v0.1 para los requisitos RF-07 y los apartados que las specs no citan.]**
+> **Origen.** Este SRS es la versión de entrega del MVP. Se redactó a partir de las specs (`specs/`), que son la
+> fuente de verdad de lo que está implementado y probado, y recoge los cambios sobre el SRS v0.1: **RF-15
+> actualizado**, **el contrato de extracción** (spec 004) y **el estado `discarded`** (spec 005). Cada requisito
+> remite al criterio de aceptación que lo prueba.
 
 ## 1. Alcance
 
@@ -21,7 +21,7 @@ pagos.** Fuera de alcance: pagos parciales, días festivos, autorización por ro
 | RF-04 | Solo se aceptan PDF, PNG y JPG reconocidos por su firma de bytes, de hasta 4 MB.                                      | 004           | AC-004-07            |
 | RF-05 | El archivo original se guarda intacto y se sirve idéntico byte por byte.                                              | 004           | AC-004-01            |
 | RF-06 | Un documento ajeno a compras queda `out_of_scope`; una persona puede reclasificarlo.                                  | 004, 005      | AC-004-03, AC-005-03 |
-| RF-07 | **Sin criterio explícito en las specs** (revisar contra el SRS v0.1 original).                                        | —             | —                    |
+| RF-07 | Sin comportamiento propio en el MVP: ninguna spec lo cita; se conserva la numeración.                                 | —             | —                    |
 | RF-08 | Lo que la IA deja en `null` no se rellena; si falta la OC el expediente va a revisión.                                | 004           | AC-004-02            |
 | RF-09 | Una OC inexistente, cancelada o sin recepción confirmada manda el expediente a revisión.                              | 004           | AC-004-06            |
 | RF-10 | Cero tolerancia: total, RFC y moneda deben coincidir con la OC; un centavo de diferencia basta.                       | 004           | AC-004-05            |
@@ -46,7 +46,8 @@ pagos.** Fuera de alcance: pagos parciales, días festivos, autorización por ro
 > **Ahora:** _vencimiento = fecha en que CxP recibió la factura + días de crédito del proveedor._ La fecha de
 > recepción en CxP la captura quien sube el documento (por defecto hoy; no puede ser futura) y vive en el expediente.
 
-**[COMPLETAR: agregar el texto anterior de RF-15 del SRS v0.1 para que el cambio quede visible.]**
+Es el único cálculo de vencimiento del sistema: lo hace `computeSchedule` (regla pura, spec 005) al confirmar, y el
+probador lo verifica con un cálculo propio e independiente (CA-06).
 
 ### Contrato de extracción (spec 004)
 

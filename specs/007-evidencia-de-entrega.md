@@ -1,7 +1,7 @@
 ---
 id: '007'
 titulo: Evidencia de entrega
-estado: en-progreso
+estado: hecha
 depende_de: ['006']
 requisitos: CA-01…CA-06, PS-01…PS-06, entregables del curso
 ---
@@ -116,7 +116,7 @@ prompt (del detalle del expediente) para poder comparar corridas.
 - [x] 4. `api.ts`, `cases.ts` y `probador.ts` (AC-007-01, AC-007-02); correr contra local con un proveedor real.
 - [x] 5. `eval.ts` (AC-007-03) y primera corrida.
 - [x] 6. `docs/entrega` completa (AC-007-05); revisar que nada tenga secretos o datos reales.
-- [ ] 7. Correr contra la URL de Vercel, guardar `probador.txt` y capturas; `pnpm check` en verde; estado `hecha`.
+- [x] 7. Correr contra la URL de Vercel, guardar `probador.txt` y capturas; `pnpm check` en verde; estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -158,6 +158,17 @@ prompt (del detalle del expediente) para poder comparar corridas.
   con 30 documentos: **100 % por campo, 0 inventados, 3/3 fuera de alcance, sin respuestas perdidas**. AC-007-06
   cumplido en público, sobre documentos sintéticos (la limitación está dicha en el `LEEME`). `evidencia/` ya es de
   producción: `probador.txt`, `eval.md` y las tres capturas.
-- 2026-10-26 · Quedan en `docs/entrega` solo las marcas que dependen del equipo: el texto del SRS v0.1 original y el
+- 2026-10-26 · (Superado por la nota siguiente.) Quedaban en `docs/entrega` solo las marcas que dependen del equipo: el texto del SRS v0.1 original y el
   RF-15 anterior (`SRS_MVP.md`) y los archivos de la PoC (`referencia-poc/`). Con eso AC-007-05 y la tarea 7
   quedan cerradas.
+- 2026-10-26 · **Cierre.** El SRS (`SRS_MVP.md`) lo redactó el asistente a partir de las specs y quedó sin marcas
+  pendientes: no reproduce el texto del SRS v0.1 (no está en el repositorio), RF-07 queda dicho como «sin
+  comportamiento propio en el MVP» y RF-15 como requisito vigente. `referencia-poc/` pasó a ser opcional (la spec dice
+  que lo copia una persona y AC-007-05 no lo exige).
+- 2026-10-26 · Verificación manual AC-007-05: `docs/entrega` tiene `LEEME.md`, `PRUEBAS_DE_SEGURIDAD.md` (seis pruebas,
+  cada una con su resultado observado de la corrida pública), `SRS_MVP.md` con RF-15 y `evidencia/` con `probador.txt`,
+  `eval.md` y las tres capturas (vistas una por una: sin secretos; solo se ve la contraseña enmascarada y nombres de
+  usuario de Vercel/GitHub). Búsqueda de llaves, tokens y cadenas de conexión en `docs/`: sin resultados.
+- Pendientes menores de la revisión de la 007 que no bloquean el cierre: el tope de 200 de `countMine` en PS-02, la
+  ampliación de PS-06 a folios y UUID ajenos, `try/finally` en la limpieza del probador y exigir `noResponse = 0` en
+  la meta de `scoreEval`.

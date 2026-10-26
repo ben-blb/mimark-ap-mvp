@@ -4,8 +4,8 @@ MVP para el área de cuentas por pagar (CxP) de MIMARK: se sube una factura, una
 deterministas los validan contra la orden de compra (OC) y la recepción, y **una persona** confirma, programa y registra
 el pago. El sistema nunca ejecuta pagos ni transferencias.
 
-> Este documento está escrito con lo que el repositorio puede demostrar. Lo que todavía depende del equipo está
-> marcado con **[COMPLETAR]**.
+> Este documento está escrito con lo que el repositorio puede demostrar: cada afirmación remite a una spec, a una
+> prueba o a un archivo de `evidencia/`.
 
 ## Datos de entrega
 

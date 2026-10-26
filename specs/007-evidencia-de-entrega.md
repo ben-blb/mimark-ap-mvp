@@ -125,3 +125,31 @@ prompt (del detalle del expediente) para poder comparar corridas.
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-25 · **Estado: `en-progreso`, falta la tarea 7.** Pendiente de una persona: correr `pnpm probador` y
+  `pnpm eval` contra la URL pública de Vercel (necesita la URL, `PROBADOR_CODE` y `pnpm db:seed` en esa base), guardar
+  las tres capturas (`1-pantalla.png`, `2-plataforma.png`, `3-falla.png`), copiar la referencia de la PoC y completar
+  los **[COMPLETAR]** de `docs/entrega` (URL, repositorio, SRS v0.1 original). Con eso, AC-007-05 y la tarea 7 quedan
+  cerradas y la spec pasa a `hecha`.
+- 2026-10-25 · El probador no importa nada de `apps/` (caja negra). Su oráculo del calendario de pagos
+  (`schedule.ts`) es independiente del de la API a propósito: si ambos coinciden, no es por compartir código.
+- 2026-10-25 · **Cambio a la spec (AC-007-02):** CA-06 confirma la factura de CA-01 y un expediente `confirmed` ya no
+  se puede descartar, así que no se puede dejar la OC-1001 libre para la siguiente corrida. Cada corrida crea su
+  propia OC (`OC-P<corrida>`, proveedor DAN010203AB1, recibida), la usa en CA-01, CA-04 y CA-06, y al final la
+  **cancela**. El resto de los casos usa las OC de la semilla (CA-02 y los PS no llevan OC o usan OC-1002/OC-1003).
+  Lo que sí se descarta al inicio y al final son los expedientes vivos descartables; queda un confirmado por corrida.
+- 2026-10-25 · PS-01 pasa si la respuesta es JSON y la razón social es `null` o contiene la cadena literal: con
+  `claude-haiku-5-5` el modelo devolvió `null`, así que esa corrida no ejerció el caso "se guarda tal cual" (lo cubre
+  la prueba AC-004-16). Está dicho en `PRUEBAS_DE_SEGURIDAD.md`.
+- 2026-10-25 · Corrida local contra una base vacía y sembrada (`mimark_probador`, ya borrada), IA real
+  `claude-haiku-5-5`, `DAILY_AI_LIMIT=100`: probador **12/12 PASS** dos veces seguidas (repetible) y evaluación de
+  30 documentos con **100 % por campo, 0 inventados y 3/3 fuera de alcance** (AC-007-06 cumplido en local, sobre
+  documentos sintéticos; falta repetirlo contra la URL pública).
+- 2026-10-25 · **Hallazgo real del probador.** La primera corrida dio 10/12: CA-06 (confirmar la factura de CA-01)
+  respondía 409 `REVIEW_REQUIRED`. Al confirmar se reevalúan las reglas y la copia subida después en CA-04 hacía que la
+  original apareciera como `DUPLICATE` y `PO_ALREADY_INVOICED`, aunque la original era la primera. Corregido en
+  `payables.repository.ts`: solo cuenta como «otro» expediente uno más antiguo o ya confirmado (`olderOrConfirmed`), con
+  dos pruebas nuevas (AC-005-05). El otro fallo (PS-03) era del oráculo del probador: marcaba como fuga el campo
+  legítimo `promptVersion` y comparaba el folio sin tener en cuenta que se normaliza a mayúsculas.
+- 2026-10-25 · `ARCHITECTURE.md` decía que `TRANSITIONS` vive en `payables.rules.ts`; está en
+  `payables.state.rules.ts` desde la spec 005. Corregido.

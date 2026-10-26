@@ -3,7 +3,8 @@
   "services": {
     "api": {
       "root": "apps/api",
-      "framework": "nestjs"
+      "framework": "nestjs",
+      "buildCommand": "pnpm run vercel-build"
     },
     "web": {
       "root": "apps/web",

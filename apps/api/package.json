@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "nest start --watch --preserveWatchOutput",
-    "build": "pnpm --filter @mimark/contracts run build && prisma generate && nest build && node -e \"require('fs').writeFileSync('dist/package.json', '{\\\"type\\\":\\\"module\\\"}')\"",
+    "build": "pnpm --filter @mimark/contracts run build && prisma generate && nest build",
     "vercel-build": "prisma migrate deploy && pnpm run build",
     "start": "node dist/main.js",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",

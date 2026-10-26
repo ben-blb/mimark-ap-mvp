@@ -84,7 +84,7 @@ requires_review | pending_confirmation | out_of_scope | failed ─(humano: desca
 ```
 
 Las reglas mueven `processing` a su resultado; solo una persona confirma, programa y registra el pago. La IA no
-mueve ningún estado. La tabla `TRANSITIONS` y `allowedActions` viven en `payables.rules.ts`; la UI dibuja
+mueve ningún estado. La tabla `TRANSITIONS` y `allowedActions` viven en `payables.state.rules.ts`; la UI dibuja
 `allowedActions` del DTO. (`discarded` se agregó al SRS en la spec 005.)
 
 ## 6. IA y seguridad

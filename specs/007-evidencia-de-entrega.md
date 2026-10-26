@@ -115,7 +115,7 @@ prompt (del detalle del expediente) para poder comparar corridas.
 - [x] 3. `report.ts` y `score.ts` con pruebas (AC-007-04).
 - [x] 4. `api.ts`, `cases.ts` y `probador.ts` (AC-007-01, AC-007-02); correr contra local con un proveedor real.
 - [x] 5. `eval.ts` (AC-007-03) y primera corrida.
-- [ ] 6. `docs/entrega` completa (AC-007-05); revisar que nada tenga secretos o datos reales.
+- [x] 6. `docs/entrega` completa (AC-007-05); revisar que nada tenga secretos o datos reales.
 - [ ] 7. Correr contra la URL de Vercel, guardar `probador.txt` y capturas; `pnpm check` en verde; estado `hecha`.
 
 ## Fuera de alcance y decisiones

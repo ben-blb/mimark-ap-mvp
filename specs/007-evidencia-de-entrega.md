@@ -153,3 +153,11 @@ prompt (del detalle del expediente) para poder comparar corridas.
   legítimo `promptVersion` y comparaba el folio sin tener en cuenta que se normaliza a mayúsculas.
 - 2026-10-25 · `ARCHITECTURE.md` decía que `TRANSITIONS` vive en `payables.rules.ts`; está en
   `payables.state.rules.ts` desde la spec 005. Corregido.
+- 2026-10-26 · **Corridas contra la URL pública** (https://mimark-ap-mvp.vercel.app, IA real `claude-haiku-5-5`,
+  `extract-invoice@1`): `pnpm probador` **12/12 PASS** (con la referencia de Vercel de cada petición) y `pnpm eval`
+  con 30 documentos: **100 % por campo, 0 inventados, 3/3 fuera de alcance, sin respuestas perdidas**. AC-007-06
+  cumplido en público, sobre documentos sintéticos (la limitación está dicha en el `LEEME`). `evidencia/` ya es de
+  producción: `probador.txt`, `eval.md` y las tres capturas.
+- 2026-10-26 · Quedan en `docs/entrega` solo las marcas que dependen del equipo: el texto del SRS v0.1 original y el
+  RF-15 anterior (`SRS_MVP.md`) y los archivos de la PoC (`referencia-poc/`). Con eso AC-007-05 y la tarea 7
+  quedan cerradas.

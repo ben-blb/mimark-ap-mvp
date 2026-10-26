@@ -303,3 +303,9 @@ En `PayableDetailPage`:
   `STALE_STATUS` o `INVALID_TRANSITION` según el orden, y la prueba lo acepta explícitamente.
 - Pendientes menores de esa revisión: el «hoy» de la web sale del reloj del navegador (la API valida con
   `BUSINESS_TZ`), y las pruebas AC-005-07 de integración usan el día real (la tabla fija está en `schedule.rules.test`).
+- 2026-10-26 · **Regla de duplicados al reevaluar (cambio hecho durante la spec 007).** Al confirmar o corregir, solo
+  cuenta como «otro» expediente (`DUPLICATE`, `PO_ALREADY_INVOICED`) uno **más antiguo o ya confirmado**
+  (`olderOrConfirmed` en `payables.repository.ts`; el loader recibe `self: { id, createdAt }`). Sin eso, una copia
+  subida después hacía que la factura original apareciera como duplicada y no se pudiera confirmar. Pruebas:
+  `AC-005-05` (dos casos nuevos en `payables-review.int.test.ts`). Afecta también a AC-004-04: la copia nueva sigue
+  quedando `requires_review` con `DUPLICATE` y la primera no cambia.

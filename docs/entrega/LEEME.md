@@ -69,9 +69,8 @@ Evaluación con 30 documentos sintéticos (`pnpm eval`, resultado en `evidencia/
 campo, 0 valores inventados y 3 de 3 documentos fuera de alcance detectados**, que cumple la meta (≥ 95 %, 0 y
 100 %). Se midió con `claude-haiku-5-5` y el prompt `extract-invoice@1`.
 
-> El probador sí se corrió contra la URL pública (12 de 12 PASS, `evidencia/probador.txt`). La evaluación incluida
-> (`eval.md`) se hizo contra un entorno local con la base sembrada. **[COMPLETAR: repetir `pnpm eval` contra
-> https://mimark-ap-mvp.vercel.app y reemplazar `evidencia/eval.md`.]**
+> Tanto el probador (12 de 12 PASS, `evidencia/probador.txt`) como la evaluación (`evidencia/eval.md`) se corrieron
+> contra la URL pública https://mimark-ap-mvp.vercel.app, con IA real.
 
 ## Limitación principal y próximo paso
 

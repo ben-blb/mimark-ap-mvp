@@ -1,7 +1,7 @@
 # Evaluación de exactitud de la IA
 
-- URL: http://localhost:3100
-- Fecha: 2026-10-25T23:59:02.646Z
+- URL: https://mimark-ap-mvp.vercel.app
+- Fecha: 2026-10-26T03:26:46.932Z
 - Modelo: claude-haiku-5-5
 - Prompt: extract-invoice@1
 - Documentos: 30

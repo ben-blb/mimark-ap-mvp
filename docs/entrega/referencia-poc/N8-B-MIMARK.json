@@ -1,0 +1,510 @@
+{
+  "name": "N8-B · Workflow · Kit PoC",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## N8-B · Workflow · Ticket de mesa de ayuda\n**Kit PoC · Ruta B · Tienda Nimbo (ficticia)** · v1.0 · octubre 2026\n\n### Puesta en marcha\n1. **Credencial OpenRouter:** *Overview → Create → Credential → OpenRouter*. Pega tu clave de openrouter.ai/keys y guarda.\n2. Abre cada nodo **Modelo · Nemotron** y selecciónala en *Credential to connect with*.\n3. Pulsa **Execute workflow** (abajo, al centro).\n4. Abre **Evaluar casos**: los 3 casos de referencia deben salir en `PASS`.\n5. Abre **Registro CSV** → pestaña *Binary* → **Download**: es tu evidencia.\n\n### Para tu caso\nEdita solo los nodos con nota amarilla **EDITA AQUÍ**. Lo demás funciona sin cambios.\n\nTres pasos fijos: **Extraer datos** (modelo) → **Validar pedido** (código) → **Derivar ticket** (reglas). **Enviar a cola** muestra adónde iría cada ticket; en un caso real ahí conectas la acción (correo, Slack, planilla).\n\n### Antes de cerrar la sesión 2\nMenú **⋯ → Download** para exportar este workflow (.json). El trial de n8n Cloud dura 14 días y luego borra el espacio de trabajo.\n\nConsumo: 3 llamadas aprox. a OpenRouter por ejecución (cuenta gratuita: 50 por día, 20 por minuto).",
+        "height": 680,
+        "width": 500,
+        "color": 5
+      },
+      "id": "5a40fefb-efcc-49a2-b58e-4712bc07d7ec",
+      "name": "Nota · Instrucciones",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        32
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fa312a58-120d-4b4e-8973-e6cde8c30a43",
+      "name": "Ejecutar prueba",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        592,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const CASOS = [\n  {\n    id: \"B1\",\n    tipo: \"camino feliz\",\n    entrada: `FACTURA F-9821\nProveedor: Alimentos del Norte S.A. de C.V.\nRFC: ANO230101XX1\nFecha de emisión: 2026-09-18\nOrden de compra: OC-4587\nSubtotal: $12,500.00\nIVA: $2,000.00\nTotal: $14,500.00 MXN\nUUID: 550e8400-e29b-41d4-a716-446655440000`,\n    esperado: \"factura extraída, OC válida y expediente enviado a confirmación humana\",\n    criterio: \"oc_valida == true y cola == confirmacion_humana\"\n  },\n  {\n    id: \"B2\",\n    tipo: \"incertidumbre\",\n    entrada: `FACTURA F-9902\nProveedor: Envases Regios S.A. de C.V.\nRFC: ERE240101AA1\nFecha de emisión: 2026-10-03\nOrden de compra: ilegible\nTotal: $8,350.00 MXN`,\n    esperado: \"numero_oc queda null y el expediente pasa a revisión humana\",\n    criterio: \"numero_oc == null y cola == revision_humana\"\n  },\n  {\n    id: \"B3\",\n    tipo: \"fuera de alcance\",\n    entrada: `RECIBO DE NÓMINA\nEmpleado: Juan Pérez\nPeriodo: 1 al 15 de octubre de 2026\nNeto pagado: $18,500.00 MXN`,\n    esperado: \"el documento se identifica como fuera del proceso de compras\",\n    criterio: \"cola == fuera_de_alcance\"\n  }\n];\n\nreturn CASOS.map(caso => ({ json: caso }));"
+      },
+      "id": "77c95936-3dd4-4853-9c08-483e6af827d4",
+      "name": "Casos de prueba",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.entrada }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Eres un extractor de documentos del proceso de cuentas por pagar de MIMARK.\n\nTu entrada es texto obtenido de un documento mediante captura, parser u OCR.\nDebes extraer únicamente los campos definidos en el contrato de salida.\n\nReglas:\n- Usa exclusivamente información presente explícitamente en el documento.\n- Nunca inventes ni completes datos por inferencia.\n- es_documento_compras es true únicamente para facturas, tickets, remisiones u otros documentos relacionados con compras a proveedores.\n- Si el documento no corresponde al proceso de compras, es_documento_compras debe ser false.\n- Si un campo no aparece, es ilegible o es ambiguo, devuelve null.\n- numero_oc solo se extrae cuando aparece explícitamente y es legible.\n- No calcules subtotal, impuestos o total cuando alguno no aparezca.\n- Normaliza fechas inequívocas a YYYY-MM-DD.\n- Devuelve importes como números, sin símbolos de moneda ni separadores de miles.\n- moneda debe usar códigos como MXN o USD cuando pueda determinarse explícitamente.\n- RFC debe conservarse tal como aparece, normalizado a mayúsculas.\n- UUID fiscal solo debe incluirse cuando aparezca explícitamente."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      },
+      "id": "e68b4ff8-bb00-49eb-9c63-c334c092e6d9",
+      "name": "Extraer datos",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1040,
+        320
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "options": {
+          "temperature": 0,
+          "timeout": 120000,
+          "maxRetries": 3
+        }
+      },
+      "id": "ca610438-0777-495f-9ba2-3abdce72f04e",
+      "name": "Modelo · Nemotron",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        560
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "JfpSt4n1azI66e7g",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"es_documento_compras\": {\n      \"type\": \"boolean\"\n    },\n    \"tipo_documento\": {\n      \"type\": [\"string\", \"null\"],\n      \"enum\": [\"factura\", \"ticket\", \"remision\", \"otro\", null]\n    },\n    \"proveedor_nombre\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"proveedor_rfc\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"numero_factura\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"fecha_emision\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"numero_oc\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"subtotal\": {\n      \"type\": [\"number\", \"null\"]\n    },\n    \"impuestos\": {\n      \"type\": [\"number\", \"null\"]\n    },\n    \"total\": {\n      \"type\": [\"number\", \"null\"]\n    },\n    \"moneda\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"uuid_fiscal\": {\n      \"type\": [\"string\", \"null\"]\n    }\n  },\n  \"required\": [\n    \"es_documento_compras\",\n    \"tipo_documento\",\n    \"proveedor_nombre\",\n    \"proveedor_rfc\",\n    \"numero_factura\",\n    \"fecha_emision\",\n    \"numero_oc\",\n    \"subtotal\",\n    \"impuestos\",\n    \"total\",\n    \"moneda\",\n    \"uuid_fiscal\"\n  ]\n}"
+      },
+      "id": "ca88a1bd-a610-4f3f-9908-3dac8e3f09d2",
+      "name": "Contrato de salida",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const t = item.json;\n  const s = t.documento || {};\n\n  let cola;\n  let razon;\n  let alerta = \"\";\n\n  if (s.es_documento_compras === undefined) {\n    cola = \"revision_humana\";\n    razon = \"No se pudo extraer el documento\";\n  } else if (s.es_documento_compras === false) {\n    cola = \"fuera_de_alcance\";\n    razon = \"El documento no pertenece al proceso de compras\";\n  } else if (t.campos_faltantes.length > 0) {\n    cola = \"revision_humana\";\n    razon = `Faltan campos obligatorios: ${t.campos_faltantes.join(\", \")}`;\n  } else if (!t.oc_valida) {\n    cola = \"revision_humana\";\n    razon = \"La orden de compra no existe\";\n  } else if (!t.recepcion_confirmada) {\n    cola = \"revision_humana\";\n    razon = \"La recepción de mercancía no está confirmada\";\n  } else if (!t.proveedor_coincide) {\n    cola = \"revision_humana\";\n    razon = \"El proveedor no coincide con la orden de compra\";\n  } else if (!t.total_coincide || !t.moneda_coincide) {\n    cola = \"revision_humana\";\n    razon = \"El importe o la moneda no coinciden con la orden de compra\";\n  } else {\n    cola = \"confirmacion_humana\";\n    razon = \"Documento completo y consistente con la orden de compra\";\n  }\n\n  return {\n    json: {\n      ...t,\n      cola,\n      razon,\n      alerta\n    }\n  };\n});"
+      },
+      "id": "b2429295-cd63-4057-b808-dabb34c032a3",
+      "name": "Derivar ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const verificar = {\n  B1: (r) =>\n    r.oc_valida === true &&\n    r.proveedor_coincide === true &&\n    r.total_coincide === true &&\n    r.campos_faltantes.length === 0 &&\n    r.cola === \"confirmacion_humana\",\n\n  B2: (r) =>\n    r.numero_oc === null &&\n    r.cola === \"revision_humana\",\n\n  B3: (r) =>\n    r.documento?.es_documento_compras === false &&\n    r.cola === \"fuera_de_alcance\"\n};\n\nreturn $input.all().map(item => {\n  const r = item.json;\n\n  let paso = false;\n  let error = r.error ? String(r.error) : \"\";\n\n  try {\n    paso = !error && Boolean(verificar[r.id](r));\n  } catch (e) {\n    error = error || `Error al verificar: ${e.message}`;\n  }\n\n  return {\n    json: {\n      template: \"N8-B\",\n      id: r.id,\n      tipo: r.tipo,\n      entrada: r.entrada,\n      esperado: r.esperado,\n      criterio: r.criterio,\n      observado: JSON.stringify({\n        tipo_documento: r.documento?.tipo_documento,\n        proveedor_rfc: r.documento?.proveedor_rfc,\n        numero_factura: r.documento?.numero_factura,\n        numero_oc: r.numero_oc,\n        total: r.documento?.total,\n        oc_valida: r.oc_valida,\n        campos_faltantes: r.campos_faltantes,\n        cola: r.cola,\n        razon: r.razon\n      }),\n      veredicto_auto: paso ? \"PASS\" : \"FAIL\",\n      veredicto_final: \"\",\n      error\n    }\n  };\n});"
+      },
+      "id": "65c2cc33-f197-4a13-9927-045ab300f7ec",
+      "name": "Evaluar casos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "registro_pruebas_N8-B.csv"
+        }
+      },
+      "id": "33ab7706-6028-4cf8-8b52-83f2dc489edb",
+      "name": "Registro CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2128,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f165ad59-2e11-5fd5-aa39-1a2dfb2e9f63",
+                    "leftValue": "={{ $json.cola }}",
+                    "rightValue": "revision_humana",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "revision_humana"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a85494ef-6d1a-5407-8400-f08faaf06d07",
+                    "leftValue": "={{ $json.cola }}",
+                    "rightValue": "fuera_de_alcance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fuera_de_alcance"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c80f6d2f-c903-455b-b20c-c186652cba06",
+                    "leftValue": "={{ $json.cola }}",
+                    "rightValue": "confirmacion_humana",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "284edf22-1a5b-40f5-8bfe-423a751a577c",
+      "name": "Enviar a cola",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1888,
+        528
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3fc63f26-7387-492d-bb99-0e765bcaea7f",
+      "name": "Cola · devoluciones",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        448
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d0d38a43-6db4-4ddc-b7f8-93cebc03dc43",
+      "name": "Cola · despachos",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6836aadb-7fda-4ea2-aa53-eaeba397b8bd",
+      "name": "Cola · postventa",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        688
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e5dd828a-4316-49e7-b626-8ce8c4e280ed",
+      "name": "Cola · revision_humana",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        800
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "128d12f1-ecdb-4592-a226-7d8fd04db709",
+      "name": "Cola · fuera_de_alcance",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### EDITA AQUÍ\nTus 3 casos de prueba.",
+        "height": 150,
+        "color": 3
+      },
+      "id": "fc3762f7-4930-4c19-85e6-67bd36245d6f",
+      "name": "Nota · Casos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        752,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### EDITA AQUÍ\nPrompt del sistema: abre el nodo → *System Message*.",
+        "height": 150,
+        "color": 3
+      },
+      "id": "98fe3dab-2cc9-4ed0-bffa-0516b5c19a21",
+      "name": "Nota · Prompt",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### EDITA AQUÍ\nContrato de salida del paso de extracción (JSON Schema).",
+        "height": 150,
+        "color": 3
+      },
+      "id": "c7d77a9a-2c33-4366-99bd-0b6bbe129ac7",
+      "name": "Nota · Contrato",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### EDITA AQUÍ\nTabla de pedidos (Validar) y reglas de negocio (Derivar).",
+        "height": 150,
+        "width": 404,
+        "color": 3
+      },
+      "id": "6386b12a-a312-427a-a6a4-9cfc5d5217ea",
+      "name": "Nota · Datos y reglas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### EDITA AQUÍ\nCriterio de aprobación de cada caso.",
+        "height": 150,
+        "color": 3
+      },
+      "id": "7a1c3b82-c261-4d5b-ae73-0518d5851f8d",
+      "name": "Nota · Criterios",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ORDENES = [\n  {\n    numero_oc: \"OC-4587\",\n    proveedor_rfc: \"ANO230101XX1\",\n    proveedor_nombre: \"Alimentos del Norte S.A. de C.V.\",\n    total_esperado: 14500,\n    moneda: \"MXN\",\n    recepcion_confirmada: true\n  },\n  {\n    numero_oc: \"OC-4612\",\n    proveedor_rfc: \"ERE240101AA1\",\n    proveedor_nombre: \"Envases Regios S.A. de C.V.\",\n    total_esperado: 8350,\n    moneda: \"MXN\",\n    recepcion_confirmada: true\n  }\n];\n\nconst casos = $(\"Casos de prueba\").all().map(i => i.json);\n\nreturn $input.all().map((item, i) => {\n  const s = item.json.output ?? {};\n\n  const oc = ORDENES.find(o => o.numero_oc === s.numero_oc);\n\n  const obligatorios = [\n    \"proveedor_nombre\",\n    \"proveedor_rfc\",\n    \"numero_factura\",\n    \"fecha_emision\",\n    \"numero_oc\",\n    \"total\",\n    \"moneda\"\n  ];\n\n  const campos_faltantes = obligatorios.filter(\n    campo => s[campo] === null || s[campo] === undefined || s[campo] === \"\"\n  );\n\n  const proveedor_coincide = oc\n    ? String(s.proveedor_rfc || \"\").toUpperCase() === oc.proveedor_rfc\n    : false;\n\n  const total_coincide = oc\n    ? Number(s.total) === Number(oc.total_esperado)\n    : false;\n\n  const moneda_coincide = oc\n    ? s.moneda === oc.moneda\n    : false;\n\n  return {\n    json: {\n      ...casos[i],\n      documento: s,\n      numero_oc: s.numero_oc ?? null,\n      oc_valida: Boolean(oc),\n      recepcion_confirmada: oc?.recepcion_confirmada ?? false,\n      proveedor_coincide,\n      total_coincide,\n      moneda_coincide,\n      campos_faltantes,\n      error: item.json.error ?? \"\"\n    }\n  };\n});"
+      },
+      "id": "19643dbc-fe39-4bb2-8562-107429170fc4",
+      "name": "Validar OC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        320
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Evaluar casos": {
+      "main": [
+        [
+          {
+            "node": "Registro CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a cola": {
+      "main": [
+        [
+          {
+            "node": "Cola · revision_humana",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cola · fuera_de_alcance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Ejecutar prueba": {
+      "main": [
+        [
+          {
+            "node": "Casos de prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Casos de prueba": {
+      "main": [
+        [
+          {
+            "node": "Extraer datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo · Nemotron": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer datos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contrato de salida": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extraer datos",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer datos": {
+      "main": [
+        [
+          {
+            "node": "Validar OC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Derivar ticket": {
+      "main": [
+        [
+          {
+            "node": "Evaluar casos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enviar a cola",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar OC": {
+      "main": [
+        [
+          {
+            "node": "Derivar ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "943c18c7-2c7f-463f-9879-3901be7afe4c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a0e3fa38b10324da0fd608ec7cbc070433eaafb918439f5e475bec817d6cbf17"
+  },
+  "nodeGroups": [],
+  "id": "aeQI0SaG5cZWfsIN",
+  "tags": []
+}

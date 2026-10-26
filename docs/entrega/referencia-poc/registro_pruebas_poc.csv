@@ -1,0 +1,20 @@
+﻿template,id,tipo,entrada,esperado,criterio,observado,veredicto_auto,veredicto_final,error
+N8-B,B1,camino feliz,"FACTURA F-9821
+Proveedor: Alimentos del Norte S.A. de C.V.
+RFC: ANO230101XX1
+Fecha de emisión: 2026-09-18
+Orden de compra: OC-4587
+Subtotal: $12,500.00
+IVA: $2,000.00
+Total: $14,500.00 MXN
+UUID: 550e8400-e29b-41d4-a716-446655440000","factura extraída, OC válida y expediente enviado a confirmación humana",oc_valida == true y cola == confirmacion_humana,"{""tipo_documento"":""factura"",""proveedor_rfc"":""ANO230101XX1"",""numero_factura"":""F-9821"",""numero_oc"":""OC-4587"",""total"":14500,""oc_valida"":true,""campos_faltantes"":[],""cola"":""confirmacion_humana"",""razon"":""Documento completo y consistente con la orden de compra""}",PASS,,
+N8-B,B2,incertidumbre,"FACTURA F-9902
+Proveedor: Envases Regios S.A. de C.V.
+RFC: ERE240101AA1
+Fecha de emisión: 2026-10-03
+Orden de compra: ilegible
+Total: $8,350.00 MXN",numero_oc queda null y el expediente pasa a revisión humana,numero_oc == null y cola == revision_humana,"{""tipo_documento"":""factura"",""proveedor_rfc"":""ERE240101AA1"",""numero_factura"":""F-9902"",""numero_oc"":null,""total"":8350,""oc_valida"":false,""campos_faltantes"":[""numero_oc""],""cola"":""revision_humana"",""razon"":""Faltan campos obligatorios: numero_oc""}",PASS,,
+N8-B,B3,fuera de alcance,"RECIBO DE NÓMINA
+Empleado: Juan Pérez
+Periodo: 1 al 15 de octubre de 2026
+Neto pagado: $18,500.00 MXN",el documento se identifica como fuera del proceso de compras,cola == fuera_de_alcance,"{""tipo_documento"":null,""proveedor_rfc"":null,""numero_factura"":null,""numero_oc"":null,""total"":null,""oc_valida"":false,""campos_faltantes"":[""proveedor_nombre"",""proveedor_rfc"",""numero_factura"",""fecha_emision"",""numero_oc"",""total"",""moneda""],""cola"":""fuera_de_alcance"",""razon"":""El documento no pertenece al proceso de compras""}",PASS,,

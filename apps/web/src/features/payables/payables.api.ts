@@ -9,8 +9,9 @@ import {
   type PaymentInput,
   type ScheduleInput,
 } from '@mimark/contracts/payables';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, toQuery } from '../../lib/api-client';
+import { dashboardKey } from '../dashboard/dashboard.api';
 
 /** Query keys y llamadas de la feature en un solo archivo. Los componentes no hacen fetch. */
 export const payableKeys = {
@@ -41,12 +42,20 @@ export function usePayableHistory(id: string) {
   });
 }
 
+/** Cualquier cambio en un expediente mueve la lista, el detalle, el historial y los totales del tablero. */
+function invalidatePayables(queryClient: QueryClient): Promise<unknown> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: payableKeys.all }),
+    queryClient.invalidateQueries({ queryKey: dashboardKey }),
+  ]);
+}
+
 export function useUploadPayable() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (form: FormData) => api.upload('/payables', form, PayableDto),
     // También si falla con 502: el expediente quedó creado en estado «failed».
-    onSettled: () => queryClient.invalidateQueries({ queryKey: payableKeys.all }),
+    onSettled: () => invalidatePayables(queryClient),
   });
 }
 
@@ -54,7 +63,7 @@ export function useRetryPayable(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => api.post(`/payables/${id}/retry`, undefined, PayableDto),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: payableKeys.all }),
+    onSettled: () => invalidatePayables(queryClient),
   });
 }
 
@@ -63,7 +72,7 @@ function useAction<I>(run: (input: I) => Promise<unknown>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: run,
-    onSettled: () => queryClient.invalidateQueries({ queryKey: payableKeys.all }),
+    onSettled: () => invalidatePayables(queryClient),
   });
 }
 

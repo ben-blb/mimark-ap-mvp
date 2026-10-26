@@ -156,3 +156,11 @@ Ejemplo (hoy 2026-10-20, horizonte 7): A vence 10-15 (MXN 1000.00), B vence 10-2
   programada y una pagada. El tablero mostró por pagar 2 / $16,704.00 MXN, vencidos 0, próximos 2 y pagados del mes 2
   (incluye el pago de una prueba anterior), y su tabla coincide con `/expedientes?status=confirmed,scheduled&due=15`
   (mismos dos folios y mismo total). Cambiar 7/15/30 días no recargó la página.
+- 2026-10-25 · Revisión independiente (`/spec-revisar 006`), corregido con prueba: AC-006-06 ahora se prueba en
+  `DashboardPage.test.tsx` (pide `horizon=30` y sigue mostrando el dato anterior hasta que llega el nuevo); los
+  filtros de la URL de `PayablesPage` tienen prueba (`PayablesPage.test.tsx`); toda acción sobre un expediente y la
+  subida invalidan también el tablero (`dashboardKey`, `payables.api.test.tsx`); y el repositorio del tablero ya no
+  omite en silencio un expediente por pagar sin sus datos: lanza un error (500) porque unos totales que no cuadran con
+  la lista son peores que un tablero que falla.
+- Pendiente cosmético: si la URL trae un `status` que no está en los botones (p. ej. `status=confirmed`), ningún botón
+  de estado queda marcado; la consulta sí se aplica.

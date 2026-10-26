@@ -144,4 +144,13 @@ describe('tablero (spec 006)', () => {
     const list = await agent.get('/api/payables?due=overdue').expect(200);
     expect(list.body.items).toHaveLength(1); // el que vence hoy no cuenta como vencido en la lista tampoco
   });
+
+  it('AC-006-02 un expediente por pagar sin sus datos de pago no se omite en silencio: el tablero falla', async () => {
+    // Un confirmado siempre tiene vencimiento, total y moneda; si falta, los totales ya no serían confiables.
+    await insertPayable(t.db, { dueOn: addDays(real(), 3), suggestedPayOn: addDays(real(), 3) });
+    const broken = await insertPayable(t.db, { suggestedPayOn: addDays(real(), 3) }); // sin dueOn
+    const res = await agent.get('/api/dashboard').expect(500);
+    expect(res.body.code).toBe('INTERNAL');
+    expect(broken).toBeTruthy();
+  });
 });

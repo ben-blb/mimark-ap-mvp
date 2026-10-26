@@ -52,25 +52,31 @@ export class DashboardRepository {
       }),
     ]);
 
-    const rows = found.flatMap((r): PortfolioRowData[] => {
-      // Un confirmado, programado o pagado siempre tiene estos datos (los llena al confirmar).
-      if (!r.total || !r.currency || !r.dueOn || !r.suggestedPayOn) return [];
-      if (r.status !== 'confirmed' && r.status !== 'scheduled' && r.status !== 'paid') return [];
-      return [
-        {
-          id: r.id,
-          supplierName: r.supplierName ?? '',
-          invoiceNumber: r.invoiceNumber ?? '',
-          totalCents: moneyToCents(r.total.toFixed(2)),
-          currency: r.currency,
-          status: r.status,
-          dueOn: fromDbDate(r.dueOn),
-          suggestedPayOn: fromDbDate(r.suggestedPayOn),
-          scheduledPayOn: r.scheduledPayOn ? fromDbDate(r.scheduledPayOn) : null,
-          urgent: r.urgent,
-          paidOn: r.paidOn ? fromDbDate(r.paidOn) : null,
-        },
-      ];
+    const rows = found.map((r): PortfolioRowData => {
+      // Un confirmado, programado o pagado siempre tiene estos datos (los llena al confirmar). Si faltan, el
+      // tablero falla en vez de omitir el expediente: unos totales que no cuadran con la lista son peores.
+      if (
+        !r.total ||
+        !r.currency ||
+        !r.dueOn ||
+        !r.suggestedPayOn ||
+        (r.status !== 'confirmed' && r.status !== 'scheduled' && r.status !== 'paid')
+      ) {
+        throw new Error(`El expediente ${r.id} (${r.status}) no tiene sus datos de pago completos`);
+      }
+      return {
+        id: r.id,
+        supplierName: r.supplierName ?? '',
+        invoiceNumber: r.invoiceNumber ?? '',
+        totalCents: moneyToCents(r.total.toFixed(2)),
+        currency: r.currency,
+        status: r.status,
+        dueOn: fromDbDate(r.dueOn),
+        suggestedPayOn: fromDbDate(r.suggestedPayOn),
+        scheduledPayOn: r.scheduledPayOn ? fromDbDate(r.scheduledPayOn) : null,
+        urgent: r.urgent,
+        paidOn: r.paidOn ? fromDbDate(r.paidOn) : null,
+      };
     });
     return { rows, inReview };
   }

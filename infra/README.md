@@ -46,8 +46,8 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
      | `BUSINESS_TZ`                            | `America/Monterrey`                                      |
      | `ENABLE_EXPERIMENTAL_COREPACK`           | `1` (usa el pnpm de `packageManager`)                    |
 
-   - El build corre `vercel-build`: `prisma migrate deploy` contra la rama del entorno y `nest build`. Vercel toma
-     `src/main.ts` como entrada; no fijes `outputDirectory` en la API.
+   - El build corre `vercel-build`: `prisma migrate deploy` contra la rama del entorno y `nest build`. `scripts/bundle.mjs`
+     deja la API en un solo archivo (`dist/server.mjs`).
 4. Variable `ENABLE_EXPERIMENTAL_COREPACK=1` en el proyecto (la usan ambos servicios).
 5. **Monorepo:** en Settings → Git activa "Skip deployments when there are no changes".
 6. **Verificar:** abre `https://<web>/api/health` → `{"status":"ok","db":"ok",...}`; entra con el código y registra

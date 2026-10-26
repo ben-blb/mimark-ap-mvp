@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "nest start --watch --preserveWatchOutput",
-    "build": "pnpm --filter @mimark/contracts run build && prisma generate && nest build",
+    "build": "pnpm --filter @mimark/contracts run build && prisma generate && nest build && node scripts/bundle.mjs",
     "vercel-build": "prisma migrate deploy && pnpm run build",
     "start": "node dist/main.js",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
@@ -40,6 +40,7 @@
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "esbuild": "0.28.2",
     "pg": "^8.23.1",
     "prisma": "7.10.1",
     "supertest": "^7.3.1",

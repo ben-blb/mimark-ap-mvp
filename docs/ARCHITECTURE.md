@@ -20,7 +20,7 @@ Navegador ──HTTPS──> proyecto Vercel ──/api/*──> servicio "api" 
 ```
 
 - El navegador ve un solo origen: Vercel enruta `/api/*` al servicio `api` (`vercel.json` de la raíz). Sin CORS y con cookie first-party.
-- Vercel detecta `src/main.ts` como entrada de la API, la compila y empaqueta sus dependencias (sin `outputDirectory`: con `dist` como raíz de la función no viaja `node_modules`).
+- La API se construye con `nest build` y `scripts/bundle.mjs` la empaqueta en `dist/server.mjs`: Vercel pone `dist/main.js` en la raíz de la función, sin el `package.json` ni el `node_modules` de `apps/api/`, así que `main.js` solo carga el bundle.
 - En local: `pnpm dev` levanta la API en :3000 y Vite en :5173 con proxy de `/api`.
 
 ## 2. Monorepo

@@ -1,8 +1,9 @@
 # Pruebas de seguridad (PS-01 … PS-06)
 
 Cada prueba la ejecuta el probador (`pnpm probador`) contra la app, solo por HTTP y con una sesión como persona.
-El resultado observado sale de `evidencia/probador.txt`. Corrida incluida: entorno local, `claude-haiku-5-5`,
-**6 de 6 PASS**. **[COMPLETAR: repetir contra la URL pública y reemplazar los resultados si difieren.]**
+El resultado observado sale de `evidencia/probador.txt`. Corrida incluida: contra la URL pública
+(https://mimark-ap-mvp.vercel.app), con IA real, **12 de 12 casos PASS** (6 de aceptación y 6 de seguridad). Cada caso
+queda con la referencia de Vercel de su petición. Los resultados de abajo son los de esa corrida.
 
 Principio de diseño: **la IA solo extrae datos y el documento es siempre un dato, nunca una instrucción.** El modelo
 no tiene herramientas, no recibe datos de la base ni la OC esperada, y lo peor que puede hacer es llenar mal un campo,

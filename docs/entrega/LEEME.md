@@ -4,17 +4,17 @@ MVP para el área de cuentas por pagar (CxP) de MIMARK: se sube una factura, una
 deterministas los validan contra la orden de compra (OC) y la recepción, y **una persona** confirma, programa y registra
 el pago. El sistema nunca ejecuta pagos ni transferencias.
 
-> Este documento está escrito con lo que el repositorio puede demostrar. Los datos que solo puede dar el equipo
-> (URL pública, enlace del repositorio, capturas) están marcados con **[COMPLETAR]**.
+> Este documento está escrito con lo que el repositorio puede demostrar. Lo que todavía depende del equipo está
+> marcado con **[COMPLETAR]**.
 
 ## Datos de entrega
 
-| Dato                | Valor                                                                                  |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| URL pública         | **[COMPLETAR: URL del proyecto `mimark-ap-web` en Vercel]**                            |
-| Repositorio         | **[COMPLETAR: URL de GitHub]**                                                         |
-| Código de acceso    | se entrega por separado al evaluador; no está en el repositorio ni en estos documentos |
-| Modelo de IA medido | `claude-haiku-5-5`, prompt `extract-invoice@1` (ver `evidencia/eval.md`)               |
+| Dato                | Valor                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| URL pública         | https://mimark-ap-mvp.vercel.app (proyecto `mimark-ap-mvp` en Vercel, un solo despliegue) |
+| Repositorio         | https://github.com/ben-blb/mimark-ap-mvp                                                  |
+| Código de acceso    | se entrega por separado al evaluador; no está en el repositorio ni en estos documentos    |
+| Modelo de IA medido | `claude-haiku-5-5`, prompt `extract-invoice@1` (ver `evidencia/eval.md`)                  |
 
 ## Alternativa elegida
 
@@ -69,8 +69,9 @@ Evaluación con 30 documentos sintéticos (`pnpm eval`, resultado en `evidencia/
 campo, 0 valores inventados y 3 de 3 documentos fuera de alcance detectados**, que cumple la meta (≥ 95 %, 0 y
 100 %). Se midió con `claude-haiku-5-5` y el prompt `extract-invoice@1`.
 
-> La corrida incluida se hizo contra un entorno local con la base sembrada. **[COMPLETAR: repetir `pnpm eval` y
-> `pnpm probador` contra la URL pública y reemplazar `evidencia/`.]**
+> El probador sí se corrió contra la URL pública (12 de 12 PASS, `evidencia/probador.txt`). La evaluación incluida
+> (`eval.md`) se hizo contra un entorno local con la base sembrada. **[COMPLETAR: repetir `pnpm eval` contra
+> https://mimark-ap-mvp.vercel.app y reemplazar `evidencia/eval.md`.]**
 
 ## Limitación principal y próximo paso
 
@@ -105,12 +106,12 @@ El código se lee solo de la variable de entorno. La evaluación sube 30 documen
 
 ## Evidencia (`evidencia/`)
 
-| Archivo            | Qué es                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `probador.txt`     | Salida del probador: CA-01…CA-06 y PS-01…PS-06 con PASS/FAIL                                |
-| `eval.md`          | Exactitud de la IA por campo, inventados y fuera de alcance                                 |
-| `1-pantalla.png`   | **[COMPLETAR]** captura de la pantalla de la aplicación                                     |
-| `2-plataforma.png` | **[COMPLETAR]** captura de la plataforma (Vercel / Neon)                                    |
-| `3-falla.png`      | **[COMPLETAR]** captura de una falla controlada (p. ej. `AI_UNAVAILABLE` con su referencia) |
+| Archivo            | Qué es                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| `probador.txt`     | Salida del probador: CA-01…CA-06 y PS-01…PS-06 con PASS/FAIL                                     |
+| `eval.md`          | Exactitud de la IA por campo, inventados y fuera de alcance                                      |
+| `1-pantalla.png`   | La aplicación en la URL pública (pantalla de Proveedores)                                        |
+| `2-plataforma.png` | La plataforma: despliegue de producción en Vercel (estado Ready)                                 |
+| `3-falla.png`      | Falla controlada: código de acceso incorrecto, con su mensaje y `Ref.` para buscarla en los logs |
 
 Todo el material de prueba es sintético. No hay secretos ni documentos reales en el repositorio.

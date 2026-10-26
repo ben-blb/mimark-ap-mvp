@@ -1,7 +1,7 @@
 # Web · apps/web
 
 React 19 + Vite 8 + MUI 9, TanStack Query y React Router. Se publica como archivos estáticos; `/api` llega al
-backend por la reescritura de `vercel.json` (y por el proxy de Vite en local).
+backend por el `vercel.json` de la raíz (servicios) (y por el proxy de Vite en local).
 
 ## Estructura
 

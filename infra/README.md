@@ -3,13 +3,13 @@
 Casi toda la infraestructura es configuración en servicios gratuitos. Este documento sustituye a Terraform: con él
 se monta todo desde cero en unos 15 minutos.
 
-| Pieza               | Servicio                                 | Plan                         | Lo crea la spec |
-| ------------------- | ---------------------------------------- | ---------------------------- | --------------- |
-| Web estática        | Vercel, proyecto `mimark-ap-web`         | Hobby                        | base            |
-| API (1 función)     | Vercel, proyecto `mimark-ap-api`         | Hobby                        | base            |
-| Base de datos       | Neon Postgres (ramas `main` y `preview`) | Free                         | base            |
-| Archivos originales | Vercel Blob, store privado               | incluido en Hobby            | 004             |
-| IA                  | Anthropic o Google (AI SDK)              | pago por uso / capa gratuita | 004             |
+| Pieza               | Servicio                                  | Plan                         | Lo crea la spec |
+| ------------------- | ----------------------------------------- | ---------------------------- | --------------- |
+| Web estática        | Vercel, servicio `web` del proyecto       | Hobby                        | base            |
+| API (1 función)     | Vercel, servicio `api` del mismo proyecto | Hobby                        | base            |
+| Base de datos       | Neon Postgres (ramas `main` y `preview`)  | Free                         | base            |
+| Archivos originales | Vercel Blob, store privado                | incluido en Hobby            | 004             |
+| IA                  | Anthropic o Google (AI SDK)               | pago por uso / capa gratuita | 004             |
 
 > Vercel Hobby es para uso personal y no comercial: sirve para la entrega del curso. Un piloto real con MIMARK pasa
 > a Vercel Pro sin cambiar código.
@@ -31,8 +31,10 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
 2. **Neon:** crea el proyecto `mimark-ap` en la región `aws-us-east-1` (cerca de Vercel `iad1`) y una rama `preview`.
    Copia de cada rama la URL con pooling (`DATABASE_URL`) y la directa (`DATABASE_URL_UNPOOLED`).
    Alternativa: Vercel → Storage → Neon, que crea las variables sola.
-3. **Proyecto `mimark-ap-api`** (Vercel → Add New → Project → este repo):
-   - Root Directory: `apps/api` · Framework: NestJS (se detecta) · Node.js: 22.x.
+3. **Proyecto de Vercel** (Add New → Project → este repo): un solo proyecto con dos servicios, declarados en el
+   `vercel.json` de la raíz (`api` en `apps/api`, `web` en `apps/web`). `/api/*` va al servicio `api` y todo lo demás
+   al servicio `web`, en un solo dominio. Ninguno llama al otro desde el servidor, así que no hay bindings.
+   - Node.js: 22.x.
    - Deja activado "Include files outside the root directory" (lo necesita `packages/contracts`).
    - Variables (Production con la rama `main`, Preview con la rama `preview`):
 
@@ -46,11 +48,8 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
 
    - El build corre `vercel-build`: `prisma migrate deploy` contra la rama del entorno y `nest build`. Vercel sirve
      `dist/main.js` (`apps/api/vercel.json`).
-4. **Proyecto `mimark-ap-web`:** Root Directory `apps/web` · Framework: Vite · Node.js 22.x ·
-   `ENABLE_EXPERIMENTAL_COREPACK=1`. Si el proyecto de la API no se llama `mimark-ap-api`, cambia la URL del rewrite
-   en `apps/web/vercel.json`.
-5. **Monorepo:** en ambos proyectos, Settings → Git → activa "Skip deployments when there are no changes" para que
-   cada push construya solo lo afectado.
+4. Variable `ENABLE_EXPERIMENTAL_COREPACK=1` en el proyecto (la usan ambos servicios).
+5. **Monorepo:** en Settings → Git activa "Skip deployments when there are no changes".
 6. **Verificar:** abre `https://<web>/api/health` → `{"status":"ok","db":"ok",...}`; entra con el código y registra
    un proveedor.
 7. **Semilla en producción** (una vez, datos sintéticos para la demo y el probador):
@@ -87,9 +86,9 @@ La web no tiene variables: llama a `/api` en su propio origen.
 
 ## Problemas comunes
 
-| Síntoma                                         | Causa probable                                    | Arreglo                                               |
-| ----------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
-| `Variables de entorno inválidas` al arrancar    | falta una variable o tiene mal formato            | el mensaje dice cuál; revisa `apps/api/.env.example`  |
-| Build de `api` falla en `prisma migrate deploy` | falta `DATABASE_URL_UNPOOLED` o la rama no existe | revisa las variables del entorno (Production/Preview) |
-| La web responde 404 en `/api/...`               | el rewrite apunta a otro nombre de proyecto       | corrige la URL en `apps/web/vercel.json`              |
-| Las pruebas de integración no conectan          | no hay Postgres de pruebas                        | `pnpm db:up` o define `TEST_DATABASE_URL`             |
+| Síntoma                                         | Causa probable                                      | Arreglo                                               |
+| ----------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| `Variables de entorno inválidas` al arrancar    | falta una variable o tiene mal formato              | el mensaje dice cuál; revisa `apps/api/.env.example`  |
+| Build de `api` falla en `prisma migrate deploy` | falta `DATABASE_URL_UNPOOLED` o la rama no existe   | revisa las variables del entorno (Production/Preview) |
+| La web responde 404 en `/api/...`               | el rewrite `/api/(.*)` de la raíz no apunta a `api` | revisa `services` y `rewrites` en `vercel.json`       |
+| Las pruebas de integración no conectan          | no hay Postgres de pruebas                          | `pnpm db:up` o define `TEST_DATABASE_URL`             |

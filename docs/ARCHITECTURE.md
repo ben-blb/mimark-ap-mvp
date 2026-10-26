@@ -10,7 +10,8 @@ persona confirma. Todo lo demás es soporte.
 ## 1. Vista del sistema
 
 ```
-Navegador ──HTTPS──> proyecto Vercel "web" (estático) ──rewrite /api/*──> proyecto Vercel "api" (NestJS = 1 función)
+Navegador ──HTTPS──> proyecto Vercel ──/api/*──> servicio "api" (NestJS = 1 función)
+                                      └──resto──> servicio "web" (estático)
                                                                               │
                                      ┌────────────────────┬──────────────────┼───────────────────┐
                                      ▼                    ▼                  ▼                   ▼
@@ -18,7 +19,7 @@ Navegador ──HTTPS──> proyecto Vercel "web" (estático) ──rewrite /ap
                               (4 tablas)           (originales)           (1 llamada/doc)   (1 línea/petición)
 ```
 
-- El navegador ve un solo origen: la web reenvía `/api/*` a la API. Sin CORS y con cookie first-party.
+- El navegador ve un solo origen: Vercel enruta `/api/*` al servicio `api` (`vercel.json` de la raíz). Sin CORS y con cookie first-party.
 - La API se construye con `nest build` y Vercel usa `dist/main.js` (`apps/api/vercel.json` → `outputDirectory`).
 - En local: `pnpm dev` levanta la API en :3000 y Vite en :5173 con proxy de `/api`.
 
@@ -26,8 +27,8 @@ Navegador ──HTTPS──> proyecto Vercel "web" (estático) ──rewrite /ap
 
 | Carpeta              | Qué es                                      | Por qué ahí                                                   |
 | -------------------- | ------------------------------------------- | ------------------------------------------------------------- |
-| `apps/api`           | Backend NestJS 12 (ESM) + Prisma 7          | Proyecto de Vercel "api"; única pieza que toca BD, Blob y LLM |
-| `apps/web`           | React 19 + Vite 8 + MUI 9                   | Proyecto de Vercel "web"; sin reglas de negocio               |
+| `apps/api`           | Backend NestJS 12 (ESM) + Prisma 7          | Servicio `api` de Vercel; única pieza que toca BD, Blob y LLM |
+| `apps/web`           | React 19 + Vite 8 + MUI 9                   | Servicio `web` de Vercel; sin reglas de negocio               |
 | `packages/contracts` | Esquemas Zod (tipo + validación)            | Lo único que comparten web y api; se construye a `dist/`      |
 | `specs`              | Specs con criterios, diseño y tareas        | Fuente de verdad del comportamiento (SDD)                     |
 | `docs`               | Este documento y las decisiones (ADR)       | Se lee, no se despliega                                       |

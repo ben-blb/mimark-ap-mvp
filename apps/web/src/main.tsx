@@ -18,7 +18,7 @@ if (!root) throw new Error('Falta #root en index.html');
 createRoot(root).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+      <CssBaseline enableColorScheme />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

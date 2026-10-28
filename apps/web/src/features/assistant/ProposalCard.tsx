@@ -32,22 +32,28 @@ export function ProposalCard(props: {
 
   return (
     <Paper
-      variant="outlined"
-      sx={{ p: 2 }}
+      sx={{
+        p: 2,
+        borderLeft: 4,
+        borderLeftColor: pending ? 'primary.main' : 'divider',
+      }}
       aria-label={`Propuesta: ${ASSISTANT_TOOL_LABELS[call.name]}`}
     >
-      <Typography variant="overline" color="text.secondary">
+      <Typography variant="overline" color="primary">
         Propuesta del asistente
       </Typography>
       <Typography sx={{ fontWeight: 600 }}>{ASSISTANT_TOOL_LABELS[call.name]}</Typography>
       {fields.length > 0 && (
-        <Box component="dl" sx={{ m: 0, mt: 1 }}>
+        <Box
+          component="dl"
+          sx={{ m: 0, mt: 1, p: 1.5, borderRadius: '10px', bgcolor: 'rgba(118 118 128 / 0.08)' }}
+        >
           {fields.map(([key, value]) => (
             <Typography key={key} variant="body2" component="div">
               <Box component="dt" sx={{ display: 'inline', color: 'text.secondary' }}>
                 {key}:
               </Box>{' '}
-              <Box component="dd" sx={{ display: 'inline', m: 0 }}>
+              <Box component="dd" sx={{ display: 'inline', m: 0, overflowWrap: 'anywhere' }}>
                 {typeof value === 'string' ? value : JSON.stringify(value)}
               </Box>
             </Typography>

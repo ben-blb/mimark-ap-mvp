@@ -1,5 +1,5 @@
 import type { PayableDto } from '@mimark/contracts/payables';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PayableDetail } from './PayableDetail';
 
@@ -45,10 +45,11 @@ const payable: PayableDto = {
   allowedActions: [],
 };
 
-function setup(over: Partial<PayableDto> = {}) {
+function setup(over: Partial<PayableDto> = {}, actions?: React.ReactNode) {
   const { container } = render(
     <PayableDetail
       payable={{ ...payable, ...over }}
+      actions={actions}
       history={[
         {
           at: '2026-10-20T15:00:00.000Z',
@@ -56,6 +57,14 @@ function setup(over: Partial<PayableDto> = {}) {
           action: 'payable.uploaded',
           fromStatus: null,
           toStatus: 'uploaded',
+          data: null,
+        },
+        {
+          at: '2026-10-20T15:00:02.000Z',
+          actor: 'sistema',
+          action: 'payable.extracted',
+          fromStatus: 'processing',
+          toStatus: 'requires_review',
           data: null,
         },
       ]}
@@ -113,5 +122,28 @@ describe('PayableDetail', () => {
     const { container } = setup();
     expect(screen.queryAllByRole('button')).toHaveLength(0);
     container.remove();
+  });
+
+  it('AC-009-05 marca lo dudoso y lo faltante con texto, no solo con color', () => {
+    setup();
+    const fields = screen.getByLabelText('Campos extraídos');
+    const taxId = within(fields).getByText('RFC del proveedor').parentElement as HTMLElement;
+    expect(within(taxId).getByText('Dudoso')).toBeInTheDocument();
+    const po = within(fields).getByText('Orden de compra').parentElement as HTMLElement;
+    expect(within(po).getByText('Falta')).toBeInTheDocument();
+  });
+
+  it('AC-009-05 el historial es una línea de tiempo en orden', () => {
+    setup();
+    const items = screen.getAllByRole('listitem').filter((li) => li.closest('ol'));
+    expect(items.map((li) => li.firstChild?.textContent)).toEqual([
+      'Documento subido',
+      'Lectura con IA',
+    ]);
+  });
+
+  it('AC-009-05 dibuja la barra de acciones que le pasan', () => {
+    setup({}, <button type="button">Corregir</button>);
+    expect(screen.getByRole('button', { name: 'Corregir' })).toBeInTheDocument();
   });
 });

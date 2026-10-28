@@ -4,14 +4,11 @@ import {
   type AssistantToolCall,
   MAX_ASSISTANT_MESSAGES,
 } from '@mimark/contracts/assistant';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
-import LinearProgress from '@mui/material/LinearProgress';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { type FormEvent, useState } from 'react';
 import { ErrorAlert } from '../../components/ErrorAlert';
@@ -19,6 +16,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ASSISTANT_TOOL_LABELS } from '../../lib/labels';
 import { validateFile } from '../payables/UploadForm';
 import { isWrite, toToolResult, useAssistantTurn, useRunTool } from './assistant.api';
+import { Composer, EmptyChat, TypingIndicator } from './AssistantParts';
 import { ProposalCard, type ProposalStatus } from './ProposalCard';
 
 /** Rondas de herramientas por mensaje de la persona (AC-008-06). */
@@ -174,29 +172,47 @@ export function AssistantPage() {
         title="Asistente"
         subtitle="Pregunta o pide operaciones en español. Lo que cambia datos siempre te lo pide confirmar."
       />
-      <Stack spacing={2} role="log" aria-live="polite" sx={{ mb: 2 }}>
-        {messages.length === 0 && (
-          <Typography color="text.secondary">
-            Ejemplos: «¿Qué vence en los próximos 7 días?», «Da de alta al proveedor…», «Programa la
-            factura F-120 para el viernes».
-          </Typography>
-        )}
+      <Stack spacing={2} role="log" aria-live="polite" sx={{ mb: 2, minHeight: { md: '40vh' } }}>
+        {messages.length === 0 && <EmptyChat onPick={setDraft} />}
         {messages.map((message, index) => {
           if (message.role === 'tool') return null;
           if (message.role === 'user') {
             return (
-              <Paper
+              <Box
                 key={index}
-                sx={{ p: 1.5, alignSelf: 'flex-end', maxWidth: '80%', bgcolor: 'action.selected' }}
+                sx={{
+                  alignSelf: 'flex-end',
+                  maxWidth: { xs: '88%', sm: '75%' },
+                  px: 2,
+                  py: 1.25,
+                  borderRadius: '20px',
+                  borderBottomRightRadius: '6px',
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                }}
               >
-                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{message.text}</Typography>
-              </Paper>
+                <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                  {message.text}
+                </Typography>
+              </Box>
             );
           }
           return (
-            <Stack key={index} spacing={1} sx={{ maxWidth: '90%' }}>
+            <Stack key={index} spacing={1} sx={{ maxWidth: { xs: '100%', sm: '85%' } }}>
               {message.text && (
-                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{message.text}</Typography>
+                <Paper
+                  sx={{
+                    alignSelf: 'flex-start',
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: '20px',
+                    borderBottomLeftRadius: '6px',
+                  }}
+                >
+                  <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                    {message.text}
+                  </Typography>
+                </Paper>
               )}
               {message.toolCalls.map((call) =>
                 isWrite(call.name) ? (
@@ -212,7 +228,13 @@ export function AssistantPage() {
                     onCancel={() => void decide(call, false)}
                   />
                 ) : (
-                  <Typography key={call.id} variant="caption" color="text.secondary">
+                  <Typography
+                    key={call.id}
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}
+                  >
+                    <SearchOutlined sx={{ fontSize: 14 }} aria-hidden />
                     {ASSISTANT_TOOL_LABELS[call.name]}
                   </Typography>
                 ),
@@ -220,53 +242,23 @@ export function AssistantPage() {
             </Stack>
           );
         })}
-        {busy && (
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Pensando…
-            </Typography>
-            <LinearProgress />
-          </Box>
-        )}
+        {busy && <TypingIndicator />}
         {notice && <Alert severity="info">{notice}</Alert>}
         <ErrorAlert error={error} />
       </Stack>
 
-      <Paper component="form" onSubmit={send} variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <TextField
-            label="Mensaje"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            multiline
-            minRows={2}
-            disabled={locked}
-            slotProps={{ htmlInput: { maxLength: 2000 } }}
-            helperText={waiting ? 'Confirma o cancela la propuesta para continuar.' : undefined}
-          />
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button component="label" variant="outlined" disabled={busy}>
-              Adjuntar factura
-              <input
-                hidden
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                aria-label="Archivo de la factura"
-                onChange={(e) => {
-                  attach(e.target.files?.[0]);
-                  e.target.value = '';
-                }}
-              />
-            </Button>
-            {file && <Chip label={file.name} onDelete={busy ? undefined : () => setFile(null)} />}
-            <Box sx={{ flexGrow: 1 }} />
-            <Button type="submit" variant="contained" disabled={locked || !draft.trim()}>
-              Enviar
-            </Button>
-          </Stack>
-          {fileError && <Alert severity="error">{fileError}</Alert>}
-        </Stack>
-      </Paper>
+      <Composer
+        draft={draft}
+        onDraftChange={setDraft}
+        file={file}
+        fileError={fileError}
+        busy={busy}
+        locked={locked}
+        waiting={waiting !== null}
+        onSubmit={send}
+        onAttach={attach}
+        onRemoveFile={() => setFile(null)}
+      />
     </>
   );
 }

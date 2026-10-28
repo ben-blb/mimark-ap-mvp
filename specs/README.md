@@ -53,5 +53,6 @@ Sin Claude Code se siguen los mismos pasos a mano: están escritos en `.claude/s
 | [006 Cartera](006-cartera.md)                           | Tablero 7/15/30 días y filtros                             | RF-17, RF-20, RF-21                  |
 | [007 Evidencia de entrega](007-evidencia-de-entrega.md) | Probador, evaluación de IA y documentos del curso          | Entregables                          |
 | [008 Asistente](008-asistente.md)                       | Operación en lenguaje natural: consulta y propone          | Extensión (PS-03, regla 6)           |
+| [009 Interfaz](009-interfaz.md)                         | Tema claro/oscuro, gráficas y responsive                   | Usabilidad (extensión)               |
 
 El orden es el de implementación: cada spec depende de las anteriores (`depende_de`).

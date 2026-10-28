@@ -1,27 +1,46 @@
 import {
   ASSISTANT_TOOLS,
+  AssistantStreamEvent,
   type AssistantToolCall,
   type AssistantToolName,
   type AssistantTurnInput,
-  AssistantTurnOutput,
+  type AssistantTurnOutput,
   MAX_TOOL_RESULT,
 } from '@mimark/contracts/assistant';
 import { DashboardDto } from '@mimark/contracts/dashboard';
 import { PayableDto, PayableHistory, PayableList } from '@mimark/contracts/payables';
 import { PurchaseOrderDto, PurchaseOrderList } from '@mimark/contracts/purchase-orders';
 import { SupplierDto, SupplierList } from '@mimark/contracts/suppliers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, toQuery } from '../../lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
+import { ApiError, api, toQuery } from '../../lib/api-client';
 import { dashboardKey } from '../dashboard/dashboard.api';
 import { payableKeys } from '../payables/payables.api';
 import { purchaseOrderKeys } from '../purchase-orders/purchase-orders.api';
 import { supplierKeys } from '../suppliers/suppliers.api';
 
-export function useAssistantTurn() {
-  return useMutation({
-    mutationFn: (input: AssistantTurnInput) =>
-      api.post('/assistant/turn', input, AssistantTurnOutput),
-  });
+/**
+ * Un turno del asistente en streaming (spec 010, AC-010-06): `onDelta` recibe el texto mientras llega y la promesa
+ * resuelve con el turno completo. `signal` lo detiene.
+ */
+export async function streamTurn(
+  input: AssistantTurnInput,
+  onDelta: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<AssistantTurnOutput> {
+  let out: AssistantTurnOutput | null = null;
+  await api.stream(
+    '/assistant/stream',
+    input,
+    AssistantStreamEvent,
+    (event) => {
+      if (event.type === 'delta') onDelta(event.text);
+      else if (event.type === 'done') out = { text: event.text, toolCalls: event.toolCalls };
+      else throw new ApiError(502, event.code, event.message);
+    },
+    signal,
+  );
+  if (!out) throw new ApiError(502, 'AI_UNAVAILABLE', 'El asistente no terminó de responder.');
+  return out;
 }
 
 export const isWrite = (name: AssistantToolName) => ASSISTANT_TOOLS[name].kind === 'write';
@@ -100,20 +119,26 @@ export function toToolResult(value: unknown): string {
 export interface ToolOutcome {
   /** Lo que se envía al asistente. */
   result: string;
+  /** La respuesta del endpoint ya validada, para dibujarla (AC-010-07). */
+  value?: unknown;
   /** Mensaje para la persona si la llamada falló. */
   error?: string;
+  /** Lo que tardó, en milisegundos. */
+  ms: number;
 }
 
 /** Ejecuta una llamada del asistente. Después de una escritura recarga lo que pudo cambiar. */
 export function useRunTool() {
   const queryClient = useQueryClient();
   return async (call: AssistantToolCall, file: File | null): Promise<ToolOutcome> => {
+    const started = performance.now();
+    const ms = () => Math.round(performance.now() - started);
     try {
       const value = await RUNNERS[call.name]((call.input ?? {}) as Params, file);
-      return { result: toToolResult(value) };
+      return { result: toToolResult(value), value, ms: ms() };
     } catch (e) {
       const error = e instanceof Error ? e.message : 'Ocurrió un error inesperado.';
-      return { result: toToolResult({ error }), error };
+      return { result: toToolResult({ error }), error, ms: ms() };
     } finally {
       if (isWrite(call.name)) {
         await Promise.all(

@@ -74,3 +74,10 @@ export function formatPayDay(localDate: string): string {
 export function formatTime(date: Date): string {
   return timeFormat.format(date);
 }
+
+/** 245760 → "240 KB"; 2.5 MB → "2.5 MB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

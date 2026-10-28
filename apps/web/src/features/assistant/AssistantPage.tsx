@@ -1,26 +1,32 @@
-import {
-  type AssistantAttachment,
-  type AssistantMessage,
-  type AssistantToolCall,
-  MAX_ASSISTANT_MESSAGES,
-} from '@mimark/contracts/assistant';
-import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import type { AssistantMessage, AssistantToolCall } from '@mimark/contracts/assistant';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { type FormEvent, useState } from 'react';
+import {
+  type DragEvent,
+  type FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useLocation } from 'react-router';
+import type { FocusComposerState } from '../../app/AppShell';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { PageHeader } from '../../components/PageHeader';
-import { ASSISTANT_TOOL_LABELS } from '../../lib/labels';
+import { useDashboard } from '../dashboard/dashboard.api';
 import { validateFile } from '../payables/UploadForm';
-import { isWrite, toToolResult, useAssistantTurn, useRunTool } from './assistant.api';
-import { Composer, EmptyChat, TypingIndicator } from './AssistantParts';
-import { ProposalCard, type ProposalStatus } from './ProposalCard';
+import { isWrite, streamTurn, toToolResult, useRunTool } from './assistant.api';
+import { Composer, DropOverlay, EmptyChat, SuggestionChips } from './AssistantParts';
+import { describeFile, isAbort, lastRead, recent, toolMessage } from './conversation';
+import { type Decision, MessageList } from './MessageList';
+import { followUpSuggestions, startSuggestions } from './suggestions';
+import type { ToolRun } from './ToolCallRow';
 
 /** Rondas de herramientas por mensaje de la persona (AC-008-06). */
 const MAX_ROUNDS = 5;
+/** A cuántos píxeles del final todavía se considera "abajo" para el desplazamiento automático. */
+const STICKY_PX = 120;
 
 interface Waiting {
   conversation: AssistantMessage[];
@@ -28,61 +34,94 @@ interface Waiting {
   writes: AssistantToolCall[];
 }
 
-const toolMessage = (call: AssistantToolCall, result: string): AssistantMessage => ({
-  role: 'tool',
-  toolCallId: call.id,
-  name: call.name,
-  result,
-});
-
-/** Los últimos mensajes que caben, empezando siempre por un mensaje de la persona. */
-function recent(conversation: AssistantMessage[]): AssistantMessage[] {
-  const tail = conversation.slice(-MAX_ASSISTANT_MESSAGES);
-  const start = tail.findIndex((m) => m.role === 'user');
-  return start > 0 ? tail.slice(start) : tail;
-}
-
-function describeFile(file: File | null): AssistantAttachment | undefined {
-  if (!file) return undefined;
-  const byExtension = /\.png$/i.test(file.name)
-    ? 'image/png'
-    : /\.jpe?g$/i.test(file.name)
-      ? 'image/jpeg'
-      : 'application/pdf';
-  const mimeType = (file.type || byExtension) as AssistantAttachment['mimeType'];
-  return { fileName: file.name, mimeType, size: file.size };
-}
-
 /**
- * Asistente en lenguaje natural (spec 008). Las lecturas se ejecutan solas; las escrituras se muestran como
- * propuestas y solo se ejecutan con el clic de la persona, por los mismos endpoints que usan las pantallas.
+ * Asistente en lenguaje natural (specs 008 y 010). El texto llega en streaming; las lecturas se ejecutan solas y
+ * se dibujan con su componente; las escrituras se muestran como confirmación y solo se ejecutan con el clic de la
+ * persona, por los mismos endpoints que usan las pantallas.
  */
 export function AssistantPage() {
-  const turn = useAssistantTurn();
   const runTool = useRunTool();
+  const dashboard = useDashboard(7);
+  const location = useLocation();
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
-  const [decisions, setDecisions] = useState<
-    Record<string, { status: ProposalStatus; error?: string }>
-  >({});
+  const [live, setLive] = useState<string | null>(null);
+  const [runs, setRuns] = useState<Record<string, ToolRun>>({});
+  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [waiting, setWaiting] = useState<Waiting | null>(null);
   const [draft, setDraft] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const abort = useRef<AbortController | null>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const stick = useRef(true);
+  const dragDepth = useRef(0);
+
+  // ⌘K desde cualquier pantalla (AppShell) llega aquí con el pedido de enfocar el compositor.
+  const focusKey = (location.state as FocusComposerState | null)?.focusComposer;
+  useEffect(() => {
+    input.current?.focus();
+  }, [focusKey]);
+
+  // Desplazamiento automático solo mientras la persona está al final (AC-010-08).
+  useEffect(() => {
+    const onScroll = () => {
+      const { scrollHeight } = document.documentElement;
+      stick.current = window.innerHeight + window.scrollY >= scrollHeight - STICKY_PX;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useLayoutEffect(() => {
+    if (stick.current) window.scrollTo?.({ top: document.documentElement.scrollHeight });
+  }, [messages, live, runs, decisions]);
+
+  async function readAll(reads: AssistantToolCall[], attached: File | null) {
+    setRuns((prev) => ({
+      ...prev,
+      ...Object.fromEntries(reads.map((c) => [c.id, { status: 'running' as const }])),
+    }));
+    return Promise.all(
+      reads.map(async (call) => {
+        const outcome = await runTool(call, attached);
+        setRuns((prev) => ({
+          ...prev,
+          [call.id]: {
+            status: outcome.error ? 'failed' : 'done',
+            ms: outcome.ms,
+            value: outcome.value,
+            error: outcome.error,
+          },
+        }));
+        return toolMessage(call, outcome.result);
+      }),
+    );
+  }
 
   async function advance(start: AssistantMessage[], attached: File | null) {
     setBusy(true);
     setError(null);
     setNotice(null);
+    const controller = new AbortController();
+    abort.current = controller;
     let conversation = start;
+    let partial = '';
     try {
       for (let round = 0; round < MAX_ROUNDS; round++) {
-        const out = await turn.mutateAsync({
-          messages: recent(conversation),
-          attachment: describeFile(attached),
-        });
+        partial = '';
+        setLive('');
+        const out = await streamTurn(
+          { messages: recent(conversation), attachment: describeFile(attached) },
+          (text) => {
+            partial += text;
+            setLive(partial);
+          },
+          controller.signal,
+        );
+        setLive(null);
         conversation = [
           ...conversation,
           { role: 'assistant', text: out.text, toolCalls: out.toolCalls },
@@ -92,9 +131,7 @@ export function AssistantPage() {
 
         const reads = out.toolCalls.filter((c) => !isWrite(c.name));
         const writes = out.toolCalls.filter((c) => isWrite(c.name));
-        const results = await Promise.all(
-          reads.map(async (c) => toolMessage(c, (await runTool(c, attached)).result)),
-        );
+        const results = await readAll(reads, attached);
         if (writes.length > 0) {
           setDecisions((prev) => ({
             ...prev,
@@ -108,8 +145,19 @@ export function AssistantPage() {
       }
       setNotice('El asistente llegó al máximo de pasos. Escribe de nuevo para continuar.');
     } catch (e) {
-      setError(e);
+      setLive(null);
+      if (isAbort(e)) {
+        // Lo que alcanzó a llegar se queda en la conversación, sin herramientas.
+        if (partial) {
+          conversation = [...conversation, { role: 'assistant', text: partial, toolCalls: [] }];
+          setMessages(conversation);
+        }
+        setNotice('Respuesta detenida.');
+      } else {
+        setError(e);
+      }
     } finally {
+      abort.current = null;
       setBusy(false);
     }
   }
@@ -125,7 +173,7 @@ export function AssistantPage() {
         ...prev,
         [call.id]: outcome.error
           ? { status: 'failed', error: outcome.error }
-          : { status: 'confirmed' },
+          : { status: 'confirmed', at: new Date() },
       }));
       if (!outcome.error && call.name === 'uploadPayable') {
         attached = null;
@@ -154,6 +202,7 @@ export function AssistantPage() {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
+    stick.current = true;
     void advance([...messages, { role: 'user', text }], file);
   }
 
@@ -164,82 +213,75 @@ export function AssistantPage() {
     setFile(problem ? null : selected);
   }
 
+  function pick(prompt: string) {
+    setDraft(prompt);
+    input.current?.focus();
+  }
+
+  // Soltar un archivo en cualquier parte del panel (AC-010-08).
+  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
+  const drop = {
+    onDragEnter: (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      dragDepth.current += 1;
+      setDragging(true);
+    },
+    onDragOver: (e: DragEvent) => {
+      if (hasFiles(e)) e.preventDefault();
+    },
+    onDragLeave: () => {
+      dragDepth.current = Math.max(0, dragDepth.current - 1);
+      if (dragDepth.current === 0) setDragging(false);
+    },
+    onDrop: (e: DragEvent) => {
+      e.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      if (!busy) attach(e.dataTransfer.files[0]);
+    },
+  };
+
   const locked = busy || waiting !== null;
+  const followUps =
+    !locked && messages.at(-1)?.role === 'assistant'
+      ? followUpSuggestions(lastRead(messages, runs))
+      : [];
 
   return (
-    <>
+    <Box
+      {...drop}
+      sx={{
+        maxWidth: 720,
+        mx: 'auto',
+        minHeight: { md: 'calc(100dvh - 64px)' },
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {dragging && <DropOverlay />}
       <PageHeader title="Asistente" />
-      <Stack spacing={2} role="log" aria-live="polite" sx={{ mb: 2, minHeight: { md: '40vh' } }}>
-        {messages.length === 0 && <EmptyChat onPick={setDraft} />}
-        {messages.map((message, index) => {
-          if (message.role === 'tool') return null;
-          if (message.role === 'user') {
-            return (
-              <Box
-                key={index}
-                sx={{
-                  alignSelf: 'flex-end',
-                  maxWidth: { xs: '88%', sm: '75%' },
-                  px: 2,
-                  py: 1.25,
-                  borderRadius: '20px',
-                  borderBottomRightRadius: '6px',
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                }}
-              >
-                <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                  {message.text}
-                </Typography>
-              </Box>
-            );
-          }
-          return (
-            <Stack key={index} spacing={1} sx={{ maxWidth: { xs: '100%', sm: '85%' } }}>
-              {message.text && (
-                <Paper
-                  sx={{
-                    alignSelf: 'flex-start',
-                    px: 2,
-                    py: 1.25,
-                    borderRadius: '20px',
-                    borderBottomLeftRadius: '6px',
-                  }}
-                >
-                  <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                    {message.text}
-                  </Typography>
-                </Paper>
-              )}
-              {message.toolCalls.map((call) =>
-                isWrite(call.name) ? (
-                  <ProposalCard
-                    key={call.id}
-                    call={call}
-                    status={decisions[call.id]?.status ?? 'cancelled'}
-                    error={decisions[call.id]?.error}
-                    blockedReason={
-                      call.name === 'uploadPayable' && !file ? 'Adjunta la factura' : undefined
-                    }
-                    onConfirm={() => void decide(call, true)}
-                    onCancel={() => void decide(call, false)}
-                  />
-                ) : (
-                  <Typography
-                    key={call.id}
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}
-                  >
-                    <SearchOutlined sx={{ fontSize: 14 }} aria-hidden />
-                    {ASSISTANT_TOOL_LABELS[call.name]}
-                  </Typography>
-                ),
-              )}
-            </Stack>
-          );
-        })}
-        {busy && <TypingIndicator />}
+      <Stack
+        spacing={2.5}
+        role="log"
+        aria-live="polite"
+        aria-busy={live !== null}
+        aria-label="Conversación"
+        sx={{ flexGrow: 1, pb: 2 }}
+      >
+        {messages.length === 0 && live === null && (
+          <EmptyChat suggestions={startSuggestions(dashboard.data)} onPick={pick} />
+        )}
+        <MessageList
+          messages={messages}
+          live={live}
+          runs={runs}
+          decisions={decisions}
+          hasFile={!!file}
+          onDecide={(call, confirm) => void decide(call, confirm)}
+        />
+        {followUps.length > 0 && (
+          <SuggestionChips aria-label="Seguimientos" suggestions={followUps} onPick={pick} />
+        )}
         {notice && <Alert severity="info">{notice}</Alert>}
         <ErrorAlert error={error} />
       </Stack>
@@ -249,13 +291,15 @@ export function AssistantPage() {
         onDraftChange={setDraft}
         file={file}
         fileError={fileError}
-        busy={busy}
+        streaming={busy}
         locked={locked}
         waiting={waiting !== null}
+        inputRef={input}
         onSubmit={send}
+        onStop={() => abort.current?.abort()}
         onAttach={attach}
         onRemoveFile={() => setFile(null)}
       />
-    </>
+    </Box>
   );
 }

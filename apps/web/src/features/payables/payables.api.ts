@@ -28,10 +28,11 @@ export function usePayables(query: PayableListFilters) {
   });
 }
 
-export function usePayable(id: string) {
+export function usePayable(id: string, enabled = true) {
   return useQuery({
     queryKey: payableKeys.detail(id),
     queryFn: () => api.get(`/payables/${id}`, PayableDto),
+    enabled,
   });
 }
 

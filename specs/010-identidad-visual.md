@@ -1,7 +1,7 @@
 ---
 id: '010'
 titulo: Identidad visual y asistente con componentes
-estado: en-progreso
+estado: hecha
 depende_de: ['009']
 requisitos: Usabilidad (extensión); modifica AC-009-01, AC-009-02 (apariencia), AC-009-03 y la UI de 008
 ---
@@ -40,7 +40,8 @@ lista de expedientes); que el servidor ejecute herramientas (sigue la regla 6 y 
   el enlace "Revisar →" (solo si N > 0); una franja con 4 cifras (por pagar, vencido, próximos N días, pagado este
   mes) sin centavos y con la moneda como sufijo, MXN y USD por separado (se mantienen AC-006-02 y AC-006-06); si
   lo vencido es 0, la cifra dice "Al corriente" y no usa color de error; los días de pago como filas con fecha,
-  total, número de expedientes y una barra proporcional, y un clic en uno filtra la tabla del tablero a ese día; y la cartera por
+  total, número de expedientes y una barra proporcional, y un clic en uno filtra la tabla del tablero a ese día;
+  y la cartera por
   vencimiento como barra apilada (vencido / ≤ 7 días / ≤ 15 días / después) con montos, o como una frase si solo
   hay un segmento con datos. El horizonte 7/15/30 se elige con pestañas. Cada gráfica tiene su alternativa en
   texto. Modifica AC-009-03.
@@ -56,7 +57,8 @@ lista de expedientes); que el servidor ejecute herramientas (sigue la regla 6 y 
   lo recibe igual (usa el mismo endpoint).
 - **AC-010-06** · `POST /api/assistant/stream` recibe `AssistantTurnInput` y responde `text/event-stream` con
   eventos `delta { text }` mientras el modelo escribe y al final un evento `done { text, toolCalls }` con las
-  mismas llamadas filtradas que `/turn` (AC-008-03), o `error { code, message }` si el modelo falla. Sin sesión,
+  mismas llamadas filtradas que `/turn` (AC-008-03), o `error { code, message }` si el modelo falla ya empezado
+  el stream (si falla antes de escribir, responde el error en JSON como `/turn`). Sin sesión,
   con cuerpo inválido o sin cuota responde 401/400/429 en JSON como `/turn`, sin abrir el stream ni llamar al LLM.
   Si la persona corta la conexión, se aborta la llamada al modelo. Cada turno (también uno abortado) deja
   `assistant.answered` y ninguna tabla de negocio cambia (AC-008-05).
@@ -119,10 +121,10 @@ Sin acciones nuevas: el streaming registra `assistant.answered` como `/turn`.
 - [x] 3. Componentes `Money`, `StatusDot`, `SummaryStrip`, `DataTable` con pruebas.
 - [x] 4. Tablero (AC-010-03).
 - [x] 5. Órdenes, expedientes y proveedores con `DataTable` (AC-010-04).
-- [ ] 6. `dueOn` en la lista de expedientes (AC-010-05).
-- [ ] 7. Endpoint `/assistant/stream` y `api.stream` (AC-010-06).
-- [ ] 8. Asistente con renderers, confirmaciones, sugerencias, adjuntos y atajo (AC-010-07, AC-010-08).
-- [ ] 9. Revisión visual (AC-010-09) y bitácora.
+- [x] 6. `dueOn` en la lista de expedientes (AC-010-05).
+- [x] 7. Endpoint `/assistant/stream` y `api.stream` (AC-010-06).
+- [x] 8. Asistente con renderers, confirmaciones, sugerencias, adjuntos y atajo (AC-010-07, AC-010-08).
+- [x] 9. Revisión visual (AC-010-09) y bitácora.
 
 ## Fuera de alcance y decisiones
 
@@ -150,3 +152,16 @@ Sin acciones nuevas: el streaming registra `assistant.answered` como `/turn`.
 - 2026-10-28 · Órdenes de compra no tiene página de detalle: la fila abre la edición (`DataRow onOpen`).
 - 2026-10-28 · La sesión no trae email (solo `actor` y `role`): la barra lateral muestra nombre y rol.
 - 2026-10-28 · Los colores viven en `app/tokens.ts` (el tema pasaba el tope de 300 líneas del lint).
+- 2026-10-28 · `api.stream` en `lib/api-client.ts` lee el SSE con `fetch` + `TextDecoderStream` (no `EventSource`, que
+  no admite POST) y valida cada evento con `AssistantStreamEvent`. El controlador manda los encabezados con el primer
+  evento: lo que falla antes (sesión, validación, cuota, modelo caído) sale como JSON por el filtro de errores.
+- 2026-10-28 · El ✓/✕ de `ExpedienteDetail` sale de `reviewReasons` de la API (la web no repite reglas).
+- 2026-10-28 · Las sugerencias y los seguimientos son funciones puras (`features/assistant/suggestions.ts`) y
+  rellenan el compositor sin enviar, como antes.
+- 2026-10-28 · El modo `fake` responde `listPayables` a "expedientes" para revisar los renderers sin IA.
+- 2026-10-28 · AC-010-09 verificado con `pnpm dev` y el navegador integrado: tablero, órdenes, expedientes, detalle y
+  asistente a 1440 (oscuro y claro) y 375; `scrollWidth === innerWidth` en 375. Corregido tras la revisión: íconos
+  decorativos en la barra lateral de escritorio y en las secciones del detalle, "$0.00" en filas vacías de la cartera,
+  mayúsculas en etiquetas de tarjetas, cifras de 28 px que partían en el teléfono, folios del asistente con el color
+  del acento y "Nueva OC" → "Nueva orden". Con el modelo real: lectura con mini tabla, detalle factura vs OC y
+  propuesta de pago cancelada sin cambios.

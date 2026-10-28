@@ -32,7 +32,11 @@ export function fakeAssistant(
     });
   }
   if (attachment && text.includes('sube')) return call('uploadPayable', {});
+  if (text.includes('expedientes')) return call('listPayables', { status: 'confirmed,scheduled' });
   if (text.includes('vence')) return call('getDashboard', { horizon: 7 });
   if (text.includes('proveedor')) return call('listSuppliers', {});
-  return { text: 'Modo de prueba: pregunta qué vence o por los proveedores.', toolCalls: [] };
+  return {
+    text: 'Modo de prueba: pregunta qué vence, por los expedientes o por los proveedores.',
+    toolCalls: [],
+  };
 }

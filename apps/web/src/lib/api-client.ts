@@ -80,7 +80,67 @@ export function toQuery(params: Record<string, string | number | boolean | undef
   return text ? `?${text}` : '';
 }
 
+/**
+ * POST que responde Server-Sent Events (spec 010): valida cada evento `data:` con `schema` y lo entrega a
+ * `onEvent` en orden. Un error antes del stream llega como `ApiError`, igual que en `call`. `signal` lo corta.
+ */
+async function stream<S extends z.ZodType>(
+  path: string,
+  body: unknown,
+  schema: S,
+  onEvent: (event: z.infer<S>) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+      headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new ApiError(
+      0,
+      'INTERNAL',
+      'No hay conexión con el servidor. Revisa tu red e intenta de nuevo.',
+    );
+  }
+  if (!res.ok) throw await toApiError(res);
+  if (!res.body) throw new ApiError(res.status, 'INTERNAL', 'Ocurrió un error inesperado.');
+
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += value;
+    const chunks = buffer.split('\n\n');
+    buffer = chunks.pop() ?? '';
+    for (const chunk of chunks) {
+      const data = chunk
+        .split('\n')
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trimStart())
+        .join('\n');
+      if (!data) continue;
+      const parsed = schema.safeParse(JSON.parse(data));
+      if (!parsed.success) {
+        throw new ApiError(
+          res.status,
+          'INTERNAL',
+          'La respuesta del servidor no tiene el formato esperado.',
+        );
+      }
+      onEvent(parsed.data);
+    }
+  }
+}
+
 export const api = {
+  stream,
   get: <S extends z.ZodType>(path: string, schema: S) => call('GET', path, schema),
   post: <S extends z.ZodType>(path: string, body: unknown, schema: S) =>
     call('POST', path, schema, body),

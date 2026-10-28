@@ -98,6 +98,16 @@ export const PAYABLE_ACTION_LABELS: Record<PayableDto['allowedActions'][number],
   discard: 'Descartar',
 };
 
+/** Lo que se ve mientras corre una lectura del asistente (AC-010-07). */
+export const ASSISTANT_TOOL_PROGRESS: Partial<Record<AssistantToolName, string>> = {
+  listSuppliers: 'Consultando proveedores',
+  listPurchaseOrders: 'Consultando órdenes de compra',
+  listPayables: 'Consultando expedientes',
+  getPayable: 'Consultando el expediente',
+  getPayableHistory: 'Consultando el historial',
+  getDashboard: 'Consultando el tablero',
+};
+
 export const ASSISTANT_TOOL_LABELS: Record<AssistantToolName, string> = {
   listSuppliers: 'Consultar proveedores',
   listPurchaseOrders: 'Consultar órdenes de compra',

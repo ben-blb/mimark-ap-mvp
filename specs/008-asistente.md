@@ -221,3 +221,11 @@ attachment)`: mapa nombre → llamada `api.*` al endpoint existente con el esque
   el adjunto se limpia y los turnos siguientes ya no lo describen.
 - 2026-10-27 · Web: la conversación se recorta a los últimos 40 mensajes empezando por uno de la persona, para no
   pasar el tope del contrato ni dejar un resultado de herramienta sin su llamada.
+- 2026-10-27 · Verificación manual en local (`pnpm dev`, `AI_PROVIDER=anthropic`, `claude-haiku-5-5`): (a) "¿Qué
+  vence en los próximos 7 días? Y cuántos proveedores activos" → consultó expedientes y proveedores solo y respondió
+  con 2 expedientes y 6 proveedores; (b) "Programa el pago de la factura F-D0AEEB para el viernes 30 de octubre" →
+  propuesta `schedulePayable` con el id real y `payOn: 2026-10-30`, sin llamar al endpoint; Cancelar → "no se hizo
+  ningún cambio". El modelo respondía en Markdown (asteriscos visibles, porque todo se muestra como texto): se pidió
+  texto plano en `assistant@1`, que aún no se había desplegado.
+- 2026-10-27 · Pendiente: AC-008-11 (factura sintética con instrucciones ocultas) y AC-008-12 (contra la URL
+  pública, requiere desplegar). La tarea 8 queda abierta hasta verificarlos.

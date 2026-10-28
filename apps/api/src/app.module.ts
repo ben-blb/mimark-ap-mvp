@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { DbModule } from './common/db.js';
 import { ErrorFilter } from './common/error.filter.js';
 import { validationPipe } from './common/validation.js';
+import { AssistantModule } from './modules/assistant/assistant.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -23,6 +24,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
     PurchaseOrdersModule,
     PayablesModule,
     DashboardModule,
+    AssistantModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SessionGuard },

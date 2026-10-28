@@ -34,6 +34,7 @@ const Env = z
     BLOB_READ_WRITE_TOKEN: z.string().optional(),
     DAILY_AI_LIMIT: z.coerce.number().int().min(1).default(30),
     DAILY_AI_LIMIT_GLOBAL: z.coerce.number().int().min(1).default(200),
+    DAILY_ASSISTANT_LIMIT: z.coerce.number().int().min(1).default(100),
   })
   .refine((e) => e.VERCEL_ENV !== 'production' || !e.SESSION_SECRET.startsWith(DEV_SECRET_PREFIX), {
     message: 'SESSION_SECRET de desarrollo en producción: genera uno nuevo',

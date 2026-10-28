@@ -52,5 +52,6 @@ Sin Claude Code se siguen los mismos pasos a mano: están escritos en `.claude/s
 | [005 Revisión y pago](005-revision-y-pago.md)           | Corrección, confirmación, vencimiento, programación y pago | RF-13…19, CA-04, CA-06, PS-04, PS-05 |
 | [006 Cartera](006-cartera.md)                           | Tablero 7/15/30 días y filtros                             | RF-17, RF-20, RF-21                  |
 | [007 Evidencia de entrega](007-evidencia-de-entrega.md) | Probador, evaluación de IA y documentos del curso          | Entregables                          |
+| [008 Asistente](008-asistente.md)                       | Operación en lenguaje natural: consulta y propone          | Extensión (PS-03, regla 6)           |
 
 El orden es el de implementación: cada spec depende de las anteriores (`depende_de`).

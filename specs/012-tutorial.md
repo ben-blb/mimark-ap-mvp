@@ -78,9 +78,9 @@ No aplica (no escribe en la base de datos).
 ## Tareas
 
 - [x] 1. Pruebas y `tour.storage.ts` (AC-012-02, 03, 09).
-- [ ] 2. `tour.steps.ts` y `Tour.tsx` con pruebas (AC-012-05, 06, 07).
-- [ ] 3. Integrar en `AppShell` (anclas, botón y menú "Ver tutorial", apertura automática) con pruebas (AC-012-01, 04).
-- [ ] 4. Documentar la convención `data-tour` y el uso de `localStorage` en `apps/web/AGENTS.md`.
+- [x] 2. `tour.steps.ts` y `Tour.tsx` con pruebas (AC-012-05, 06, 07).
+- [x] 3. Integrar en `AppShell` (anclas, botón y menú "Ver tutorial", apertura automática) con pruebas (AC-012-01, 04).
+- [x] 4. Documentar la convención `data-tour` y el uso de `localStorage` en `apps/web/AGENTS.md`.
 - [ ] 5. Verificación manual (AC-012-08) y `pnpm check` en verde.
 
 ## Fuera de alcance y decisiones

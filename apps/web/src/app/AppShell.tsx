@@ -1,5 +1,6 @@
 import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
+import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LogoutOutlined from '@mui/icons-material/LogoutOutlined';
 import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import SpaceDashboardOutlined from '@mui/icons-material/SpaceDashboardOutlined';
@@ -16,16 +17,42 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useLogout, useSession } from '../features/session/session.api';
+import { Tour } from '../features/tour/Tour';
+import { hasSeenTour, markTourSeen } from '../features/tour/tour.storage';
 import { ROLE_LABELS } from '../lib/labels';
 import { MOBILE_NAV_OFFSET, vars } from './theme';
 
 /** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
 const NAV_ITEMS = [
-  { to: '/', label: 'Tablero', short: 'Tablero', icon: <SpaceDashboardOutlined /> },
-  { to: '/proveedores', label: 'Proveedores', short: 'Proveedores', icon: <StorefrontOutlined /> },
-  { to: '/ordenes', label: 'Órdenes de compra', short: 'Órdenes', icon: <ReceiptLongOutlined /> },
-  { to: '/expedientes', label: 'Expedientes', short: 'Expedientes', icon: <DescriptionOutlined /> },
-  { to: '/asistente', label: 'Asistente', short: 'Asistente', icon: <AutoAwesomeOutlined /> },
+  { to: '/', tour: 'tablero', label: 'Tablero', short: 'Tablero', icon: <SpaceDashboardOutlined /> },
+  {
+    to: '/proveedores',
+    tour: 'proveedores',
+    label: 'Proveedores',
+    short: 'Proveedores',
+    icon: <StorefrontOutlined />,
+  },
+  {
+    to: '/ordenes',
+    tour: 'ordenes',
+    label: 'Órdenes de compra',
+    short: 'Órdenes',
+    icon: <ReceiptLongOutlined />,
+  },
+  {
+    to: '/expedientes',
+    tour: 'expedientes',
+    label: 'Expedientes',
+    short: 'Expedientes',
+    icon: <DescriptionOutlined />,
+  },
+  {
+    to: '/asistente',
+    tour: 'asistente',
+    label: 'Asistente',
+    short: 'Asistente',
+    icon: <AutoAwesomeOutlined />,
+  },
 ] as const;
 
 const SIDEBAR_WIDTH = 220;
@@ -33,6 +60,13 @@ const SIDEBAR_WIDTH = 220;
 /** Estado de navegación con el que `⌘K` pide al asistente enfocar su compositor (AC-010-08). */
 export interface FocusComposerState {
   focusComposer: number;
+}
+
+interface UserProps {
+  actor?: string;
+  role?: string;
+  onLogout: () => void;
+  onTour: () => void;
 }
 
 /** Marca en texto: sin logotipo (DESIGN.md). */
@@ -50,7 +84,7 @@ function Wordmark() {
 }
 
 /** Barra lateral de escritorio pegada al borde (AC-010-02). */
-function Sidebar(props: { actor?: string; role?: string; onLogout: () => void }) {
+function Sidebar(props: UserProps) {
   return (
     <Box
       component="aside"
@@ -76,6 +110,7 @@ function Sidebar(props: { actor?: string; role?: string; onLogout: () => void })
             component={NavLink}
             to={item.to}
             end={item.to === '/'}
+            data-tour={item.tour}
             sx={(theme) => ({
               position: 'relative',
               display: 'flex',
@@ -120,6 +155,15 @@ function Sidebar(props: { actor?: string; role?: string; onLogout: () => void })
             {props.role}
           </Typography>
         </Box>
+        <IconButton
+          aria-label="Ver tutorial"
+          title="Ver tutorial"
+          size="small"
+          data-tour="ayuda"
+          onClick={props.onTour}
+        >
+          <HelpOutlineOutlined fontSize="small" />
+        </IconButton>
         <IconButton aria-label="Salir" title="Salir" size="small" onClick={props.onLogout}>
           <LogoutOutlined fontSize="small" />
         </IconButton>
@@ -129,7 +173,7 @@ function Sidebar(props: { actor?: string; role?: string; onLogout: () => void })
 }
 
 /** Barra superior compacta y barra inferior del teléfono (AC-009-02). */
-function MobileChrome(props: { actor?: string; role?: string; onLogout: () => void }) {
+function MobileChrome(props: UserProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   return (
     <>
@@ -183,6 +227,15 @@ function MobileChrome(props: { actor?: string; role?: string; onLogout: () => vo
             </Typography>
             <Typography variant="caption">{props.role}</Typography>
           </ListSubheader>
+          <MenuItem
+            onClick={() => {
+              setAnchor(null);
+              props.onTour();
+            }}
+          >
+            <HelpOutlineOutlined fontSize="small" sx={{ mr: 1.5 }} />
+            Ver tutorial
+          </MenuItem>
           <MenuItem onClick={props.onLogout}>
             <LogoutOutlined fontSize="small" sx={{ mr: 1.5 }} />
             Salir
@@ -215,6 +268,7 @@ function MobileChrome(props: { actor?: string; role?: string; onLogout: () => vo
             to={item.to}
             end={item.to === '/'}
             aria-label={item.label}
+            data-tour={item.tour}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -267,14 +321,29 @@ export function AppShell() {
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'), { noSsr: true });
   useComposerShortcut();
+  const actor = session.data?.actor;
+  const [tourOpen, setTourOpen] = useState(false);
+  // Primera vez de esta persona en este navegador (spec 012).
+  useEffect(() => {
+    if (actor && !hasSeenTour(actor)) setTourOpen(true);
+  }, [actor]);
   const user = {
-    actor: session.data?.actor,
+    actor,
     role: session.data ? ROLE_LABELS[session.data.role] : undefined,
     onLogout: () => logout.mutate(),
+    onTour: () => setTourOpen(true),
   };
 
   return (
     <Box sx={{ minHeight: '100dvh' }}>
+      {tourOpen && (
+        <Tour
+          onClose={() => {
+            if (actor) markTourSeen(actor);
+            setTourOpen(false);
+          }}
+        />
+      )}
       {desktop ? <Sidebar {...user} /> : <MobileChrome {...user} />}
       <Box
         component="main"

@@ -24,6 +24,8 @@ src/features/<x>/ una carpeta por recurso: <x>.api.ts, páginas, diálogos, form
 - Prohibido `dangerouslySetInnerHTML`: el contenido de documentos y de la IA se muestra como texto (lint).
 - Las acciones de un expediente se dibujan desde `allowedActions` del DTO; la UI no repite reglas de negocio.
 - Ruta nueva → `app/router.tsx`; pantalla de primer nivel → `NAV_ITEMS` en `app/AppShell.tsx`.
+- Tutorial (spec 012): los elementos que resalta llevan `data-tour="<id>"` (ids en `features/tour/tour.steps.ts`).
+  La marca de «ya visto» vive en `localStorage` solo desde `features/tour/tour.storage.ts`; no lo uses para otra cosa.
 - Imports relativos sin extensión (los resuelve Vite).
 
 ## Pruebas

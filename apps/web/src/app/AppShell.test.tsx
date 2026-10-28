@@ -2,12 +2,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { sessionKey } from '../features/session/session.api';
+import { hasSeenTour, markTourSeen } from '../features/tour/tour.storage';
 import { setViewport } from '../test/setup';
 import { AppShell } from './AppShell';
 
-function setup(width: number) {
+afterEach(() => localStorage.clear());
+
+/** Por defecto la persona ya vio el tutorial, para que no se abra solo en las demás pruebas. */
+function setup(width: number, tourSeen = true) {
+  if (tourSeen) markTourSeen('Ana López');
   setViewport(width);
   const client = new QueryClient();
   client.setQueryData(sessionKey, {
@@ -82,5 +87,39 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('button', { name: 'Cuenta' }));
     expect(screen.getByRole('menu')).toHaveTextContent('Ana López');
     expect(screen.getByRole('menuitem', { name: 'Salir' })).toBeInTheDocument();
+  });
+
+  it('AC-012-01 la primera vez el tutorial se abre solo y al saltarlo no vuelve a abrirse', async () => {
+    const user = setup(1440, false);
+    expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Saltar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(hasSeenTour('Ana López')).toBe(true);
+  });
+
+  it('AC-012-02 con la marca guardada, el tutorial no se abre solo', () => {
+    setup(1440);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('AC-012-04 «Ver tutorial» de la barra lateral lo abre aunque ya lo haya visto', async () => {
+    const user = setup(1440);
+    await user.click(screen.getByRole('button', { name: 'Ver tutorial' }));
+    expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
+  });
+
+  it('AC-012-04 en el teléfono «Ver tutorial» está en el menú de cuenta', async () => {
+    const user = setup(375);
+    await user.click(screen.getByRole('button', { name: 'Cuenta' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Ver tutorial' }));
+    expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
+  });
+
+  it('AC-012-06 los pasos resaltan la navegación real de la barra lateral', async () => {
+    const user = setup(1440);
+    await user.click(screen.getByRole('button', { name: 'Ver tutorial' }));
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(document.querySelector('[data-tour-highlight="tablero"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="tablero"]')).toHaveTextContent('Tablero');
   });
 });

@@ -85,8 +85,7 @@ export const ASSISTANT_TOOLS = {
   },
   uploadPayable: {
     kind: 'write',
-    description:
-      'Propone subir la factura adjunta en el chat para extraer sus datos. Solo si hay adjunto.',
+    description: 'La web sube la factura adjunta al enviar el mensaje; el modelo no la propone.',
     input: UploadPayableInput,
   },
   retryPayable: {
@@ -129,6 +128,9 @@ export const ASSISTANT_TOOLS = {
   string,
   { kind: 'read' | 'write'; description: string; input: z.ZodType }
 >;
+
+/** Herramientas que ejecuta la web por una acción de la persona (spec 011): el modelo no las ve ni las propone. */
+export const WEB_ONLY_TOOLS: ReadonlySet<string> = new Set(['uploadPayable']);
 
 export type AssistantToolName = keyof typeof ASSISTANT_TOOLS;
 export const AssistantToolName = z.enum(

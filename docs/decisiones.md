@@ -104,7 +104,10 @@ diga cuál reemplaza. Formato: decisión · alternativas · por qué · revisar 
 
 - **Decisión:** el asistente (spec 008) llama al LLM con herramientas sin `execute`, descritas desde
   `contracts/assistant.ts`. La API valida las llamadas y las devuelve; la web ejecuta las lecturas y, tras un clic de
-  la persona, las escrituras, por los endpoints existentes. Sin streaming ni conversación guardada.
+  la persona, las escrituras, por los endpoints existentes. Excepción (spec 011): adjuntar una factura y enviar el
+  mensaje es el clic de la persona, así que la web sube el archivo sin propuesta; el modelo no la propone ni ve el
+  archivo. Las conversaciones se guardan por persona en la base de datos (spec 011); el streaming llegó con la
+  spec 010.
 - **Alternativas:** ejecutar las herramientas en el servidor (agente con `execute`); servidor MCP; `useChat` de
   `@ai-sdk/react` con streaming.
 - **Por qué:** la IA nunca ejecuta una acción (regla 6) y una factura con instrucciones ocultas a lo más produce una

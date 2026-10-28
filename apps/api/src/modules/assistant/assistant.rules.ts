@@ -1,5 +1,6 @@
 import {
   ASSISTANT_TOOLS,
+  WEB_ONLY_TOOLS,
   type AssistantMessage,
   type AssistantToolCall,
 } from '@mimark/contracts/assistant';
@@ -54,7 +55,7 @@ export function toModelMessages(messages: AssistantMessage[]): ModelMessage[] {
  */
 export function pickToolCalls(calls: RawToolCall[]): AssistantToolCall[] {
   return calls.flatMap((call) => {
-    if (!Object.hasOwn(ASSISTANT_TOOLS, call.name)) return [];
+    if (!Object.hasOwn(ASSISTANT_TOOLS, call.name) || WEB_ONLY_TOOLS.has(call.name)) return [];
     const name = call.name as keyof typeof ASSISTANT_TOOLS;
     if (!ASSISTANT_TOOLS[name].input.safeParse(call.input).success) return [];
     return [{ id: call.id, name, input: call.input }];

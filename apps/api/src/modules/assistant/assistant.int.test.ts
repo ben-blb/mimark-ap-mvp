@@ -42,7 +42,7 @@ describe('asistente (spec 008)', () => {
         { id: 'c3', name: 'schedulePayable', input: { id: 'x', payOn: 'viernes' } },
       ],
       model: 'mock',
-      promptVersion: 'assistant@1',
+      promptVersion: 'assistant@2',
       ms: 1,
     });
     const res = await agent.post('/api/assistant/turn').send(ask('¿qué vence?')).expect(200);
@@ -123,7 +123,7 @@ describe('asistente (spec 008)', () => {
             { id: 'c2', name: 'deleteEverything', input: {} },
           ],
           model: 'mock',
-          promptVersion: 'assistant@1',
+          promptVersion: 'assistant@2',
           ms: 1,
         });
       });

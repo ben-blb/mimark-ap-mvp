@@ -31,7 +31,7 @@ export function fakeAssistant(
       reference: 'FAKE-1',
     });
   }
-  if (attachment && text.includes('sube')) return call('uploadPayable', {});
+  if (attachment && text.includes('factura')) return call('listPayables', {});
   if (text.includes('expedientes')) return call('listPayables', { status: 'confirmed,scheduled' });
   if (text.includes('vence')) return call('getDashboard', { horizon: 7 });
   if (text.includes('proveedor')) return call('listSuppliers', {});

@@ -1,9 +1,9 @@
 import { simulateReadableStream } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
 import { describe, expect, it } from 'vitest';
-import { ASSISTANT_TOOLS } from '@mimark/contracts/assistant';
+import { ASSISTANT_TOOLS, WEB_ONLY_TOOLS } from '@mimark/contracts/assistant';
 import { AssistantClient } from './assistant.client.js';
-import { ASSISTANT_PROMPT } from './prompts/assistant.v1.js';
+import { ASSISTANT_PROMPT } from './prompts/assistant.v2.js';
 
 const usage = {
   inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -47,10 +47,10 @@ describe('AssistantClient', () => {
     expect(system).toContain('Hoy: 2026-10-27');
     expect(system).toContain('factura-acme.pdf (application/pdf, 1234 bytes)');
     expect(prompt).not.toContain('"type":"file"');
-    expect(result.promptVersion).toBe('assistant@1');
+    expect(result.promptVersion).toBe('assistant@2');
   });
 
-  it('AC-008-03 da al modelo todo el catálogo y devuelve sus llamadas sin ejecutarlas', async () => {
+  it('AC-008-03 da al modelo el catálogo (menos la subida, AC-011-03) y devuelve sus llamadas sin ejecutarlas', async () => {
     const m = model();
     const result = await new AssistantClient().run(m, {
       messages: [{ role: 'user', content: '¿Qué vence?' }],
@@ -58,7 +58,11 @@ describe('AssistantClient', () => {
     });
 
     const tools = (m.doGenerateCalls[0]?.tools ?? []).map((t) => t.name);
-    expect(tools.sort()).toEqual(Object.keys(ASSISTANT_TOOLS).sort());
+    expect(tools.sort()).toEqual(
+      Object.keys(ASSISTANT_TOOLS)
+        .filter((name) => !WEB_ONLY_TOOLS.has(name))
+        .sort(),
+    );
     expect(m.doGenerateCalls).toHaveLength(1);
     expect(result.text).toBe('Reviso el tablero.');
     expect(result.toolCalls).toEqual([{ id: 'c1', name: 'getDashboard', input: { horizon: 7 } }]);

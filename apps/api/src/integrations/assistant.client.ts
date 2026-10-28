@@ -11,11 +11,15 @@ import {
   type ModelMessage,
 } from 'ai';
 import { z } from 'zod';
-import { ASSISTANT_TOOLS, type AssistantAttachment } from '@mimark/contracts/assistant';
+import {
+  ASSISTANT_TOOLS,
+  WEB_ONLY_TOOLS,
+  type AssistantAttachment,
+} from '@mimark/contracts/assistant';
 import type { LocalDate } from '@mimark/contracts/common';
 import { env } from '../config/env.js';
 import { fakeAssistant } from './fake-assistant.js';
-import { ASSISTANT_PROMPT } from './prompts/assistant.v1.js';
+import { ASSISTANT_PROMPT } from './prompts/assistant.v2.js';
 
 export interface AssistantInput {
   messages: ModelMessage[];
@@ -38,7 +42,9 @@ export interface AssistantResult {
  * sola vez en las reglas.
  */
 const TOOLS = Object.fromEntries(
-  Object.entries(ASSISTANT_TOOLS).map(([name, t]) => [
+  Object.entries(ASSISTANT_TOOLS)
+    .filter(([name]) => !WEB_ONLY_TOOLS.has(name))
+    .map(([name, t]) => [
     name,
     tool({
       description: t.description,

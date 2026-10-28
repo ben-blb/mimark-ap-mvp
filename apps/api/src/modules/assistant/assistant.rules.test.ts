@@ -10,6 +10,7 @@ describe('pickToolCalls', () => {
     ['schedulePayable con fecha', 'schedulePayable', { id, payOn: '2026-10-30' }, true],
     ['schedulePayable con "viernes"', 'schedulePayable', { id, payOn: 'viernes' }, false],
     ['deleteEverything', 'deleteEverything', {}, false],
+    ['AC-011-03 uploadPayable (solo la web sube)', 'uploadPayable', {}, false],
     [
       'recordPayment completo',
       'recordPayment',

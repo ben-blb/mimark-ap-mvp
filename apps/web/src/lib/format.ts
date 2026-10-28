@@ -35,3 +35,20 @@ export function formatDateTime(iso: string): string {
 export function paymentTermLabel(creditDays: number): string {
   return creditDays === 0 ? 'Contado' : `Crédito ${creditDays} días`;
 }
+
+const shortDateFormat = new Intl.DateTimeFormat('es-MX', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
+/** Fecha de negocio 'YYYY-MM-DD' → "mié, 21 oct" (ejes de gráficas). */
+export function formatShortDate(localDate: string): string {
+  return shortDateFormat.format(new Date(`${localDate}T00:00:00Z`));
+}
+
+/** 15300 → "$15.3 k" (ejes de gráficas; el importe exacto va en el tooltip). */
+export function formatCompactMoney(amount: number): string {
+  return `$${amount.toLocaleString('es-MX', { notation: 'compact', maximumFractionDigits: 1 })}`;
+}

@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
@@ -7,17 +8,33 @@ export function PageHeader(props: { title: string; subtitle?: string; actions?: 
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
       spacing={2}
-      sx={{ mb: 3, justifyContent: 'space-between', alignItems: { sm: 'flex-end' } }}
+      sx={{
+        mb: { xs: 2.5, sm: 4 },
+        justifyContent: 'space-between',
+        alignItems: { sm: 'flex-end' },
+      }}
     >
-      <div>
+      <Box sx={{ minWidth: 0 }}>
         <Typography variant="h1">{props.title}</Typography>
         {props.subtitle && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 640 }}>
             {props.subtitle}
           </Typography>
         )}
-      </div>
-      {props.actions}
+      </Box>
+      {props.actions && (
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            flexShrink: 0,
+            alignItems: 'center',
+            '& > .MuiButton-root': { flex: { xs: 1, sm: 'none' } },
+          }}
+        >
+          {props.actions}
+        </Stack>
+      )}
     </Stack>
   );
 }

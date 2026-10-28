@@ -1,3 +1,4 @@
+import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
 import type { PayableDto, PayableStatus, REVIEW_REASON_CODES } from '@mimark/contracts/payables';
@@ -95,4 +96,25 @@ export const PAYABLE_ACTION_LABELS: Record<PayableDto['allowedActions'][number],
   pay: 'Registrar pago',
   documents: 'Documentos',
   discard: 'Descartar',
+};
+
+export const ASSISTANT_TOOL_LABELS: Record<AssistantToolName, string> = {
+  listSuppliers: 'Consultar proveedores',
+  listPurchaseOrders: 'Consultar órdenes de compra',
+  listPayables: 'Consultar expedientes',
+  getPayable: 'Consultar un expediente',
+  getPayableHistory: 'Consultar historial de un expediente',
+  getDashboard: 'Consultar el tablero',
+  createSupplier: 'Dar de alta un proveedor',
+  updateSupplier: 'Cambiar un proveedor',
+  createPurchaseOrder: 'Registrar una orden de compra',
+  recordReceipt: 'Confirmar recepción de una orden de compra',
+  uploadPayable: 'Subir la factura adjunta',
+  retryPayable: 'Reintentar la extracción',
+  correctFields: 'Corregir campos de un expediente',
+  confirmPayable: 'Confirmar un expediente',
+  schedulePayable: 'Programar un pago',
+  recordPayment: 'Registrar un pago ya hecho',
+  updateDocuments: 'Actualizar documentos de un expediente',
+  discardPayable: 'Descartar un expediente',
 };

@@ -15,7 +15,13 @@ export function ActionBar(props: {
   pending?: PayableAction | null;
 }) {
   return (
-    <Stack direction="row" spacing={1} role="group" aria-label="Acciones del expediente">
+    <Stack
+      direction="row"
+      spacing={1}
+      role="group"
+      aria-label="Acciones del expediente"
+      sx={{ flexWrap: { sm: 'wrap' }, rowGap: 1, '& > .MuiButton-root': { flexShrink: 0 } }}
+    >
       {props.actions.map((action) => (
         <Button
           key={action}

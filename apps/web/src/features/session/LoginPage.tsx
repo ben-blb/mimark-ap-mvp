@@ -5,6 +5,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { BrandMark } from '../../components/BrandMark';
 import { useLocation, useNavigate } from 'react-router';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ROLE_LABELS } from '../../lib/labels';
@@ -27,21 +28,24 @@ export function LoginPage() {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
+    <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', p: 2 }}>
       <Paper
         component="form"
         onSubmit={submit}
         noValidate
-        sx={{ p: 4, width: '100%', maxWidth: 400 }}
+        sx={{ p: { xs: 3, sm: 5 }, width: '100%', maxWidth: 420, borderRadius: '24px' }}
       >
-        <Stack spacing={1}>
-          <Typography variant="overline" color="text.secondary">
-            MIMARK
-          </Typography>
-          <Typography variant="h1">Cuentas por pagar</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ pb: 2 }}>
-            Entra con el código de acceso que te compartieron.
-          </Typography>
+        <Stack spacing={2}>
+          <BrandMark size={52} />
+          <Box sx={{ pb: 1 }}>
+            <Typography variant="overline" color="text.secondary">
+              MIMARK
+            </Typography>
+            <Typography variant="h1">Cuentas por pagar</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+              Entra con el código de acceso que te compartieron.
+            </Typography>
+          </Box>
           <TextField
             label="Código de acceso"
             type="password"
@@ -62,7 +66,13 @@ export function LoginPage() {
             ))}
           </TextField>
           <ErrorAlert error={login.error} />
-          <Button type="submit" variant="contained" size="large" loading={login.isPending}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            loading={login.isPending}
+            sx={{ py: 1.25 }}
+          >
             Entrar
           </Button>
         </Stack>

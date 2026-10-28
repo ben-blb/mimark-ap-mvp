@@ -1,8 +1,9 @@
 import type { DashboardDto } from '@mimark/contracts/dashboard';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+import { setViewport } from '../../test/setup';
 import { DashboardView } from './DashboardView';
 
 const bucket = (count: number, MXN: string, USD = '0.00') => ({ count, amount: { MXN, USD } });
@@ -47,8 +48,8 @@ function setup(over: Partial<DashboardDto> = {}) {
 describe('DashboardView', () => {
   it('AC-006-06 muestra cada importe con su moneda, sin mezclar MXN y USD', () => {
     setup();
-    expect(screen.getByText('$1,500.00 MXN')).toBeInTheDocument();
-    expect(screen.getByText('$100.00 USD')).toBeInTheDocument();
+    expect(screen.getByText('$1,500.00 MXN', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('$100.00 USD', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText('$1,000.00 MXN', { selector: 'p' })).toBeInTheDocument();
     expect(screen.queryByText(/1,600/)).not.toBeInTheDocument();
   });
@@ -86,5 +87,39 @@ describe('DashboardView', () => {
     setup({ items: [], inReview: 0, byPayDay: [] });
     expect(screen.getByText(/No hay expedientes por pagar/)).toBeInTheDocument();
     expect(screen.queryByText(/en revisión o por confirmar/)).not.toBeInTheDocument();
+  });
+
+  it('AC-009-03 la gráfica por día de pago trae su tabla en texto, una columna por moneda', () => {
+    setup();
+    const table = screen.getByRole('table', { name: 'Importe por día de pago' });
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Día de pago', 'Expedientes', 'MXN', 'USD']);
+    expect(within(table).getByText('$1,500.00 MXN')).toBeInTheDocument();
+    expect(within(table).getByText('$100.00 USD')).toBeInTheDocument();
+  });
+
+  it('AC-009-03 la dona reparte lo por pagar en vencidos, dentro del horizonte y después', () => {
+    setup();
+    const table = screen.getByRole('table', { name: 'Expedientes por pagar según vencimiento' });
+    const rows = within(table)
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => r.textContent);
+    expect(rows).toEqual(['Vencidos1', 'Dentro de 15 días1', 'Después1']);
+  });
+
+  it('AC-009-04 en el teléfono los expedientes del horizonte son tarjetas con su enlace', () => {
+    setViewport(375);
+    setup();
+    expect(screen.queryByRole('table', { name: 'Expedientes del horizonte' })).toBeNull();
+    const list = screen.getByRole('list', { name: 'Expedientes del horizonte' });
+    expect(within(list).getByRole('link', { name: 'A-100' })).toHaveAttribute(
+      'href',
+      '/expedientes/p1',
+    );
+    expect(within(list).getByText('Vencido')).toBeInTheDocument();
   });
 });

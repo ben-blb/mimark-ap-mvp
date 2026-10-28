@@ -44,7 +44,8 @@ scripts/             spec-check, bootstrap, hooks de agentes
 4. Cada escritura va con su evento de auditoría en la misma transacción.
 5. Los tipos que comparten web y api viven en `packages/contracts` (Zod). Los errores usan el catálogo de
    `contracts/errors.ts`.
-6. La IA solo extrae datos. Nada que venga de un documento decide un estado ni ejecuta una acción.
+6. La IA solo extrae datos y, en el asistente, propone. Nada que venga de un documento o del modelo decide un
+   estado ni ejecuta una acción: cada escritura la confirma una persona (spec 008, ADR-14).
 7. La web habla con la API solo por `lib/api-client.ts` y muestra el contenido de documentos y de la IA siempre
    como texto.
 8. Nada de secretos ni documentos reales en el repositorio. Los datos de prueba son sintéticos.

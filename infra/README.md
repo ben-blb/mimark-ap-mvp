@@ -61,7 +61,7 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
   `BLOB_READ_WRITE_TOKEN`). Un solo store; los archivos llevan prefijo por entorno.
 - **IA:** `AI_PROVIDER` (`anthropic` o `google`), `AI_MODEL` y la llave del proveedor (`ANTHROPIC_API_KEY` o
   `GOOGLE_GENERATIVE_AI_API_KEY`). En local puedes usar `AI_PROVIDER=fake` sin llaves.
-- **Cuotas:** `DAILY_AI_LIMIT` (por persona, 30) y `DAILY_AI_LIMIT_GLOBAL` (200).
+- **Cuotas:** `DAILY_AI_LIMIT` (por persona, 30) y `DAILY_AI_LIMIT_GLOBAL` (200); turnos del asistente: `DAILY_ASSISTANT_LIMIT` (por persona, 100).
 - Para documentos reales (después del curso) usa una cuenta de pago cuyos términos excluyan entrenar con tus datos.
 
 ## Dónde vive cada secreto

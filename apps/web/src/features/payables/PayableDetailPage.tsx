@@ -1,7 +1,9 @@
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import Alert from '@mui/material/Alert';
+import Link from '@mui/material/Link';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ApiError } from '../../lib/api-client';
 import { REVIEW_REASON_LABELS } from '../../lib/labels';
@@ -45,6 +47,14 @@ export function PayableDetailPage() {
 
   return (
     <>
+      <Link
+        component={RouterLink}
+        to="/expedientes"
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25, mb: 1.5, fontWeight: 500 }}
+      >
+        <ChevronLeft fontSize="small" aria-hidden />
+        Expedientes
+      </Link>
       <ErrorAlert error={retry.error} />
       {newReasons ? (
         <Alert severity="warning" role="alert" sx={{ mb: 2 }}>

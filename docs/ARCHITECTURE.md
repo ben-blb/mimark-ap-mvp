@@ -95,18 +95,23 @@ mueve ningún estado. La tabla `TRANSITIONS` y `allowedActions` viven en `payabl
 - El modelo no recibe datos de la base ni la OC esperada, y no tiene herramientas: lo peor que puede hacer es llenar
   mal un campo, y las reglas lo detectan. El prompt es un archivo versionado; cada auditoría guarda su versión.
 - Modo `AI_PROVIDER=fake` para desarrollo sin llaves (prohibido en producción).
+- **Asistente (spec 008, ADR-14):** `POST /api/assistant/turn` da al modelo un catálogo de herramientas **sin
+  `execute`** (`contracts/assistant.ts`). El modelo solo propone llamadas; la API las valida con el esquema de cada
+  herramienta y no lee ni escribe datos del negocio. La web ejecuta sola las lecturas y muestra las escrituras como
+  propuestas que una persona confirma con un clic, por los mismos endpoints que usan las pantallas. El asistente
+  propone; una persona ejecuta.
 
 | Prueba                     | Defensa estructural                                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | PS-01 contenido ejecutable | React escapa todo; lint prohíbe `dangerouslySetInnerHTML`; el original se sirve con su tipo validado, `nosniff` y `no-store` |
 | PS-02 tamaño excesivo      | Firma de bytes + límite de 4 MB antes de guardar o llamar a la IA                                                            |
-| PS-03 prompt injection     | Sin herramientas ni secretos en contexto; el documento es dato                                                               |
+| PS-03 prompt injection     | Extracción sin herramientas ni secretos; el asistente solo propone y cada escritura exige un clic humano                     |
 | PS-04 autoridad inventada  | Las reglas validan contra la base (recepción), no contra texto libre                                                         |
 | PS-05 acción no permitida  | No existe ningún endpoint de transferencias; `paid` solo lo registra una persona                                             |
 | PS-06 extracción masiva    | El modelo solo ve el archivo actual                                                                                          |
 
 Acceso: código compartido (hash scrypt en `ACCESS_CODE_HASH`) → cookie HMAC HttpOnly de 8 h. Guard global; rutas
-abiertas con `@Public()`. Cuotas contadas en `audit_events` (intentos fallidos por IP; extracciones por día).
+abiertas con `@Public()`. Cuotas contadas en `audit_events` (intentos fallidos por IP; extracciones y turnos del asistente por día).
 
 ## 7. Observabilidad y errores
 

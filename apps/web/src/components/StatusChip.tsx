@@ -4,10 +4,10 @@ import { PAYABLE_STATUS_LABELS } from '../lib/labels';
 
 const COLORS: Record<PayableStatus, ChipProps['color']> = {
   uploaded: 'default',
-  processing: 'default',
+  processing: 'info',
   requires_review: 'warning',
   pending_confirmation: 'info',
-  confirmed: 'success',
+  confirmed: 'primary',
   scheduled: 'success',
   paid: 'success',
   out_of_scope: 'default',

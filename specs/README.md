@@ -56,5 +56,6 @@ Sin Claude Code se siguen los mismos pasos a mano: están escritos en `.claude/s
 | [009 Interfaz](009-interfaz.md)                         | Tema claro/oscuro, gráficas y responsive                   | Usabilidad (extensión)               |
 | [010 Identidad visual](010-identidad-visual.md)         | Sistema "libro mayor" y asistente con componentes y SSE    | Usabilidad (extensión)               |
 | [011 Flujo de factura](011-asistente-flujo-factura.md)  | Subida en un paso, alta guiada y conversaciones guardadas  | Extensión (modifica 008)             |
+| [012 Tutorial](012-tutorial.md)                         | Recorrido guiado de bienvenida, repetible                  | Usabilidad (extensión)               |
 
 El orden es el de implementación: cada spec depende de las anteriores (`depende_de`).

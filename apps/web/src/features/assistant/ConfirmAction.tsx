@@ -122,7 +122,10 @@ export function summarize(call: AssistantToolCall, payable?: PayableDto): Summar
         changes: Object.entries(input)
           .filter(([key]) => key !== 'id')
           .map(([key, value]) => ({
-            label: FIELD_LABELS[key as keyof typeof FIELD_LABELS] ?? key,
+            label:
+              FIELD_LABELS[
+                (key === 'poNumber' ? 'purchaseOrderNumber' : key) as keyof typeof FIELD_LABELS
+              ] ?? key,
             before: text(payable?.fields[key as keyof PayableDto['fields']]),
             after: text(value),
           })),

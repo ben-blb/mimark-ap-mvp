@@ -1,7 +1,7 @@
 ---
 id: '011'
 titulo: Asistente · factura en un paso, alta guiada y conversaciones guardadas
-estado: en-progreso
+estado: hecha
 depende_de: ['010']
 requisitos: Extensión posterior al SRS; modifica AC-008-08 y el alcance de 008; respeta la regla 6
 ---
@@ -168,7 +168,7 @@ turnos (`assistant.answered`) no cambia.
 - [x] 4. Contratos `conversations.ts` y su prueba (AC-011-14).
 - [x] 5. Migración y módulo `conversations` con `conversations.int.test.ts` (AC-011-11, 12, 13, 15).
 - [x] 6. Web: `conversations.api.ts`, lista, autoguardado y restauración con pruebas (AC-011-16, 17, 18).
-- [ ] 7. Verificación manual (AC-011-10) y bitácora.
+- [x] 7. Verificación manual (AC-011-10) y bitácora.
 
 ## Fuera de alcance y decisiones
 
@@ -190,3 +190,6 @@ turnos (`assistant.answered`) no cambia.
 - 2026-10-28 · Las decisiones de las propuestas se guardan en una columna `decisions Json` de `conversations` (no en cada mensaje): se escriben junto con la conversación completa y mantienen `conversation_messages.payload` igual al `AssistantMessage` del contrato. Las lecturas (`runs`) no se guardan: se reconstruyen del mensaje `tool`; si el resultado fue recortado por el tope, la fila se ve sin su componente.
 - 2026-10-28 · `configureApp` sube el límite del JSON a 4 MB: el cuerpo por defecto (100 KB) no alcanzaba para conversaciones con resultados de herramientas de hasta 20 000 caracteres.
 - 2026-10-28 · `⌘K` dentro de `/asistente/...` se queda en la conversación abierta; fuera del asistente abre una nueva.
+- 2026-10-28 · AC-011-10 verificado en local (`pnpm dev`, `AI_PROVIDER=anthropic`, `claude-haiku-5-5`, navegador integrado; el PDF se adjuntó con `DataTransfer` por JavaScript). Factura sintética de `infra/probador` con proveedor «Herrajes del Pacífico» (RFC `HPA110203QW4`) y OC `OC-9901` inexistentes. Un solo Enter la sube sin tarjeta; el asistente consulta proveedores y OC, no los encuentra y pregunta días de crédito y fecha de la OC. Propone y, al confirmar una por una, queda: proveedor → OC → `correctFields { poNumber }` → recepción → `correctFields` otra vez; el expediente termina en `pending_confirmation`. Reabrir la conversación desde la lista restaura todo con las propuestas como "Hecho".
+- 2026-10-28 · Hallazgo: registrar la recepción por sí sola no reevalúa el expediente (el modelo lo había dado por hecho). El prompt `assistant@2` ahora pide `correctFields { poNumber }` también tras la recepción. La tarjeta de `correctFields` mostraba `poNumber`; ahora dice "Orden de compra".
+- 2026-10-28 · Pendiente menor: la tarjeta de `createPurchaseOrder` muestra el id del proveedor, no su nombre.

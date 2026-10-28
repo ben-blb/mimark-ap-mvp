@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Id } from './common.js';
+import { ErrorCode } from './errors.js';
 import { DashboardQuery } from './dashboard.js';
 import {
   ALLOWED_MIME_TYPES,
@@ -181,3 +182,14 @@ export const AssistantTurnOutput = z.object({
   toolCalls: z.array(AssistantToolCall),
 });
 export type AssistantTurnOutput = z.infer<typeof AssistantTurnOutput>;
+
+/**
+ * Eventos de `POST /assistant/stream` (spec 010, AC-010-06), uno por línea `data:` del SSE: el texto llega en
+ * trozos y el turno termina con `done` (mismo contenido que `/turn`) o con `error`.
+ */
+export const AssistantStreamEvent = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('delta'), text: z.string() }),
+  z.object({ type: z.literal('done') }).extend(AssistantTurnOutput.shape),
+  z.object({ type: z.literal('error'), code: ErrorCode, message: z.string() }),
+]);
+export type AssistantStreamEvent = z.infer<typeof AssistantStreamEvent>;

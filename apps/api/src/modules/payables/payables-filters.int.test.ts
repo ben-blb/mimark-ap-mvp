@@ -106,6 +106,17 @@ describe('expedientes: filtros de la lista (spec 006)', () => {
     expect(await ids(`status=confirmed&due=overdue&invoiceNumber=A-1`)).toEqual([a]);
   });
 
+  it('AC-010-05 cada item trae su vencimiento, o null si aún no se calcula', async () => {
+    const items = (await agent.get('/api/payables').expect(200)).body.items as {
+      id: string;
+      dueOn: string | null;
+    }[];
+    const dueOf = (id: string) => items.find((i) => i.id === id)?.dueOn;
+    expect(dueOf(a)).toBe(addDays(today, -2));
+    expect(dueOf(c)).toBe(addDays(today, 12));
+    expect(dueOf(d)).toBeNull();
+  });
+
   it('AC-006-04 rechaza un estado o un vencimiento que no existen', async () => {
     await agent.get('/api/payables?status=confirmed,volando').expect(400);
     await agent.get('/api/payables?due=90').expect(400);

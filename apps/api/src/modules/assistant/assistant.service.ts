@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AssistantTurnInput, AssistantTurnOutput } from '@mimark/contracts/assistant';
+import type { LocalDate } from '@mimark/contracts/common';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { startOfLocalDay, toLocalDate } from '../../common/dates.js';
@@ -22,6 +23,46 @@ export class AssistantService {
   ) {}
 
   async turn(input: AssistantTurnInput, ctx: Ctx): Promise<AssistantTurnOutput> {
+    const today = await this.checkQuota(ctx);
+    let result: AssistantResult;
+    try {
+      result = await this.client.turn(this.request(input, today));
+    } catch {
+      throw unavailable();
+    }
+    return this.finish(result, ctx);
+  }
+
+  /**
+   * Igual que `turn`, con el texto en trozos (spec 010, AC-010-06). La cuota se revisa antes de llamar a
+   * `onDelta`, así que un 429 todavía sale como JSON. Si la persona se va (`signal`), el turno se audita igual.
+   */
+  async stream(
+    input: AssistantTurnInput,
+    ctx: Ctx,
+    signal: AbortSignal,
+    onDelta: (text: string) => void,
+  ): Promise<AssistantTurnOutput> {
+    const today = await this.checkQuota(ctx);
+    const started = Date.now();
+    let result: AssistantResult;
+    try {
+      result = await this.client.stream(this.request(input, today), signal, onDelta);
+    } catch {
+      if (!signal.aborted) throw unavailable();
+      result = {
+        text: '',
+        toolCalls: [],
+        model: 'aborted',
+        promptVersion: '',
+        ms: Date.now() - started,
+      };
+    }
+    return this.finish(result, ctx);
+  }
+
+  /** Revisa la cuota diaria de la persona y devuelve "hoy" en la zona del negocio. */
+  private async checkQuota(ctx: Ctx): Promise<LocalDate> {
     const today = toLocalDate(new Date(), env.BUSINESS_TZ);
     const used = await this.audit.countSince({
       action: TURN_ACTION,
@@ -29,18 +70,15 @@ export class AssistantService {
       since: startOfLocalDay(today, env.BUSINESS_TZ),
     });
     checkAssistantQuota(used, env.DAILY_ASSISTANT_LIMIT);
+    return today;
+  }
 
-    let result: AssistantResult;
-    try {
-      result = await this.client.turn({
-        messages: toModelMessages(input.messages),
-        attachment: input.attachment,
-        today,
-      });
-    } catch {
-      throw new AppError('AI_UNAVAILABLE', 'El asistente no está disponible. Intenta de nuevo.');
-    }
+  private request(input: AssistantTurnInput, today: LocalDate) {
+    return { messages: toModelMessages(input.messages), attachment: input.attachment, today };
+  }
 
+  /** Filtra las llamadas con el catálogo y audita el turno. */
+  private async finish(result: AssistantResult, ctx: Ctx): Promise<AssistantTurnOutput> {
     const toolCalls = pickToolCalls(result.toolCalls);
     // Sin el texto de la conversación: puede traer datos de documentos.
     await this.audit.log({
@@ -57,3 +95,6 @@ export class AssistantService {
     return { text: result.text, toolCalls };
   }
 }
+
+const unavailable = () =>
+  new AppError('AI_UNAVAILABLE', 'El asistente no está disponible. Intenta de nuevo.');

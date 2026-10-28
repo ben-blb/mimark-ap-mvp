@@ -168,10 +168,7 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader
-        title="Asistente"
-        subtitle="Pregunta o pide operaciones en español. Lo que cambia datos siempre te lo pide confirmar."
-      />
+      <PageHeader title="Asistente" />
       <Stack spacing={2} role="log" aria-live="polite" sx={{ mb: 2, minHeight: { md: '40vh' } }}>
         {messages.length === 0 && <EmptyChat onPick={setDraft} />}
         {messages.map((message, index) => {

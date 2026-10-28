@@ -1,11 +1,8 @@
 import type { ExtractedField } from '@mimark/contracts/extraction';
 import type { PayableDto } from '@mimark/contracts/payables';
-import FactCheckOutlined from '@mui/icons-material/FactCheckOutlined';
-import PaymentsOutlined from '@mui/icons-material/PaymentsOutlined';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
@@ -55,29 +52,22 @@ function fieldValue(payable: PayableDto, field: ExtractedField): string | null {
   }
 }
 
-export function Section(props: { title: string; icon?: ReactNode; children: ReactNode }) {
+/** Sección del expediente: título y contenido sobre el fondo, separada por un divisor (sin tarjeta). */
+export function Section(props: { title: string; children: ReactNode }) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 2.5 } }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
-        {props.icon && (
-          <Box
-            aria-hidden
-            sx={{ display: 'flex', color: 'text.secondary', '& svg': { fontSize: 20 } }}
-          >
-            {props.icon}
-          </Box>
-        )}
-        <Typography variant="h2">{props.title}</Typography>
-      </Stack>
+    <Box component="section" sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Typography variant="h2" sx={{ mb: 1.5 }}>
+        {props.title}
+      </Typography>
       {props.children}
-    </Paper>
+    </Box>
   );
 }
 
 /** Campos extraídos: dudoso o faltante con fondo tonal y texto («Dudoso», «Falta»), AC-009-05. */
 export function ExtractedFields({ payable }: { payable: PayableDto }) {
   return (
-    <Section title="Datos extraídos" icon={<FactCheckOutlined />}>
+    <Section title="Datos extraídos">
       <Box component="dl" aria-label="Campos extraídos" sx={{ m: 0 }}>
         {FIELD_ORDER.map((field) => {
           const value = fieldValue(payable, field);
@@ -94,7 +84,7 @@ export function ExtractedFields({ payable }: { payable: PayableDto }) {
                 py: 1.25,
                 px: 1.25,
                 mx: -1.25,
-                borderRadius: '10px',
+                borderRadius: '8px',
                 '& + &': { borderTop: 1, borderColor: 'divider' },
                 ...(flagged ? tonal(theme, 'warning', 0.1) : {}),
               })}
@@ -191,7 +181,7 @@ export function PaymentCard({ payable }: { payable: PayableDto }) {
   const { schedule, payment, documents, discardReason } = payable;
   if (!schedule && !payment && !documents && !discardReason) return null;
   return (
-    <Section title="Pago" icon={<PaymentsOutlined />}>
+    <Section title="Pago">
       {schedule && (
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
@@ -206,12 +196,12 @@ export function PaymentCard({ payable }: { payable: PayableDto }) {
               gap: 1.5,
             }}
           >
-            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(118 118 128 / 0.08)' }}>
+            <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'background.surface2' }}>
               <Typography variant="body2">
                 Pago sugerido: {formatDate(schedule.suggestedPayOn)}
               </Typography>
             </Box>
-            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(118 118 128 / 0.08)' }}>
+            <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'background.surface2' }}>
               <Typography variant="body2">
                 Programado:{' '}
                 {schedule.scheduledPayOn ? formatDate(schedule.scheduledPayOn) : 'sin programar'}

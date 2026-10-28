@@ -3,91 +3,98 @@ import AddOutlined from '@mui/icons-material/AddOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { useDeferredValue, useState } from 'react';
 import { MONO } from '../../app/theme';
 import { CardField } from '../../components/CardField';
+import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
 import { ErrorAlert } from '../../components/ErrorAlert';
+import { Money } from '../../components/Money';
 import { PageHeader } from '../../components/PageHeader';
-import { ResponsiveList } from '../../components/ResponsiveList';
-import { formatDate, formatMoney } from '../../lib/format';
+import { StatusDot } from '../../components/StatusDot';
+import { formatDay } from '../../lib/format';
 import { PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
 import { PurchaseOrderDialog } from './PurchaseOrderDialog';
 import { ReceiptDialog } from './ReceiptDialog';
 import { usePurchaseOrders } from './purchase-orders.api';
 
-type Status = PurchaseOrderListQuery['status'];
-type Receipt = NonNullable<PurchaseOrderListQuery['receipt']> | 'all';
 type Dialog =
   { kind: 'edit'; order?: PurchaseOrderDto } | { kind: 'receipt'; order: PurchaseOrderDto } | null;
 
-function ReceiptChip({ order }: { order: PurchaseOrderDto }) {
+/** Un solo filtro (AC-010-04): estado y recepción combinados en un select. */
+const VIEWS = {
+  open: { label: 'Abiertas', query: { status: 'open' } },
+  openPending: { label: 'Abiertas · sin recepción', query: { status: 'open', receipt: 'pending' } },
+  openReceived: { label: 'Abiertas · recibidas', query: { status: 'open', receipt: 'received' } },
+  cancelled: { label: 'Canceladas', query: { status: 'cancelled' } },
+  all: { label: 'Todas', query: { status: 'all' } },
+} satisfies Record<string, { label: string; query: Partial<PurchaseOrderListQuery> }>;
+type View = keyof typeof VIEWS;
+
+/** Recepción: punto + fecha corta, y quién recibió en texto terciario (AC-010-04). */
+function Receipt({ order }: { order: PurchaseOrderDto }) {
+  if (!order.receivedOn) return <StatusDot tone="warning">Pendiente</StatusDot>;
   return (
-    <Chip
-      size="small"
-      color={order.receiptStatus === 'received' ? 'success' : 'default'}
-      label={
-        order.receivedOn
-          ? `Recibida ${formatDate(order.receivedOn)} por ${order.receivedBy ?? ''}`
-          : 'Pendiente'
-      }
-      sx={{ maxWidth: '100%' }}
-    />
+    <Box>
+      <StatusDot tone="success">{formatDay(order.receivedOn)}</StatusDot>
+      {order.receivedBy && (
+        <Typography
+          variant="caption"
+          component="div"
+          sx={{ color: 'text.tertiary', pl: 1.75, lineHeight: 1.2 }}
+        >
+          {order.receivedBy}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
 function OrderActions(props: { order: PurchaseOrderDto; onOpen: (dialog: Dialog) => void }) {
   const { order } = props;
   return (
-    <>
+    <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
       {order.status === 'open' && order.receiptStatus === 'pending' && (
         <Button size="small" onClick={() => props.onOpen({ kind: 'receipt', order })}>
           Confirmar recepción
         </Button>
       )}
-      <Button size="small" onClick={() => props.onOpen({ kind: 'edit', order })}>
+      <Button size="small" color="inherit" onClick={() => props.onOpen({ kind: 'edit', order })}>
         Editar
       </Button>
-    </>
+    </Stack>
   );
 }
 
 export function PurchaseOrdersPage() {
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<Status>('open');
-  const [receipt, setReceipt] = useState<Receipt>('all');
+  const [view, setView] = useState<View>('open');
   const [dialog, setDialog] = useState<Dialog>(null);
-  const orders = usePurchaseOrders({
-    search: useDeferredValue(search),
-    status,
-    receipt: receipt === 'all' ? undefined : receipt,
-  });
+  const orders = usePurchaseOrders({ search: useDeferredValue(search), ...VIEWS[view].query });
+  // La columna Estado solo informa cuando la vista mezcla abiertas y canceladas.
+  const showStatus = view === 'all';
 
   return (
     <>
       <PageHeader
         title="Órdenes de compra"
-        subtitle="Cada factura se valida contra su orden de compra y su recepción."
         actions={
           <Button
             variant="contained"
             startIcon={<AddOutlined />}
             onClick={() => setDialog({ kind: 'edit' })}
           >
-            Nueva OC
+            Nueva orden
           </Button>
         }
       />
 
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mb: 2 }}>
         <TextField
           placeholder="Buscar por folio o proveedor"
           value={search}
@@ -104,37 +111,28 @@ export function PurchaseOrdersPage() {
           }}
           sx={{ maxWidth: { md: 360 } }}
         />
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          aria-label="Recepción"
-          value={receipt}
-          onChange={(_, value: Receipt | null) => value && setReceipt(value)}
+        <TextField
+          select
+          value={view}
+          onChange={(e) => setView(e.target.value as View)}
+          slotProps={{ select: { native: true }, htmlInput: { 'aria-label': 'Mostrar' } }}
+          sx={{ width: { md: 240 }, flexShrink: 0 }}
         >
-          <ToggleButton value="all">Toda recepción</ToggleButton>
-          <ToggleButton value="pending">Pendientes</ToggleButton>
-          <ToggleButton value="received">Recibidas</ToggleButton>
-        </ToggleButtonGroup>
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          aria-label="Estado"
-          value={status}
-          onChange={(_, value: Status | null) => value && setStatus(value)}
-        >
-          <ToggleButton value="open">Abiertas</ToggleButton>
-          <ToggleButton value="cancelled">Canceladas</ToggleButton>
-          <ToggleButton value="all">Todas</ToggleButton>
-        </ToggleButtonGroup>
+          {Object.entries(VIEWS).map(([value, v]) => (
+            <option key={value} value={value}>
+              {v.label}
+            </option>
+          ))}
+        </TextField>
       </Stack>
 
       <ErrorAlert error={orders.error} />
-      <ResponsiveList
+      <DataTable
         aria-label="Órdenes de compra"
         items={orders.data?.items}
         loading={orders.isFetching}
         getKey={(order) => order.id}
-        empty="No hay órdenes con este filtro. Registra una con «Nueva OC»."
+        empty="No hay órdenes con este filtro. Registra una con «Nueva orden»."
         head={
           <TableRow>
             <TableCell>Folio</TableCell>
@@ -142,55 +140,63 @@ export function PurchaseOrdersPage() {
             <TableCell>Fecha</TableCell>
             <TableCell align="right">Total</TableCell>
             <TableCell>Recepción</TableCell>
-            <TableCell>Estado</TableCell>
+            {showStatus && <TableCell>Estado</TableCell>}
             <TableCell align="right" />
           </TableRow>
         }
         row={(order) => (
-          <TableRow key={order.id} hover>
-            <TableCell sx={{ fontFamily: MONO, fontWeight: 600 }}>{order.number}</TableCell>
-            <TableCell>{order.supplier.name}</TableCell>
-            <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(order.issuedOn)}</TableCell>
+          <DataRow
+            key={order.id}
+            onOpen={() => setDialog({ kind: 'edit', order })}
+            label={`${order.number} ${order.supplier.name}`}
+          >
             <TableCell
-              align="right"
-              sx={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}
+              sx={{
+                fontFamily: MONO,
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+              }}
             >
-              {formatMoney(order.total, order.currency)}
+              {order.number}
             </TableCell>
-            <TableCell>
-              <ReceiptChip order={order} />
+            <TableCell sx={{ minWidth: 220 }}>
+              <Ellipsis maxWidth={320}>{order.supplier.name}</Ellipsis>
             </TableCell>
-            <TableCell>{PURCHASE_ORDER_STATUS_LABELS[order.status]}</TableCell>
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDay(order.issuedOn)}</TableCell>
+            <TableCell align="right">
+              <Money amount={order.total} currency={order.currency} />
+            </TableCell>
+            <TableCell sx={{ py: 0.5 }}>
+              <Receipt order={order} />
+            </TableCell>
+            {showStatus && <TableCell>{PURCHASE_ORDER_STATUS_LABELS[order.status]}</TableCell>}
             <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
               <OrderActions order={order} onOpen={setDialog} />
             </TableCell>
-          </TableRow>
+          </DataRow>
         )}
         card={(order) => (
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontFamily: MONO, fontWeight: 600 }}>{order.number}</Typography>
+                <Typography sx={{ fontFamily: MONO, fontWeight: 500 }}>{order.number}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {order.supplier.name}
                 </Typography>
               </Box>
-              <Typography
-                sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
-              >
-                {formatMoney(order.total, order.currency)}
-              </Typography>
+              <Money amount={order.total} currency={order.currency} />
             </Stack>
             <Stack direction="row" spacing={3}>
-              <CardField label="Fecha">{formatDate(order.issuedOn)}</CardField>
-              <CardField label="Estado">{PURCHASE_ORDER_STATUS_LABELS[order.status]}</CardField>
+              <CardField label="Fecha">{formatDay(order.issuedOn)}</CardField>
+              <CardField label="Recepción">
+                <Receipt order={order} />
+              </CardField>
+              {showStatus && (
+                <CardField label="Estado">{PURCHASE_ORDER_STATUS_LABELS[order.status]}</CardField>
+              )}
             </Stack>
-            <Box>
-              <ReceiptChip order={order} />
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-              <OrderActions order={order} onOpen={setDialog} />
-            </Stack>
+            <OrderActions order={order} onOpen={setDialog} />
           </Stack>
         )}
       />

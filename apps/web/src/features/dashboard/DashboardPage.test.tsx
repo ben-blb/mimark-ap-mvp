@@ -62,14 +62,14 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('A-100')).toBeInTheDocument();
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/dashboard?horizon=15');
 
-    await user.click(screen.getByRole('button', { name: '30 días' }));
+    await user.click(screen.getByRole('tab', { name: '30 días' }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith('/api/dashboard?horizon=30', expect.anything()),
     );
 
     // Mientras llega el nuevo se sigue viendo el anterior: no se vacía ni parpadea.
     expect(screen.getByText('A-100')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '30 días' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('tab', { name: '30 días' })).toHaveAttribute('aria-selected', 'true');
 
     slow.resolve(json(dto(30, 'B-200')));
     expect(await screen.findByText('B-200')).toBeInTheDocument();

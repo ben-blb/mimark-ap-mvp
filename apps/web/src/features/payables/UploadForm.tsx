@@ -89,7 +89,7 @@ export function UploadForm(props: {
             alignItems: 'center',
             gap: 0.75,
             p: 3,
-            borderRadius: '16px',
+            borderRadius: '8px',
             border: '1.5px dashed',
             borderColor: dragging ? 'primary.main' : 'divider',
             textAlign: 'center',

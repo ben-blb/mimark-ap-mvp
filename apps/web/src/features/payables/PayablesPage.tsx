@@ -11,8 +11,6 @@ import Stack from '@mui/material/Stack';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { useDeferredValue, useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router';
@@ -20,15 +18,16 @@ import { MONO } from '../../app/theme';
 import { CardField } from '../../components/CardField';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { PageHeader } from '../../components/PageHeader';
-import { ResponsiveList } from '../../components/ResponsiveList';
-import { StatusChip } from '../../components/StatusChip';
-import { formatDateTime, formatMoney } from '../../lib/format';
+import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
+import { Money } from '../../components/Money';
+import { PayableStatusDot } from '../../components/PayableStatusDot';
+import { formatDateTime, formatDay, formatMoney } from '../../lib/format';
 import { useSuppliers } from '../suppliers/suppliers.api';
 import { usePayables } from './payables.api';
 import { UploadDialog } from './UploadDialog';
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'Todos' },
+  { value: '', label: 'Todos los estados' },
   { value: 'pending_confirmation', label: 'Por confirmar' },
   { value: 'requires_review', label: 'En revisión' },
   { value: 'requires_review,pending_confirmation', label: 'Por revisar' },
@@ -38,12 +37,36 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 ];
 
 const DUE_FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'Cualquiera' },
+  { value: '', label: 'Cualquier vencimiento' },
   { value: 'overdue', label: 'Vencidos' },
   { value: '7', label: '7 días' },
   { value: '15', label: '15 días' },
   { value: '30', label: '30 días' },
 ];
+
+/** Un filtro como select nativo compacto (no grupos de pastillas). */
+function FilterSelect(props: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <TextField
+      select
+      value={props.value}
+      onChange={(e) => props.onChange(e.target.value)}
+      slotProps={{ select: { native: true }, htmlInput: { 'aria-label': props.label } }}
+      sx={{ width: { sm: 200 }, flexShrink: 0 }}
+    >
+      {props.options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </TextField>
+  );
+}
 
 /** Los filtros viven en la URL: así los enlaces del tablero (y recargar la página) los conservan. */
 type FilterKey = 'status' | 'search' | 'supplierId' | 'poNumber' | 'invoiceNumber' | 'due';
@@ -84,7 +107,6 @@ export function PayablesPage() {
     <>
       <PageHeader
         title="Expedientes"
-        subtitle="Cada documento de proveedor se lee, se valida contra su orden de compra y espera tu confirmación."
         actions={
           <Button
             variant="contained"
@@ -97,7 +119,7 @@ export function PayablesPage() {
       />
 
       <Stack spacing={1.5} sx={{ mb: 2.5 }}>
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <TextField
             placeholder="Buscar por proveedor, factura, OC o archivo"
             value={get('search')}
@@ -112,7 +134,19 @@ export function PayablesPage() {
                 ),
               },
             }}
-            sx={{ maxWidth: { md: 480 } }}
+            sx={{ maxWidth: { md: 360 } }}
+          />
+          <FilterSelect
+            label="Estado"
+            value={get('status')}
+            options={STATUS_FILTERS}
+            onChange={(v) => set('status', v)}
+          />
+          <FilterSelect
+            label="Vencimiento"
+            value={get('due')}
+            options={DUE_FILTERS}
+            onChange={(v) => set('due', v)}
           />
           <Button
             variant="outlined"
@@ -121,7 +155,7 @@ export function PayablesPage() {
             onClick={() => setMoreFilters((open) => !open)}
             sx={{ flexShrink: 0 }}
           >
-            Filtros
+            Más filtros
           </Button>
         </Stack>
         <Collapse in={moreFilters}>
@@ -153,38 +187,10 @@ export function PayablesPage() {
             />
           </Stack>
         </Collapse>
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5}>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            aria-label="Estado"
-            value={get('status')}
-            onChange={(_, value: string | null) => value !== null && set('status', value)}
-          >
-            {STATUS_FILTERS.map((f) => (
-              <ToggleButton key={f.value} value={f.value}>
-                {f.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            aria-label="Vencimiento"
-            value={get('due')}
-            onChange={(_, value: string | null) => value !== null && set('due', value)}
-          >
-            {DUE_FILTERS.map((f) => (
-              <ToggleButton key={f.value} value={f.value}>
-                {f.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Stack>
       </Stack>
 
       <ErrorAlert error={payables.error} />
-      <ResponsiveList
+      <DataTable
         aria-label="Expedientes"
         items={payables.data?.items}
         loading={payables.isFetching}
@@ -202,44 +208,35 @@ export function PayablesPage() {
           </TableRow>
         }
         row={(p) => (
-          <TableRow key={p.id} hover>
+          <DataRow key={p.id} to={`/expedientes/${p.id}`} label={p.fileName}>
             <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}>
-              {formatDateTime(p.createdAt)}
+              {formatDay(p.createdAt.slice(0, 10))}
             </TableCell>
-            <TableCell sx={{ minWidth: 180, maxWidth: 260, overflowWrap: 'anywhere' }}>
-              <Link component={RouterLink} to={`/expedientes/${p.id}`} sx={{ fontWeight: 600 }}>
-                {p.fileName}
+            <TableCell>
+              <Link
+                component={RouterLink}
+                to={`/expedientes/${p.id}`}
+                sx={{ color: 'text.primary', display: 'block' }}
+              >
+                <Ellipsis maxWidth={220}>{p.fileName}</Ellipsis>
               </Link>
             </TableCell>
-            <TableCell sx={{ maxWidth: 280 }}>
-              <Box
-                sx={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-                title={p.supplierName ?? undefined}
-              >
-                {p.supplierName ?? '—'}
-              </Box>
+            <TableCell sx={{ minWidth: 200 }}>
+              <Ellipsis>{p.supplierName ?? '—'}</Ellipsis>
             </TableCell>
-            <TableCell sx={{ fontFamily: MONO, whiteSpace: 'nowrap' }}>
+            <TableCell sx={{ fontFamily: MONO, fontWeight: 500, whiteSpace: 'nowrap' }}>
               {p.invoiceNumber ?? '—'}
             </TableCell>
             <TableCell sx={{ fontFamily: MONO, whiteSpace: 'nowrap' }}>
               {p.poNumber ?? '—'}
             </TableCell>
-            <TableCell
-              align="right"
-              sx={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}
-            >
-              {p.total && p.currency ? formatMoney(p.total, p.currency) : '—'}
+            <TableCell align="right">
+              {p.total && p.currency ? <Money amount={p.total} currency={p.currency} /> : '—'}
             </TableCell>
             <TableCell>
-              <StatusChip status={p.status} />
+              <PayableStatusDot status={p.status} />
             </TableCell>
-          </TableRow>
+          </DataRow>
         )}
         card={(p) => (
           <Stack spacing={1.5}>
@@ -265,7 +262,7 @@ export function PayablesPage() {
                   {p.supplierName ?? '—'}
                 </Typography>
               </Box>
-              <StatusChip status={p.status} />
+              <PayableStatusDot status={p.status} />
             </Stack>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
               <CardField label="Factura">{p.invoiceNumber ?? '—'}</CardField>

@@ -5,7 +5,6 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { BrandMark } from '../../components/BrandMark';
 import { useLocation, useNavigate } from 'react-router';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ROLE_LABELS } from '../../lib/labels';
@@ -33,17 +32,13 @@ export function LoginPage() {
         component="form"
         onSubmit={submit}
         noValidate
-        sx={{ p: { xs: 3, sm: 5 }, width: '100%', maxWidth: 420, borderRadius: '24px' }}
+        sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 380 }}
       >
         <Stack spacing={2}>
-          <BrandMark size={52} />
           <Box sx={{ pb: 1 }}>
-            <Typography variant="overline" color="text.secondary">
-              MIMARK
-            </Typography>
-            <Typography variant="h1">Cuentas por pagar</Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-              Entra con el código de acceso que te compartieron.
+            <Typography sx={{ fontWeight: 600, letterSpacing: '0.04em' }}>MIMARK</Typography>
+            <Typography variant="h1" component="p" sx={{ color: 'text.tertiary', fontWeight: 400 }}>
+              Cuentas por pagar
             </Typography>
           </Box>
           <TextField

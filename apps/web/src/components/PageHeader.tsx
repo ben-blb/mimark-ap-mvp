@@ -1,37 +1,25 @@
-import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-export function PageHeader(props: { title: string; subtitle?: string; actions?: ReactNode }) {
+/** Título de página sin subtítulo (DESIGN.md) y, a la derecha, sus acciones. */
+export function PageHeader(props: { title: string; actions?: ReactNode }) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
+      direction="row"
       spacing={2}
       sx={{
-        mb: { xs: 2.5, sm: 4 },
+        mb: { xs: 2.5, sm: 3 },
+        minHeight: 32,
         justifyContent: 'space-between',
-        alignItems: { sm: 'flex-end' },
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        rowGap: 1.5,
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h1">{props.title}</Typography>
-        {props.subtitle && (
-          <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 640 }}>
-            {props.subtitle}
-          </Typography>
-        )}
-      </Box>
+      <Typography variant="h1">{props.title}</Typography>
       {props.actions && (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            flexShrink: 0,
-            alignItems: 'center',
-            '& > .MuiButton-root': { flex: { xs: 1, sm: 'none' } },
-          }}
-        >
+        <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: 'center' }}>
           {props.actions}
         </Stack>
       )}

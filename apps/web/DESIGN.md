@@ -5,7 +5,7 @@
 
 Lo usan 2–3 personas de administración varias veces al día para decidir qué pagar los miércoles y viernes. Es una
 herramienta de oficio, no una landing: densa, tranquila y exacta. Spec: `specs/010-identidad-visual.md`. Todo lo de
-aquí está implementado en `src/app/theme.ts`; la UI no define colores, fuentes ni radios sueltos.
+aquí está implementado en `src/app/tokens.ts` (colores) y `src/app/theme.ts`; la UI no define colores, fuentes ni radios sueltos.
 
 ## Tokens
 
@@ -52,14 +52,14 @@ aire de formulario y de oficina sin ser frío, sus cifras tabulares son claras (
 Mono es de la misma familia, así que un folio junto a un nombre no salta. Se sirve con `@fontsource` (pesos 400,
 500 y 600), sin peticiones a terceros.
 
-| Paso | Uso                                                           |
-| ---- | ------------------------------------------------------------- |
+| Paso | Uso                                                            |
+| ---- | -------------------------------------------------------------- |
 | 12   | Etiquetas de la franja, sufijo de moneda, encabezados de tabla |
-| 13   | Celdas de tabla, folios, metadatos                            |
-| 14   | Cuerpo, botones, navegación                                   |
-| 16   | Títulos de sección (h2)                                       |
-| 20   | H1 de página                                                  |
-| 28   | Cifras de la franja de resumen                                |
+| 13   | Celdas de tabla, folios, metadatos                             |
+| 14   | Cuerpo, botones, navegación                                    |
+| 16   | Títulos de sección (h2)                                        |
+| 20   | H1 de página                                                   |
+| 28   | Cifras de la franja de resumen                                 |
 
 - Todos los montos con `font-variant-numeric: tabular-nums`, alineados a la derecha (`<Money>`).
 - Mayúsculas con tracking **solo** en encabezados de tabla.

@@ -36,38 +36,36 @@ function setup(entry: string) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('PayablesPage: filtros en la URL', () => {
-  it('AC-006-04 un enlace con filtros (como el del tablero) los aplica a la consulta y a los botones', async () => {
+  it('AC-006-04 un enlace con filtros (como el del tablero) los aplica a la consulta y a los filtros', async () => {
     const { lastQuery } = setup('/expedientes?status=requires_review,pending_confirmation');
     await waitFor(() =>
       expect(lastQuery().get('status')).toBe('requires_review,pending_confirmation'),
     );
-    expect(screen.getByRole('button', { name: 'Por revisar' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    expect(screen.getByRole('combobox', { name: 'Estado' })).toHaveValue(
+      'requires_review,pending_confirmation',
     );
-    expect(screen.getByRole('button', { name: 'Todos' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('AC-006-04 los filtros se combinan: estado y vencimiento de la URL viajan juntos', async () => {
     const { lastQuery } = setup('/expedientes?status=confirmed,scheduled&due=15');
     await waitFor(() => expect(lastQuery().get('due')).toBe('15'));
     expect(lastQuery().get('status')).toBe('confirmed,scheduled');
-    expect(screen.getByRole('button', { name: 'Por pagar' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    expect(screen.getByRole('button', { name: '15 días' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('combobox', { name: 'Estado' })).toHaveValue('confirmed,scheduled');
+    expect(screen.getByRole('combobox', { name: 'Vencimiento' })).toHaveValue('15');
   });
 
   it('AC-006-04 cambiar un filtro conserva los demás y vuelve a consultar', async () => {
     const { lastQuery, user } = setup('/expedientes?status=confirmed,scheduled&due=15');
     await waitFor(() => expect(lastQuery().get('due')).toBe('15'));
 
-    await user.click(screen.getByRole('button', { name: 'Vencidos' }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Vencimiento' }), 'Vencidos');
     await waitFor(() => expect(lastQuery().get('due')).toBe('overdue'));
     expect(lastQuery().get('status')).toBe('confirmed,scheduled');
 
-    await user.click(screen.getByRole('button', { name: 'Cualquiera' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Vencimiento' }),
+      'Cualquier vencimiento',
+    );
     await waitFor(() => expect(lastQuery().has('due')).toBe(false));
     expect(lastQuery().get('status')).toBe('confirmed,scheduled');
   });

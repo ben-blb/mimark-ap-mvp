@@ -1,7 +1,7 @@
 ---
 id: '010'
 titulo: Identidad visual y asistente con componentes
-estado: borrador
+estado: en-progreso
 depende_de: ['009']
 requisitos: Usabilidad (extensión); modifica AC-009-01, AC-009-02 (apariencia), AC-009-03 y la UI de 008
 ---
@@ -40,7 +40,7 @@ lista de expedientes); que el servidor ejecute herramientas (sigue la regla 6 y 
   el enlace "Revisar →" (solo si N > 0); una franja con 4 cifras (por pagar, vencido, próximos N días, pagado este
   mes) sin centavos y con la moneda como sufijo, MXN y USD por separado (se mantienen AC-006-02 y AC-006-06); si
   lo vencido es 0, la cifra dice "Al corriente" y no usa color de error; los días de pago como filas con fecha,
-  total, número de expedientes y una barra proporcional, cada una enlazada a los expedientes; y la cartera por
+  total, número de expedientes y una barra proporcional, y un clic en uno filtra la tabla del tablero a ese día; y la cartera por
   vencimiento como barra apilada (vencido / ≤ 7 días / ≤ 15 días / después) con montos, o como una frase si solo
   hay un segmento con datos. El horizonte 7/15/30 se elige con pestañas. Cada gráfica tiene su alternativa en
   texto. Modifica AC-009-03.
@@ -90,8 +90,8 @@ error { code: ErrorCode, message }])`.
 
 ### API
 
-| Método y ruta                | Entrada              | Salida                                       | Errores                                                             |
-| ---------------------------- | -------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| Método y ruta                | Entrada              | Salida                                        | Errores                                                             |
+| ---------------------------- | -------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
 | `POST /api/assistant/stream` | `AssistantTurnInput` | `text/event-stream` de `AssistantStreamEvent` | `UNAUTHENTICATED`, `VALIDATION`, `QUOTA_EXCEEDED`, `AI_UNAVAILABLE` |
 
 - `assistant.client.ts`: `stream(input, signal, onDelta)` con `streamText` (mismas opciones y herramientas sin
@@ -114,11 +114,11 @@ Sin acciones nuevas: el streaming registra `assistant.answered` como `/turn`.
 
 ## Tareas
 
-- [ ] 1. `DESIGN.md`, tema nuevo y fuentes (AC-010-01).
-- [ ] 2. `AppShell` y `PageHeader` sin subtítulo (AC-010-02).
-- [ ] 3. Componentes `Money`, `StatusDot`, `SummaryStrip`, `DataTable` con pruebas.
-- [ ] 4. Tablero (AC-010-03).
-- [ ] 5. Órdenes, expedientes y proveedores con `DataTable` (AC-010-04).
+- [x] 1. `DESIGN.md`, tema nuevo y fuentes (AC-010-01).
+- [x] 2. `AppShell` y `PageHeader` sin subtítulo (AC-010-02).
+- [x] 3. Componentes `Money`, `StatusDot`, `SummaryStrip`, `DataTable` con pruebas.
+- [x] 4. Tablero (AC-010-03).
+- [x] 5. Órdenes, expedientes y proveedores con `DataTable` (AC-010-04).
 - [ ] 6. `dueOn` en la lista de expedientes (AC-010-05).
 - [ ] 7. Endpoint `/assistant/stream` y `api.stream` (AC-010-06).
 - [ ] 8. Asistente con renderers, confirmaciones, sugerencias, adjuntos y atajo (AC-010-07, AC-010-08).
@@ -143,3 +143,10 @@ Sin acciones nuevas: el streaming registra `assistant.answered` como `/turn`.
 - 2026-10-28 · Dependencias: `+@fontsource/ibm-plex-sans`, `+@fontsource/ibm-plex-mono` (fuentes del sistema
   visual); `-@mui/x-charts` (sin uso tras el tablero nuevo).
 - 2026-10-28 · El terciario del brief (`#6E6A64`) da 3.5:1 sobre el fondo: no pasa AA. Se usa `#8A857E` (5.1:1).
+- 2026-10-28 · El clic en un día de pago filtra la tabla del propio tablero: `GET /api/payables` no filtra por día de
+  pago y la spec no cambia endpoints.
+- 2026-10-28 · La barra apilada se calcula en la web (`features/dashboard/portfolio.ts`) desde `items` (vencidos y
+  próximos del horizonte) y `totals.pending`; una barra por moneda para no sumar MXN y USD.
+- 2026-10-28 · Órdenes de compra no tiene página de detalle: la fila abre la edición (`DataRow onOpen`).
+- 2026-10-28 · La sesión no trae email (solo `actor` y `role`): la barra lateral muestra nombre y rol.
+- 2026-10-28 · Los colores viven en `app/tokens.ts` (el tema pasaba el tope de 300 líneas del lint).

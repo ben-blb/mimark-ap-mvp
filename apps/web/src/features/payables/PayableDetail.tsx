@@ -1,8 +1,5 @@
 import type { PayableDto, PayableHistory } from '@mimark/contracts/payables';
-import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
-import StorefrontOutlined from '@mui/icons-material/StorefrontOutlined';
-import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -11,8 +8,9 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
-import { surface, MOBILE_NAV_OFFSET, MONO } from '../../app/theme';
-import { StatusChip } from '../../components/StatusChip';
+import { MOBILE_NAV_OFFSET, MONO, RADIUS, surface } from '../../app/theme';
+import { Money } from '../../components/Money';
+import { PayableStatusDot } from '../../components/PayableStatusDot';
 import { formatDate, formatDateTime, formatMoney, paymentTermLabel } from '../../lib/format';
 import {
   AUDIT_ACTION_LABELS,
@@ -46,7 +44,7 @@ export function PayableDetail(props: {
         >
           <Box sx={{ minWidth: 0 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.75 }}>
-              <StatusChip status={payable.status} />
+              <PayableStatusDot status={payable.status} />
               {payable.fields.docType && (
                 <Typography variant="body2" color="text.secondary">
                   Tipo de documento: {DOC_TYPE_LABELS[payable.fields.docType]}
@@ -63,11 +61,11 @@ export function PayableDetail(props: {
           </Box>
           {total && currency && (
             <Box sx={{ textAlign: { md: 'right' }, flexShrink: 0 }}>
-              <Typography variant="overline" color="text.secondary" component="div">
+              <Typography variant="caption" color="text.secondary" component="div">
                 Total
               </Typography>
-              <Typography variant="h3" component="p" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                {formatMoney(total, currency)}
+              <Typography variant="h3" component="p">
+                <Money amount={total} currency={currency} />
               </Typography>
             </Box>
           )}
@@ -84,7 +82,7 @@ export function PayableDetail(props: {
               right: 12,
               bottom: `calc(${MOBILE_NAV_OFFSET} + 12px)`,
               zIndex: theme.zIndex.appBar,
-              borderRadius: '18px',
+              borderRadius: RADIUS.container,
               p: 1,
               overflowX: 'auto',
             },
@@ -101,7 +99,7 @@ export function PayableDetail(props: {
       )}
 
       {payable.reviewReasons.length > 0 && (
-        <Alert severity="warning" icon={<WarningAmberOutlined />}>
+        <Alert severity="warning">
           <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Razones</Typography>
           <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
             {payable.reviewReasons.map((reason) => (
@@ -135,7 +133,7 @@ export function PayableDetail(props: {
             direction="row"
             sx={{ px: 1, pt: 0.5, pb: 1, justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Documento original
             </Typography>
             <Link
@@ -160,7 +158,7 @@ export function PayableDetail(props: {
                 width: '100%',
                 height: { sm: '60vh', lg: 'calc(100% - 36px)' },
                 border: 0,
-                borderRadius: '10px',
+                borderRadius: '8px',
                 bgcolor: 'background.paper',
               }}
             />
@@ -169,7 +167,7 @@ export function PayableDetail(props: {
               component="img"
               alt="Documento original"
               src={fileUrl}
-              sx={{ maxWidth: '100%', display: 'block', borderRadius: '10px', mx: 'auto' }}
+              sx={{ maxWidth: '100%', display: 'block', borderRadius: '8px', mx: 'auto' }}
             />
           )}
         </Paper>
@@ -179,7 +177,7 @@ export function PayableDetail(props: {
 
           <PaymentCard payable={payable} />
 
-          <Section title="Orden de compra y proveedor" icon={<StorefrontOutlined />}>
+          <Section title="Orden de compra y proveedor">
             <Stack spacing={1}>
               {payable.purchaseOrder ? (
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
@@ -224,7 +222,7 @@ export function PayableDetail(props: {
             </Stack>
           </Section>
 
-          <Section title="Historial" icon={<HistoryOutlined />}>
+          <Section title="Historial">
             <Timeline
               items={props.history.map((event) => ({
                 title: AUDIT_ACTION_LABELS[event.action] ?? event.action,

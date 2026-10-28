@@ -28,6 +28,11 @@ describe('Tour', () => {
     expect(screen.queryByRole('button', { name: 'Atrás' })).not.toBeInTheDocument();
   });
 
+  it('AC-012-05 al abrir, el foco queda dentro del diálogo', () => {
+    setup();
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+  });
+
   it('AC-012-05 Siguiente y Atrás avanzan y retroceden', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Siguiente' }));

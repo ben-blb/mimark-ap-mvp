@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useLogout, useSession } from '../features/session/session.api';
 import { Tour } from '../features/tour/Tour';
@@ -42,7 +42,8 @@ export function AppShell() {
   // Se abre solo la primera vez de esta persona en este navegador, o cuando ella lo pide (spec 012).
   const [requested, setRequested] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const tourOpen = requested || (!!actor && !dismissed && !hasSeenTour(actor));
+  const seen = useMemo(() => !actor || hasSeenTour(actor), [actor]);
+  const tourOpen = requested || (!seen && !dismissed);
   const user = {
     actor,
     role: session.data ? ROLE_LABELS[session.data.role] : undefined,

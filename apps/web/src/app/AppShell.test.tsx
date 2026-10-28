@@ -2,21 +2,24 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sessionKey } from '../features/session/session.api';
 import { hasSeenTour, markTourSeen } from '../features/tour/tour.storage';
 import { setViewport } from '../test/setup';
 import { AppShell } from './AppShell';
 
-afterEach(() => localStorage.clear());
+afterEach(() => {
+  vi.restoreAllMocks();
+  localStorage.clear();
+});
 
 /** Por defecto la persona ya vio el tutorial, para que no se abra solo en las demás pruebas. */
-function setup(width: number, tourSeen = true) {
+function setup(width: number, tourSeen = true, actor = 'Ana López') {
   if (tourSeen) markTourSeen('Ana López');
   setViewport(width);
   const client = new QueryClient();
   client.setQueryData(sessionKey, {
-    actor: 'Ana López',
+    actor,
     role: 'payables',
     expiresAt: '2026-10-28T00:00:00.000Z',
   });
@@ -121,5 +124,33 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(document.querySelector('[data-tour-highlight="tablero"]')).not.toBeNull();
     expect(document.querySelector('[data-tour="tablero"]')).toHaveTextContent('Tablero');
+  });
+
+  it('AC-012-03 si Ana ya lo vio, otra persona en el mismo navegador lo ve solo', () => {
+    setup(1440, true, 'Luis Pérez');
+    expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
+  });
+
+  it('AC-012-06 en el teléfono el resaltado cae sobre la barra inferior', async () => {
+    const user = setup(375);
+    await user.click(screen.getByRole('button', { name: 'Cuenta' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Ver tutorial' }));
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }));
+    const target = screen.getByRole('navigation', { name: 'Principal', hidden: true });
+    expect(document.querySelector('[data-tour-highlight="tablero"]')).not.toBeNull();
+    expect(target.querySelector('[data-tour="tablero"]')).not.toBeNull();
+  });
+
+  it('AC-012-09 con localStorage bloqueado el tutorial abre, cierra y no se reabre', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('bloqueado');
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('bloqueado');
+    });
+    const user = setup(1440, false);
+    expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Saltar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

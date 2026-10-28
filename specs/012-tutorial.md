@@ -1,7 +1,7 @@
 ---
 id: '012'
 titulo: Tutorial de bienvenida
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['009', '010', '011']
 requisitos: Usabilidad (extensión)
 ---
@@ -81,7 +81,7 @@ No aplica (no escribe en la base de datos).
 - [x] 2. `tour.steps.ts` y `Tour.tsx` con pruebas (AC-012-05, 06, 07).
 - [x] 3. Integrar en `AppShell` (anclas, botón y menú "Ver tutorial", apertura automática) con pruebas (AC-012-01, 04).
 - [x] 4. Documentar la convención `data-tour` y el uso de `localStorage` en `apps/web/AGENTS.md`.
-- [ ] 5. Verificación manual (AC-012-08) y `pnpm check` en verde.
+- [x] 5. Verificación manual (AC-012-08) y `pnpm check` en verde.
 
 ## Fuera de alcance y decisiones
 
@@ -91,3 +91,7 @@ No aplica (no escribe en la base de datos).
 ## Bitácora
 
 <!-- AAAA-MM-DD · nota -->
+
+- 2026-10-28 · `AppShell.tsx` pasó el límite de 300 líneas: la barra lateral, la barra móvil y `NAV_ITEMS` se movieron a `app/AppNav.tsx` (AGENTS.md de web actualizado). La apertura automática se deriva del estado (sin `useEffect`+`setState`, lo prohíbe el lint).
+- 2026-10-28 · Un clic fuera del globo ya no lo cierra (solo Esc, Saltar o Terminar), para no marcarlo como visto por accidente.
+- 2026-10-28 · AC-012-08 verificado a mano con `pnpm dev` en el navegador integrado: escritorio (tema oscuro del sistema) y 375 px; el resaltado y el globo se colocan junto a la barra lateral y encima de la barra inferior. No se probó a mano el tema claro ni `prefers-reduced-motion` (ese caso solo pone la transición en 0).

@@ -57,7 +57,7 @@ describe('Tour', () => {
     expect(second.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('AC-012-05 devuelve el foco al cerrar', async () => {
+  it('AC-012-05 devuelve el foco al cerrar', () => {
     const trigger = document.createElement('button');
     document.body.append(trigger);
     trigger.focus();

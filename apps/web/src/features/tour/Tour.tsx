@@ -77,7 +77,10 @@ export function Tour(props: { onClose: () => void }) {
       )}
       <Dialog
         open
-        onClose={props.onClose}
+        onClose={(_, reason) => {
+          // Un clic suelto fuera del globo no debe cerrar ni marcar el tutorial como visto.
+          if (reason === 'escapeKeyDown') props.onClose();
+        }}
         aria-labelledby="tour-title"
         hideBackdrop={!!rect}
         transitionDuration={reducedMotion ? 0 : undefined}
@@ -96,10 +99,7 @@ export function Tour(props: { onClose: () => void }) {
           <Box sx={{ display: 'flex', gap: 1 }}>
             {!last && <Button onClick={props.onClose}>Saltar</Button>}
             {index > 0 && <Button onClick={() => setIndex(index - 1)}>Atrás</Button>}
-            <Button
-              variant="contained"
-              onClick={last ? props.onClose : () => setIndex(index + 1)}
-            >
+            <Button variant="contained" onClick={last ? props.onClose : () => setIndex(index + 1)}>
               {last ? 'Terminar' : 'Siguiente'}
             </Button>
           </Box>

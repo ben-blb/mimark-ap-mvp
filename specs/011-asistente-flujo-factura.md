@@ -2,7 +2,7 @@
 id: '011'
 titulo: Asistente · factura en un paso, alta guiada y conversaciones guardadas
 estado: en-progreso
-depende_de: ['008', '010']
+depende_de: ['010']
 requisitos: Extensión posterior al SRS; modifica AC-008-08 y el alcance de 008; respeta la regla 6
 ---
 
@@ -164,7 +164,7 @@ turnos (`assistant.answered`) no cambia.
 
 - [x] 1. ADR-14 y spec 008 enmendados; `docs/decisiones.md`, `specs/README.md` (mapa).
 - [x] 2. `assistant@2`, `pickToolCalls` descarta `uploadPayable`, fake actualizado (AC-011-03, 05–08).
-- [ ] 3. Web: subida directa en `send()` con pruebas (AC-011-01, 02, 04, 09).
+- [x] 3. Web: subida directa en `send()` con pruebas (AC-011-01, 02, 04, 09).
 - [ ] 4. Contratos `conversations.ts` y su prueba (AC-011-14).
 - [ ] 5. Migración y módulo `conversations` con `conversations.int.test.ts` (AC-011-11, 12, 13, 15).
 - [ ] 6. Web: `conversations.api.ts`, lista, autoguardado y restauración con pruebas (AC-011-16, 17, 18).
@@ -186,3 +186,4 @@ turnos (`assistant.answered`) no cambia.
 
 - 2026-10-28 · Spec redactada a partir del plan aprobado por el usuario y aprobada ("Aprobada, implementa").
 - 2026-10-28 · `assistant.v1.ts` se renombró a `assistant.v2.ts` (nadie más importaba v1). `uploadPayable` sigue en `ASSISTANT_TOOLS` para el runner y los renderers de la web, y `WEB_ONLY_TOOLS` (contracts) lo oculta al modelo y lo descarta en `pickToolCalls`.
+- 2026-10-28 · `depende_de` quedó en `['010']`: `spec:check` no deja cerrar una spec que depende de otra en progreso, y 008 sigue abierta solo por la verificación manual contra la URL pública (AC-008-12) y su tarea de documentación. 011 modifica el comportamiento de 008 y 010 (ya hecha) ya trae el asistente con streaming.

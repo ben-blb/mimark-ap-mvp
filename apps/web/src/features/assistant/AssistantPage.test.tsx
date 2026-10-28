@@ -63,6 +63,17 @@ const payable: PayableDto = {
   allowedActions: [],
 };
 
+const supplier = {
+  id: 'cmh0supplier00000000000001',
+  name: 'Aceros del Norte',
+  taxId: 'ANO010203AB1',
+  creditDays: 30,
+  currency: 'MXN',
+  active: true,
+  createdAt: '2026-10-20T15:00:00.000Z',
+  updatedAt: '2026-10-20T15:00:00.000Z',
+};
+
 type Turn = { text: string; toolCalls: { id: string; name: string; input: unknown }[] };
 
 /** Un turno como SSE: el texto en dos trozos y luego `done`. Si `hold`, el stream no termina hasta abortarse. */
@@ -116,6 +127,9 @@ function setup(turns: Turn[], options: { hold?: boolean; board?: typeof dashboar
         sse(turn, init?.signal, options.hold && queue.length === turns.length),
       );
     }
+    if (url === '/api/suppliers' && init?.method === 'POST')
+      return Promise.resolve(json(supplier));
+    if (url.startsWith('/api/suppliers')) return Promise.resolve(json({ items: [supplier] }));
     if (url.startsWith('/api/dashboard')) return Promise.resolve(json(options.board ?? dashboard));
     if (url === '/api/payables' && (init?.method ?? 'GET') === 'GET')
       return Promise.resolve(json(list));
@@ -205,44 +219,98 @@ describe('AssistantPage', () => {
     });
   });
 
-  it('AC-008-08 sin adjunto la carga queda bloqueada; con adjunto envía el multipart al endpoint de carga', async () => {
-    const upload = {
-      id: 'c1',
-      name: 'uploadPayable',
-      input: { purchaseOrderNumber: 'OC-1001' },
-    };
-    const { writes, turnBodies, user } = setup([{ text: '', toolCalls: [upload] }]);
-    await say(user, 'Sube la factura');
-
-    expect(await screen.findByText('Adjunta la factura')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Confirmar' })).toBeDisabled();
-
+  it('AC-011-01 adjuntar y enviar sube la factura sin tarjeta de confirmación y el asistente continúa', async () => {
+    const { writes, turnBodies, user } = setup([]);
     const pdf = new File(['%PDF-1.7'], 'factura.pdf', { type: 'application/pdf' });
     await user.upload(screen.getByLabelText('Archivo de la factura'), pdf);
-    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+    await say(user, 'Revísalo');
 
-    await waitFor(() => expect(writes('/api/payables')).toHaveLength(1));
+    expect(await screen.findByText('Listo.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).toBeNull();
     const [url, init] = writes('/api/payables')[0] ?? [];
     expect(url).toBe('/api/payables');
-    const form = init?.body as FormData;
-    expect((form.get('file') as File).name).toBe('factura.pdf');
-    expect(form.get('purchaseOrderNumber')).toBe('OC-1001');
-    // El siguiente turno ya no describe el adjunto: se subió.
-    await waitFor(() => expect(turnBodies()).toHaveLength(2));
-    expect(turnBodies()[1].attachment).toBeUndefined();
+    expect((init?.body as FormData).get('file')).toMatchObject({ name: 'factura.pdf' });
+    // El turno ya trae la subida como herramienta ejecutada y no vuelve a describir el adjunto.
+    const [first] = turnBodies();
+    expect(first.attachment).toBeUndefined();
+    expect(first.messages.map((m: { role: string }) => m.role)).toEqual([
+      'user',
+      'assistant',
+      'tool',
+    ]);
+    expect(first.messages[1].toolCalls[0].name).toBe('uploadPayable');
+    expect(first.messages[2]).toMatchObject({ name: 'uploadPayable' });
+    expect(screen.queryByLabelText(/factura\.pdf/)).toBeNull();
   });
 
-  it('AC-008-08 el turno describe el adjunto solo con nombre, tipo y tamaño', async () => {
+  it('AC-011-02 si la subida falla muestra el error, el asistente no responde y el archivo sigue adjunto', async () => {
     const { turnBodies, user } = setup([]);
+    const base = fetch;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string, init?: RequestInit) =>
+        url === '/api/payables' && init?.method === 'POST'
+          ? Promise.resolve(
+              new Response(
+                JSON.stringify({ code: 'QUOTA_EXCEEDED', message: 'Límite diario de cargas.', requestId: 'r1' }),
+                { status: 429, headers: { 'content-type': 'application/json' } },
+              ),
+            )
+          : base(url, init),
+      ),
+    );
     const pdf = new File(['%PDF-1.7'], 'factura.pdf', { type: 'application/pdf' });
     await user.upload(screen.getByLabelText('Archivo de la factura'), pdf);
-    await say(user, 'Hola');
-    await screen.findByText('Listo.');
-    expect(turnBodies()[0].attachment).toEqual({
-      fileName: 'factura.pdf',
-      mimeType: 'application/pdf',
-      size: 8,
-    });
+    await say(user, 'Revísalo');
+
+    expect(await screen.findByText(/Límite diario de cargas/)).toBeInTheDocument();
+    expect(turnBodies()).toHaveLength(0);
+    expect(screen.getByText(/factura\.pdf/)).toBeInTheDocument();
+    expect(within(screen.getByRole('log')).queryByText('Revísalo')).toBeNull();
+  });
+
+  it('AC-011-04 un archivo sin texto se sube igual con el mensaje "Revisa la factura adjunta"', async () => {
+    const { writes, turnBodies, user } = setup([]);
+    const pdf = new File(['%PDF-1.7'], 'factura.pdf', { type: 'application/pdf' });
+    await user.upload(screen.getByLabelText('Archivo de la factura'), pdf);
+    await user.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    expect(await screen.findByText('Listo.')).toBeInTheDocument();
+    expect(writes('/api/payables')).toHaveLength(1);
+    expect(turnBodies()[0].messages[0]).toEqual({ role: 'user', text: 'Revisa la factura adjunta' });
+  });
+
+  it('AC-011-09 un alta propuesta no escribe nada hasta Confirmar y el asistente propone la siguiente después', async () => {
+    const createSupplier = {
+      id: 'c1',
+      name: 'createSupplier',
+      input: { name: 'Aceros del Norte', taxId: 'ANO010203AB1', creditDays: 30, currency: 'MXN' },
+    };
+    const createPo = {
+      id: 'c2',
+      name: 'createPurchaseOrder',
+      input: {
+        number: 'OC-77',
+        supplierId: supplier.id,
+        issuedOn: '2026-10-10',
+        total: '116.00',
+        currency: 'MXN',
+      },
+    };
+    const { writes, calls, user } = setup([
+      { text: 'No existe el proveedor. Te propongo darlo de alta:', toolCalls: [createSupplier] },
+      { text: 'Ahora la orden de compra:', toolCalls: [createPo] },
+    ]);
+    await say(user, 'Revísalo');
+
+    await screen.findByLabelText('Propuesta: Dar de alta un proveedor');
+    expect(writes('/api/suppliers')).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await screen.findByLabelText('Propuesta: Registrar una orden de compra');
+    expect(writes('/api/suppliers')).toHaveLength(1);
+    expect(calls('/api/purchase-orders').filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
+    expect(screen.getAllByRole('button', { name: 'Confirmar' })).toHaveLength(1);
   });
 
   it('AC-008-10 muestra el contenido del asistente como texto, sin interpretar HTML', async () => {

@@ -25,7 +25,6 @@ export function MessageList(props: {
   live: string | null;
   runs: Record<string, ToolRun>;
   decisions: Record<string, Decision>;
-  hasFile: boolean;
   onDecide: (call: AssistantToolCall, confirm: boolean) => void;
 }) {
   const { messages, live, runs, decisions } = props;
@@ -81,9 +80,6 @@ export function MessageList(props: {
                 status={decisions[call.id]?.status ?? 'cancelled'}
                 error={decisions[call.id]?.error}
                 at={decisions[call.id]?.at}
-                blockedReason={
-                  call.name === 'uploadPayable' && !props.hasFile ? 'Adjunta la factura' : undefined
-                }
                 onConfirm={() => props.onDecide(call, true)}
                 onCancel={() => props.onDecide(call, false)}
               />

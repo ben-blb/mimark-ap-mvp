@@ -18,13 +18,15 @@ import { useDashboard } from '../dashboard/dashboard.api';
 import { validateFile } from '../payables/UploadForm';
 import { isWrite, streamTurn, toToolResult, useRunTool } from './assistant.api';
 import { Composer, DropOverlay, EmptyChat, SuggestionChips } from './AssistantParts';
-import { describeFile, isAbort, lastRead, recent, toolMessage } from './conversation';
+import { isAbort, lastRead, recent, toolMessage } from './conversation';
 import { type Decision, MessageList } from './MessageList';
 import { followUpSuggestions, startSuggestions } from './suggestions';
 import type { ToolRun } from './ToolCallRow';
 
 /** Rondas de herramientas por mensaje de la persona (AC-008-06). */
 const MAX_ROUNDS = 5;
+/** Texto del mensaje cuando la persona envía solo el archivo (AC-011-04). */
+const ATTACHED_PROMPT = 'Revisa la factura adjunta';
 /** A cuántos píxeles del final todavía se considera "abajo" para el desplazamiento automático. */
 const STICKY_PX = 120;
 
@@ -79,14 +81,14 @@ export function AssistantPage() {
     if (stick.current) window.scrollTo?.({ top: document.documentElement.scrollHeight });
   }, [messages, live, runs, decisions]);
 
-  async function readAll(reads: AssistantToolCall[], attached: File | null) {
+  async function readAll(reads: AssistantToolCall[]) {
     setRuns((prev) => ({
       ...prev,
       ...Object.fromEntries(reads.map((c) => [c.id, { status: 'running' as const }])),
     }));
     return Promise.all(
       reads.map(async (call) => {
-        const outcome = await runTool(call, attached);
+        const outcome = await runTool(call, null);
         setRuns((prev) => ({
           ...prev,
           [call.id]: {
@@ -101,7 +103,7 @@ export function AssistantPage() {
     );
   }
 
-  async function advance(start: AssistantMessage[], attached: File | null) {
+  async function advance(start: AssistantMessage[]) {
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -114,7 +116,7 @@ export function AssistantPage() {
         partial = '';
         setLive('');
         const out = await streamTurn(
-          { messages: recent(conversation), attachment: describeFile(attached) },
+          { messages: recent(conversation) },
           (text) => {
             partial += text;
             setLive(partial);
@@ -131,7 +133,7 @@ export function AssistantPage() {
 
         const reads = out.toolCalls.filter((c) => !isWrite(c.name));
         const writes = out.toolCalls.filter((c) => isWrite(c.name));
-        const results = await readAll(reads, attached);
+        const results = await readAll(reads);
         if (writes.length > 0) {
           setDecisions((prev) => ({
             ...prev,
@@ -165,20 +167,15 @@ export function AssistantPage() {
   async function decide(call: AssistantToolCall, confirm: boolean) {
     if (!waiting) return;
     let result: string;
-    let attached = file;
     if (confirm) {
       setDecisions((prev) => ({ ...prev, [call.id]: { status: 'running' } }));
-      const outcome = await runTool(call, file);
+      const outcome = await runTool(call, null);
       setDecisions((prev) => ({
         ...prev,
         [call.id]: outcome.error
           ? { status: 'failed', error: outcome.error }
           : { status: 'confirmed', at: new Date() },
       }));
-      if (!outcome.error && call.name === 'uploadPayable') {
-        attached = null;
-        setFile(null);
-      }
       result = outcome.result;
     } else {
       setDecisions((prev) => ({ ...prev, [call.id]: { status: 'cancelled' } }));
@@ -194,16 +191,50 @@ export function AssistantPage() {
     setWaiting(null);
     const conversation = [...waiting.conversation, ...results];
     setMessages(conversation);
-    await advance(conversation, attached);
+    await advance(conversation);
   }
 
-  function send(event: FormEvent) {
+  /**
+   * Adjuntar y enviar es el clic de la persona (spec 011, ADR-14): la factura se sube antes del turno, sin
+   * propuesta, y su resultado entra a la conversación como una herramienta ya ejecutada.
+   */
+  async function send(event: FormEvent) {
     event.preventDefault();
-    const text = draft.trim();
+    const text = draft.trim() || (file ? ATTACHED_PROMPT : '');
     if (!text) return;
-    setDraft('');
     stick.current = true;
-    void advance([...messages, { role: 'user', text }], file);
+    setError(null);
+    setNotice(null);
+    const user: AssistantMessage = { role: 'user', text };
+    if (!file) {
+      setDraft('');
+      void advance([...messages, user]);
+      return;
+    }
+
+    const upload: AssistantToolCall = {
+      id: `upload-${crypto.randomUUID()}`,
+      name: 'uploadPayable',
+      input: {},
+    };
+    setBusy(true);
+    const outcome = await runTool(upload, file);
+    if (outcome.error) {
+      setBusy(false);
+      setError(new Error(outcome.error));
+      return;
+    }
+    setDraft('');
+    setFile(null);
+    setDecisions((prev) => ({ ...prev, [upload.id]: { status: 'confirmed', at: new Date() } }));
+    const conversation: AssistantMessage[] = [
+      ...messages,
+      user,
+      { role: 'assistant', text: '', toolCalls: [upload] },
+      toolMessage(upload, outcome.result),
+    ];
+    setMessages(conversation);
+    void advance(conversation);
   }
 
   function attach(selected: File | undefined) {
@@ -276,7 +307,6 @@ export function AssistantPage() {
           live={live}
           runs={runs}
           decisions={decisions}
-          hasFile={!!file}
           onDecide={(call, confirm) => void decide(call, confirm)}
         />
         {followUps.length > 0 && (
@@ -295,7 +325,7 @@ export function AssistantPage() {
         locked={locked}
         waiting={waiting !== null}
         inputRef={input}
-        onSubmit={send}
+        onSubmit={(event) => void send(event)}
         onStop={() => abort.current?.abort()}
         onAttach={attach}
         onRemoveFile={() => setFile(null)}

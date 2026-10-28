@@ -241,7 +241,7 @@ export function Composer(props: {
               type="submit"
               aria-label="Enviar"
               size="small"
-              disabled={props.locked || !props.draft.trim()}
+              disabled={props.locked || (!props.draft.trim() && !props.file)}
               sx={{
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',

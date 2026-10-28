@@ -1,5 +1,4 @@
 import {
-  type AssistantAttachment,
   type AssistantMessage,
   type AssistantToolCall,
   type AssistantToolName,
@@ -20,17 +19,6 @@ export function recent(conversation: AssistantMessage[]): AssistantMessage[] {
   const tail = conversation.slice(-MAX_ASSISTANT_MESSAGES);
   const start = tail.findIndex((m) => m.role === 'user');
   return start > 0 ? tail.slice(start) : tail;
-}
-
-export function describeFile(file: File | null): AssistantAttachment | undefined {
-  if (!file) return undefined;
-  const byExtension = /\.png$/i.test(file.name)
-    ? 'image/png'
-    : /\.jpe?g$/i.test(file.name)
-      ? 'image/jpeg'
-      : 'application/pdf';
-  const mimeType = (file.type || byExtension) as AssistantAttachment['mimeType'];
-  return { fileName: file.name, mimeType, size: file.size };
 }
 
 export const isAbort = (e: unknown) => e instanceof DOMException && e.name === 'AbortError';

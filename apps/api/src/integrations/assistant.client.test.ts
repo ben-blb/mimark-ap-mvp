@@ -50,6 +50,19 @@ describe('AssistantClient', () => {
     expect(result.promptVersion).toBe('assistant@2');
   });
 
+  it('AC-011-05 el prompt guía el alta: proveedor por RFC, OC con id real, recepción preguntada y reevaluación', () => {
+    const text = ASSISTANT_PROMPT.text;
+    expect(text).toContain('PO_NOT_FOUND');
+    expect(text).toContain('listSuppliers'); // AC-011-05
+    expect(text).toContain('días de crédito'); // se pregunta, no se infiere
+    expect(text).toContain('createPurchaseOrder'); // AC-011-06
+    expect(text).toContain('La fecha de la orden la da la persona');
+    expect(text).toContain('RECEIPT_NOT_CONFIRMED'); // AC-011-07
+    expect(text).toContain('recordReceipt');
+    expect(text).toMatch(/correctFields[^.]*poNumber/); // AC-011-08
+    expect(text).toContain('UNA escritura por vez');
+  });
+
   it('AC-008-03 da al modelo el catálogo (menos la subida, AC-011-03) y devuelve sus llamadas sin ejecutarlas', async () => {
     const m = model();
     const result = await new AssistantClient().run(m, {

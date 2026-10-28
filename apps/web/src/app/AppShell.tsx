@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/proveedores', label: 'Proveedores' },
   { to: '/ordenes', label: 'Órdenes de compra' },
   { to: '/expedientes', label: 'Expedientes' },
+  { to: '/asistente', label: 'Asistente' },
 ] as const;
 
 export function AppShell() {

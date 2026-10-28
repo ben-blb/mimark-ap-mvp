@@ -39,8 +39,9 @@ describe('AssistantClient', () => {
 
     const [call] = m.doGenerateCalls;
     const prompt = JSON.stringify(call?.prompt);
-    expect(call?.prompt[0]?.role).toBe('system');
-    const system = String(call?.prompt[0]?.content);
+    const first = call?.prompt[0];
+    expect(first?.role).toBe('system');
+    const system = first?.role === 'system' ? first.content : '';
     expect(system).toContain(ASSISTANT_PROMPT.text);
     expect(system).toContain('Hoy: 2026-10-27');
     expect(system).toContain('factura-acme.pdf (application/pdf, 1234 bytes)');

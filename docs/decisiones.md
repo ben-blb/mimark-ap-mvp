@@ -99,3 +99,16 @@ diga cuál reemplaza. Formato: decisión · alternativas · por qué · revisar 
 - **Alternativas:** Spec Kit u otras herramientas con varios archivos por spec; issues sin trazabilidad.
 - **Por qué:** con pocos devs y muchos agentes, la spec es el contrato y la máquina verifica que se cumplió.
 - **Revisar si:** las specs crecen tanto que un archivo deja de leerse de una vez → dividir la spec, no el formato.
+
+## ADR-14 · Asistente con herramientas que solo proponen
+
+- **Decisión:** el asistente (spec 008) llama al LLM con herramientas sin `execute`, descritas desde
+  `contracts/assistant.ts`. La API valida las llamadas y las devuelve; la web ejecuta las lecturas y, tras un clic de
+  la persona, las escrituras, por los endpoints existentes. Sin streaming ni conversación guardada.
+- **Alternativas:** ejecutar las herramientas en el servidor (agente con `execute`); servidor MCP; `useChat` de
+  `@ai-sdk/react` con streaming.
+- **Por qué:** la IA nunca ejecuta una acción (regla 6) y una factura con instrucciones ocultas a lo más produce una
+  propuesta cancelable (PS-03). Cada escritura conserva su validación, sus reglas de estado y su auditoría con el
+  actor real, sin duplicar lógica ni llamar services entre módulos. `useChat` saltaría `lib/api-client.ts` (regla 7).
+- **Revisar si:** se necesitan respuestas largas en tiempo real → streaming sobre el mismo contrato; o se quiere
+  operar desde otro cliente → MCP sobre el mismo catálogo, manteniendo la confirmación humana.

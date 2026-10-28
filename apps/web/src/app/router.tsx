@@ -1,5 +1,6 @@
 import Typography from '@mui/material/Typography';
 import { createBrowserRouter } from 'react-router';
+import { AssistantPage } from '../features/assistant/AssistantPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { LoginPage } from '../features/session/LoginPage';
 import { PayableDetailPage } from '../features/payables/PayableDetailPage';
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'ordenes', element: <PurchaseOrdersPage /> },
       { path: 'expedientes', element: <PayablesPage /> },
       { path: 'expedientes/:id', element: <PayableDetailPage /> },
+      { path: 'asistente', element: <AssistantPage /> },
       { path: '*', element: <Typography>No existe esta página.</Typography> },
     ],
   },

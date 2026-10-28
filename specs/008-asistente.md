@@ -188,8 +188,8 @@ attachment)`: mapa nombre → llamada `api.*` al endpoint existente con el esque
 - [x] 4. `DAILY_ASSISTANT_LIMIT` en `env.ts`; módulo `assistant` (controller, service, module) registrado en
       `app.module.ts`.
 - [x] 5. `assistant.int.test.ts` con `AI_PROVIDER=fake` (AC-008-01, 02, 04, 05).
-- [ ] 6. Web: `assistant.api.ts` + `runTool` con pruebas (AC-008-06, 08).
-- [ ] 7. Web: `ProposalCard`, `AssistantPage`, ruta y menú con pruebas (AC-008-07, 10).
+- [x] 6. Web: `assistant.api.ts` + `runTool` con pruebas (AC-008-06, 08).
+- [x] 7. Web: `ProposalCard`, `AssistantPage`, ruta y menú con pruebas (AC-008-07, 10).
 - [ ] 8. ADR-14 en `docs/decisiones.md`; `docs/ARCHITECTURE.md` §6 y regla 6 de `AGENTS.md` ("el asistente
       propone; una persona ejecuta"); verificación manual (AC-008-11, 12) y bitácora.
 
@@ -216,3 +216,8 @@ attachment)`: mapa nombre → llamada `api.*` al endpoint existente con el esque
   `pickToolCalls`. Validar dos veces rompía esquemas con `transform` (p. ej. `status` de `PayableListQuery`).
 - 2026-10-27 · Cualquier error del modelo responde 502 `AI_UNAVAILABLE` con mensaje propio; la cuota usa
   `QUOTA_EXCEEDED` con el mensaje "límite diario del asistente".
+- 2026-10-27 · Web: el botón "Adjuntar factura" sigue activo mientras espera una propuesta (si no, no se podía
+  adjuntar el archivo que pide `uploadPayable`); solo se bloquea mientras el asistente piensa. Tras subir la factura
+  el adjunto se limpia y los turnos siguientes ya no lo describen.
+- 2026-10-27 · Web: la conversación se recorta a los últimos 40 mensajes empezando por uno de la persona, para no
+  pasar el tope del contrato ni dejar un resultado de herramienta sin su llamada.

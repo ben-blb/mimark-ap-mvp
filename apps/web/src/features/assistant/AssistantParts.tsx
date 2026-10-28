@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { FormEvent } from 'react';
-import { glass, MOBILE_NAV_OFFSET, tonal } from '../../app/theme';
+import { surface, MOBILE_NAV_OFFSET, tonal } from '../../app/theme';
 
 const EXAMPLES = [
   '¿Qué vence en los próximos 7 días?',
@@ -111,7 +111,7 @@ export function Composer(props: {
       component="form"
       onSubmit={props.onSubmit}
       sx={(theme) => ({
-        ...glass(theme, 0.85),
+        ...surface(theme),
         position: 'sticky',
         bottom: { xs: `calc(${MOBILE_NAV_OFFSET} + 12px)`, md: 16 },
         p: 1,

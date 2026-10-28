@@ -1,43 +1,46 @@
 import { esES } from '@mui/material/locale';
 import { createTheme, type CSSObject, type Theme } from '@mui/material/styles';
 
-const REDUCED_TRANSPARENCY = '@media (prefers-reduced-transparency: reduce)';
+declare module '@mui/material/styles' {
+  interface TypeText {
+    /** Moneda en sufijo, quién recibió, pistas (DESIGN.md). */
+    tertiary: string;
+  }
+  interface TypeBackground {
+    /** Un paso arriba del fondo: hover de fila, compositor, menús. */
+    surface1: string;
+    /** Dos pasos: mensaje de la persona, pista de barras, fila seleccionada. */
+    surface2: string;
+  }
+}
+
 const REDUCED_MOTION = '@media (prefers-reduced-motion: reduce)';
 
-/** Colores de estado que se pintan "tonales" (fondo suave + texto oscuro): chips y avisos. */
+/** Colores de estado: se pintan como texto o punto, nunca como fondo de bloque (DESIGN.md). */
 const TONES = ['primary', 'success', 'warning', 'error', 'info'] as const;
 type Tone = (typeof TONES)[number];
 
+/** Radios del sistema: 6 px controles, 8 px contenedores. */
+export const RADIUS = { control: '6px', container: '8px' } as const;
+
 /**
- * Material translúcido (spec 009, AC-009-01). Una sola receta para tarjetas, diálogos y navegación:
- * fondo semitransparente con desenfoque y un borde claro, y sólido si la persona pide menos transparencia.
+ * Superficie elevada plana (spec 010, AC-010-01): un paso de color y un divisor de 1 px. Sin blur, sin
+ * transparencia, sin sombra. Sustituye al antiguo material translúcido.
  */
-export function glass(theme: Theme, opacity = 0.72): CSSObject {
+export function surface(theme: Theme, level: 1 | 2 = 1): CSSObject {
+  const palette = vars(theme).palette;
   return {
-    backgroundColor: `rgba(${vars(theme).palette.background.paperChannel} / ${opacity})`,
-    backdropFilter: 'blur(24px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    backgroundColor: level === 1 ? palette.background.surface1 : palette.background.surface2,
     border: '1px solid',
-    borderColor: 'rgba(255 255 255 / 0.6)',
-    boxShadow: '0 1px 2px rgba(0 0 0 / 0.04), 0 8px 28px rgba(0 0 0 / 0.06)',
-    ...theme.applyStyles('dark', {
-      borderColor: 'rgba(255 255 255 / 0.08)',
-      boxShadow: '0 1px 2px rgba(0 0 0 / 0.4), 0 8px 28px rgba(0 0 0 / 0.35)',
-    }),
-    [REDUCED_TRANSPARENCY]: {
-      backgroundColor: vars(theme).palette.background.paper,
-      backdropFilter: 'none',
-      WebkitBackdropFilter: 'none',
-    },
+    borderColor: palette.divider,
   };
 }
 
-/** Fondo y texto tonales de un color de estado: legibles en claro y en oscuro. */
-export function tonal(theme: Theme, tone: Tone, strength = 0.14): CSSObject {
+/** Texto de un color de estado, con un fondo apenas perceptible (campos dudosos, zona de arrastre). */
+export function tonal(theme: Theme, tone: Tone, strength = 0.08): CSSObject {
   return {
     backgroundColor: `rgba(${vars(theme).palette[tone].mainChannel} / ${strength})`,
-    color: vars(theme).palette[tone].dark,
-    ...theme.applyStyles('dark', { color: vars(theme).palette[tone].light }),
+    color: vars(theme).palette[tone].main,
   };
 }
 
@@ -53,70 +56,94 @@ export function vars(current: Theme) {
 
 const isTone = (color: unknown): color is Tone => TONES.includes(color as Tone);
 
-/** Tema único, claro y oscuro según el sistema. La UI no define colores ni tipografías sueltos: todo sale de aquí. */
+/** Folios, RFC y UUID. */
+export const MONO = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+const SANS = '"IBM Plex Sans", "Helvetica Neue", Helvetica, sans-serif';
+
+/** Cifras alineadas en columna: todos los montos. */
+export const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const;
+
+/**
+ * Tema único "libro mayor" (DESIGN.md), claro u oscuro según el sistema. La UI no define colores, tipografías ni
+ * radios sueltos: todo sale de aquí.
+ */
 export const theme = createTheme(
   {
     cssVariables: { colorSchemeSelector: 'media' },
     colorSchemes: {
-      light: {
-        palette: {
-          primary: { main: '#0071E3', dark: '#0058B0', light: '#4DA3FF' },
-          secondary: { main: '#1D1D1F' },
-          success: { main: '#34C759', dark: '#1E7B34', light: '#30D158' },
-          warning: { main: '#FF9500', dark: '#A35200', light: '#FFB340' },
-          error: { main: '#FF3B30', dark: '#C41E15', light: '#FF6961' },
-          info: { main: '#007AFF', dark: '#0058B9', light: '#64B5FF' },
-          background: { default: '#F5F5F7', paper: '#FFFFFF' },
-          text: { primary: '#1D1D1F', secondary: '#6E6E73' },
-          divider: 'rgba(60 60 67 / 0.14)',
-        },
-      },
       dark: {
         palette: {
-          primary: { main: '#0A84FF', dark: '#0060DF', light: '#64B5FF' },
-          secondary: { main: '#F5F5F7' },
-          success: { main: '#30D158', dark: '#248A3D', light: '#5EE07F' },
-          warning: { main: '#FF9F0A', dark: '#C77700', light: '#FFC163' },
-          error: { main: '#FF453A', dark: '#D70015', light: '#FF7A72' },
-          info: { main: '#0A84FF', dark: '#0060DF', light: '#70B7FF' },
-          background: { default: '#000000', paper: '#1C1C1E' },
-          text: { primary: '#F5F5F7', secondary: '#98989D' },
-          divider: 'rgba(84 84 88 / 0.6)',
+          primary: { main: '#7DB89A', dark: '#679F84', light: '#97C9AF', contrastText: '#131211' },
+          secondary: { main: '#A29E97' },
+          success: { main: '#A8B87E', dark: '#8E9D66', light: '#BCC99A' },
+          warning: { main: '#D4AE6A', dark: '#B8934F', light: '#E0C28A' },
+          error: { main: '#D98A7E', dark: '#BF7266', light: '#E5A69C' },
+          info: { main: '#A29E97', dark: '#8A857E', light: '#BDB9B2' },
+          background: {
+            default: '#131211',
+            paper: '#1A1917',
+            surface1: '#1A1917',
+            surface2: '#21201D',
+          },
+          text: { primary: '#ECE9E4', secondary: '#A29E97', tertiary: '#8A857E' },
+          divider: '#2C2A27',
+          action: { hover: '#1A1917', selected: '#21201D' },
+        },
+      },
+      light: {
+        palette: {
+          primary: { main: '#2E6A53', dark: '#245442', light: '#4A8670', contrastText: '#FFFFFF' },
+          secondary: { main: '#5E5A54' },
+          success: { main: '#56692A', dark: '#45551F', light: '#6F8540' },
+          warning: { main: '#8A6420', dark: '#6F4F14', light: '#A57D38' },
+          error: { main: '#A8483B', dark: '#8A372C', light: '#C0645A' },
+          info: { main: '#5E5A54', dark: '#4A4641', light: '#6E6963' },
+          background: {
+            default: '#F7F5F0',
+            paper: '#FFFFFF',
+            surface1: '#FFFFFF',
+            surface2: '#EFECE6',
+          },
+          text: { primary: '#1C1B19', secondary: '#5E5A54', tertiary: '#6E6963' },
+          divider: '#E2DED6',
+          action: { hover: '#EFECE6', selected: '#EFECE6' },
         },
       },
     },
-    shape: { borderRadius: 12 },
+    shape: { borderRadius: 6 },
+    spacing: 8,
     typography: {
-      fontFamily:
-        '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: SANS,
       fontSize: 14,
-      h1: { fontSize: '1.875rem', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.15 },
-      h2: { fontSize: '1.0625rem', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.3 },
-      h3: { fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 },
-      body1: { fontSize: '0.9375rem', lineHeight: 1.5 },
-      body2: { fontSize: '0.875rem', lineHeight: 1.45 },
+      // Escala corta: 12 / 13 / 14 / 16 / 20 / 28. Nada pasa de 600.
+      h1: { fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.3 },
+      h2: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.4 },
+      h3: { fontSize: '1.75rem', fontWeight: 500, lineHeight: 1.15, ...TABULAR },
+      body1: { fontSize: '0.875rem', lineHeight: 1.55 },
+      body2: { fontSize: '0.8125rem', lineHeight: 1.5 },
+      caption: { fontSize: '0.75rem', lineHeight: 1.45 },
+      // Mayúsculas con tracking solo en encabezados de tabla (DESIGN.md): el overline se usa solo ahí.
       overline: {
         fontSize: '0.6875rem',
-        fontWeight: 600,
+        fontWeight: 500,
         letterSpacing: '0.06em',
-        lineHeight: 1.6,
+        lineHeight: 1.5,
+        textTransform: 'uppercase',
       },
-      button: { textTransform: 'none', fontWeight: 600, letterSpacing: 0 },
+      button: { textTransform: 'none', fontWeight: 500, letterSpacing: 0, fontSize: '0.875rem' },
     },
     components: {
       MuiCssBaseline: {
         styleOverrides: (theme) => ({
           body: {
             minHeight: '100vh',
-            backgroundAttachment: 'fixed',
-            // Un velo de color muy tenue para que el vidrio tenga qué difuminar.
-            backgroundImage:
-              'radial-gradient(1200px 600px at 0% 0%, rgba(0 113 227 / 0.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(175 82 222 / 0.08), transparent 60%), radial-gradient(900px 600px at 50% 100%, rgba(52 199 89 / 0.06), transparent 60%)',
-            ...theme.applyStyles('dark', {
-              backgroundImage:
-                'radial-gradient(1200px 600px at 0% 0%, rgba(10 132 255 / 0.18), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(191 90 242 / 0.14), transparent 60%), radial-gradient(900px 600px at 50% 100%, rgba(48 209 88 / 0.08), transparent 60%)',
-            }),
             WebkitFontSmoothing: 'antialiased',
+            fontFeatureSettings: '"ss02"',
+          },
+          '::selection': { backgroundColor: `rgba(${vars(theme).palette.primary.mainChannel} / 0.3)` },
+          ':focus-visible': {
+            outline: `2px solid ${vars(theme).palette.primary.main}`,
+            outlineOffset: 2,
           },
           [REDUCED_MOTION]: {
             '*, *::before, *::after': {
@@ -129,116 +156,125 @@ export const theme = createTheme(
       MuiPaper: {
         defaultProps: { elevation: 0 },
         styleOverrides: {
-          root: ({ theme }) => ({ backgroundImage: 'none', ...glass(theme) }),
-          rounded: { borderRadius: 16 },
+          root: ({ theme }) => ({ backgroundImage: 'none', ...surface(theme) }),
+          rounded: { borderRadius: RADIUS.container },
         },
       },
+      MuiButtonBase: { defaultProps: { disableRipple: true } },
       MuiButton: {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 980,
-            paddingInline: 16,
-            transition: 'transform 100ms ease-out, background-color 150ms ease',
-            '&:active': { transform: 'scale(0.97)' },
+            borderRadius: RADIUS.control,
+            minHeight: 32,
+            paddingBlock: 4,
+            paddingInline: 12,
+            whiteSpace: 'nowrap',
+            transition: 'background-color 120ms ease, color 120ms ease',
           },
-          sizeSmall: { paddingInline: 12 },
+          sizeSmall: { minHeight: 28, paddingInline: 8, fontSize: '0.8125rem' },
+          text: { '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' } },
           outlined: ({ theme }) => ({
             borderColor: vars(theme).palette.divider,
-            backgroundColor: `rgba(${vars(theme).palette.background.paperChannel} / 0.6)`,
+            color: vars(theme).palette.text.primary,
+            '&:hover': {
+              borderColor: vars(theme).palette.text.tertiary,
+              backgroundColor: 'transparent',
+            },
           }),
         },
       },
       MuiIconButton: {
-        styleOverrides: { root: { '&:active': { transform: 'scale(0.94)' } } },
+        styleOverrides: {
+          root: ({ theme }) => ({
+            borderRadius: RADIUS.control,
+            color: vars(theme).palette.text.secondary,
+            '&:hover': { color: vars(theme).palette.text.primary },
+          }),
+        },
       },
       MuiTextField: { defaultProps: { size: 'small', fullWidth: true } },
       MuiOutlinedInput: {
         styleOverrides: {
           root: ({ theme }) => ({
-            borderRadius: 10,
-            backgroundColor: `rgba(${vars(theme).palette.background.paperChannel} / 0.7)`,
+            borderRadius: RADIUS.control,
+            backgroundColor: 'transparent',
             '& .MuiOutlinedInput-notchedOutline': { borderColor: vars(theme).palette.divider },
-          }),
-        },
-      },
-      MuiToggleButtonGroup: {
-        // Control segmentado tipo iOS; en pantallas chicas se desplaza en lugar de desbordar la página.
-        styleOverrides: {
-          root: ({ theme }) => ({
-            padding: 2,
-            gap: 2,
-            borderRadius: 10,
-            maxWidth: '100%',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            alignSelf: 'flex-start',
-            backgroundColor: 'rgba(118 118 128 / 0.12)',
-            ...theme.applyStyles('dark', { backgroundColor: 'rgba(118 118 128 / 0.24)' }),
-          }),
-          grouped: {
-            border: 0,
-            margin: 0,
-            borderRadius: '8px !important',
-            borderLeft: '0 !important',
-          },
-        },
-      },
-      MuiToggleButton: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            paddingBlock: 4,
-            paddingInline: 12,
-            fontWeight: 500,
-            color: vars(theme).palette.text.primary,
-            '&.Mui-selected, &.Mui-selected:hover': {
-              color: vars(theme).palette.text.primary,
-              backgroundColor: vars(theme).palette.background.paper,
-              boxShadow: '0 1px 3px rgba(0 0 0 / 0.12), 0 1px 1px rgba(0 0 0 / 0.04)',
-              ...theme.applyStyles('dark', { backgroundColor: '#636366' }),
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: vars(theme).palette.text.tertiary,
             },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderWidth: 1 },
+          }),
+          input: { fontSize: '0.875rem' },
+        },
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: ({ theme }) => ({ minHeight: 32, borderBottom: `1px solid ${vars(theme).palette.divider}` }),
+          indicator: { height: 2 },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            minHeight: 32,
+            minWidth: 0,
+            paddingInline: 0,
+            paddingBlock: 6,
+            marginRight: 20,
+            fontWeight: 500,
+            color: vars(theme).palette.text.secondary,
+            '&.Mui-selected': { color: vars(theme).palette.text.primary },
           }),
         },
       },
       MuiChip: {
+        // Solo para sugerencias de texto (asistente); los estados usan StatusDot.
         styleOverrides: {
           root: ({ theme, ownerState }) => ({
-            fontWeight: 600,
-            borderRadius: 8,
+            fontWeight: 400,
+            borderRadius: RADIUS.control,
             ...(ownerState.variant !== 'outlined' && isTone(ownerState.color)
               ? tonal(theme, ownerState.color)
               : {}),
             ...(ownerState.variant !== 'outlined' && ownerState.color === 'default'
-              ? { backgroundColor: 'rgba(118 118 128 / 0.14)' }
+              ? { backgroundColor: vars(theme).palette.background.surface2 }
               : {}),
           }),
-          outlined: ({ theme, ownerState }) =>
-            isTone(ownerState.color)
-              ? {
-                  borderColor: `rgba(${vars(theme).palette[ownerState.color].mainChannel} / 0.45)`,
-                  color: vars(theme).palette[ownerState.color].dark,
-                  ...theme.applyStyles('dark', {
-                    color: vars(theme).palette[ownerState.color].light,
-                  }),
-                }
-              : {},
+          outlined: ({ theme }) => ({ borderColor: vars(theme).palette.divider }),
         },
       },
       MuiAlert: {
         styleOverrides: {
-          root: { borderRadius: 14, alignItems: 'center' },
+          root: ({ theme }) => ({
+            borderRadius: RADIUS.container,
+            alignItems: 'center',
+            border: `1px solid ${vars(theme).palette.divider}`,
+            backgroundColor: 'transparent',
+            color: vars(theme).palette.text.primary,
+          }),
+          icon: { opacity: 1 },
           standard: ({ theme, ownerState }) =>
-            isTone(ownerState.severity) ? tonal(theme, ownerState.severity, 0.12) : {},
+            isTone(ownerState.severity)
+              ? { '& .MuiAlert-icon': { color: vars(theme).palette[ownerState.severity].main } }
+              : {},
         },
       },
       MuiTable: { defaultProps: { size: 'small' } },
       MuiTableCell: {
         styleOverrides: {
-          root: ({ theme }) => ({ borderColor: vars(theme).palette.divider, paddingBlock: 10 }),
+          root: ({ theme }) => ({
+            borderColor: vars(theme).palette.divider,
+            fontSize: '0.8125rem',
+            height: 42,
+            paddingBlock: 0,
+            paddingInline: 12,
+            '&:first-of-type': { paddingLeft: 0 },
+            '&:last-of-type': { paddingRight: 0 },
+          }),
           head: ({ theme }) => ({
             ...theme.typography.overline,
+            height: 36,
             color: vars(theme).palette.text.secondary,
             whiteSpace: 'nowrap',
           }),
@@ -247,28 +283,37 @@ export const theme = createTheme(
       MuiTableRow: {
         styleOverrides: {
           root: ({ theme }) => ({
-            '&:last-child td': { borderBottom: 0 },
-            '&.MuiTableRow-hover:hover': {
-              backgroundColor: `rgba(${vars(theme).palette.primary.mainChannel} / 0.05)`,
-            },
+            transition: 'background-color 120ms ease',
+            '&.MuiTableRow-hover:hover': { backgroundColor: vars(theme).palette.background.surface1 },
+          }),
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: ({ theme }) => ({
+            ...surface(theme, 2),
+            color: vars(theme).palette.text.primary,
+            borderRadius: RADIUS.control,
+            fontSize: '0.75rem',
+            fontWeight: 400,
           }),
         },
       },
       MuiDialog: {
         styleOverrides: {
-          // En el teléfono el diálogo es una hoja que sube desde abajo, como en iOS.
           container: ({ theme }) => ({
             [theme.breakpoints.down('sm')]: { alignItems: 'flex-end' },
           }),
           paper: ({ theme }) => ({
-            ...glass(theme, 0.92),
-            borderRadius: 20,
+            ...surface(theme),
+            borderRadius: RADIUS.container,
+            boxShadow: '0 12px 32px rgba(0 0 0 / 0.35)',
             [theme.breakpoints.down('sm')]: {
               margin: 0,
               width: '100%',
               maxWidth: '100% !important',
               maxHeight: '92dvh',
-              borderRadius: '20px 20px 0 0',
+              borderRadius: `${RADIUS.container} ${RADIUS.container} 0 0`,
               paddingBottom: 'env(safe-area-inset-bottom)',
             },
           }),
@@ -276,28 +321,27 @@ export const theme = createTheme(
       },
       MuiBackdrop: {
         styleOverrides: {
-          root: {
-            '&:not(.MuiBackdrop-invisible)': {
-              backgroundColor: 'rgba(0 0 0 / 0.28)',
-              backdropFilter: 'blur(4px)',
-            },
-          },
+          root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(10 9 8 / 0.6)' } },
         },
       },
       MuiMenu: {
-        styleOverrides: { paper: ({ theme }) => ({ ...glass(theme, 0.88), borderRadius: 14 }) },
+        styleOverrides: {
+          paper: ({ theme }) => ({
+            ...surface(theme),
+            borderRadius: RADIUS.container,
+            boxShadow: '0 8px 24px rgba(0 0 0 / 0.3)',
+          }),
+        },
       },
-      MuiLinearProgress: {
-        styleOverrides: { root: { height: 3, borderRadius: 3 } },
+      MuiLinearProgress: { styleOverrides: { root: { height: 2 } } },
+      MuiLink: {
+        defaultProps: { underline: 'hover' },
+        styleOverrides: { root: { fontWeight: 500 } },
       },
-      MuiLink: { defaultProps: { underline: 'hover' } },
     },
   },
   esES,
 );
 
 /** Alto de la barra inferior del teléfono: lo que flota al pie (acciones, compositor) se pone encima. */
-export const MOBILE_NAV_OFFSET = 'calc(64px + env(safe-area-inset-bottom))';
-
-/** Folios, RFC y UUID: monoespaciada del sistema. */
-export const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+export const MOBILE_NAV_OFFSET = 'calc(56px + env(safe-area-inset-bottom))';

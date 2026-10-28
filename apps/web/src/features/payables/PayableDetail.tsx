@@ -11,7 +11,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
-import { glass, MOBILE_NAV_OFFSET, MONO } from '../../app/theme';
+import { surface, MOBILE_NAV_OFFSET, MONO } from '../../app/theme';
 import { StatusChip } from '../../components/StatusChip';
 import { formatDate, formatDateTime, formatMoney, paymentTermLabel } from '../../lib/format';
 import {
@@ -78,7 +78,7 @@ export function PayableDetail(props: {
         <Box
           sx={(theme) => ({
             [theme.breakpoints.down('sm')]: {
-              ...glass(theme, 0.8),
+              ...surface(theme),
               position: 'fixed',
               left: 12,
               right: 12,

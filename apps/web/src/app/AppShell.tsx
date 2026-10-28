@@ -19,7 +19,7 @@ import { NavLink, Outlet } from 'react-router';
 import { BrandMark } from '../components/BrandMark';
 import { useLogout, useSession } from '../features/session/session.api';
 import { ROLE_LABELS } from '../lib/labels';
-import { glass, MOBILE_NAV_OFFSET, vars } from './theme';
+import { surface, MOBILE_NAV_OFFSET, vars } from './theme';
 
 /** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
 const NAV_ITEMS = [
@@ -63,7 +63,7 @@ function Sidebar(props: { actor?: string; role?: string; onLogout: () => void })
     <Box
       component="aside"
       sx={(theme) => ({
-        ...glass(theme, 0.6),
+        ...surface(theme),
         position: 'fixed',
         top: 12,
         bottom: 12,
@@ -149,7 +149,7 @@ function MobileChrome(props: { actor?: string; role?: string; onLogout: () => vo
       <Box
         component="header"
         sx={(theme) => ({
-          ...glass(theme, 0.7),
+          ...surface(theme),
           position: 'sticky',
           top: 0,
           zIndex: theme.zIndex.appBar,
@@ -201,7 +201,7 @@ function MobileChrome(props: { actor?: string; role?: string; onLogout: () => vo
         component="nav"
         aria-label="Principal"
         sx={(theme) => ({
-          ...glass(theme, 0.75),
+          ...surface(theme),
           position: 'fixed',
           left: 0,
           right: 0,

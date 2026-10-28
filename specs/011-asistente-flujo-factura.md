@@ -138,12 +138,12 @@ tarjetas (AC-011-17). Los resultados de herramientas ya viajan truncados (`MAX_T
 
 ### API
 
-| Método y ruta                    | Entrada                | Salida                    | Errores                              |
-| -------------------------------- | ---------------------- | ------------------------- | ------------------------------------ |
-| `GET /api/conversations`         | —                      | `ConversationSummary[]`   | `UNAUTHENTICATED`                    |
-| `GET /api/conversations/:id`     | —                      | `ConversationDto`         | `UNAUTHENTICATED`, `NOT_FOUND`       |
-| `PUT /api/conversations/:id`     | `SaveConversationInput`| `ConversationDto`         | `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND` (id de otra persona) |
-| `DELETE /api/conversations/:id`  | —                      | 204                       | `UNAUTHENTICATED`, `NOT_FOUND`       |
+| Método y ruta                   | Entrada                 | Salida                  | Errores                                                           |
+| ------------------------------- | ----------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `GET /api/conversations`        | —                       | `ConversationSummary[]` | `UNAUTHENTICATED`                                                 |
+| `GET /api/conversations/:id`    | —                       | `ConversationDto`       | `UNAUTHENTICATED`, `NOT_FOUND`                                    |
+| `PUT /api/conversations/:id`    | `SaveConversationInput` | `ConversationDto`       | `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND` (id de otra persona) |
+| `DELETE /api/conversations/:id` | —                       | 204                     | `UNAUTHENTICATED`, `NOT_FOUND`                                    |
 
 Módulo `apps/api/src/modules/conversations/` con la forma de `suppliers` (controller → service → repository). Solo
 el repositorio escribe las tablas (regla 3). El título lo calcula la web (primeras palabras del primer mensaje).
@@ -165,9 +165,9 @@ turnos (`assistant.answered`) no cambia.
 - [x] 1. ADR-14 y spec 008 enmendados; `docs/decisiones.md`, `specs/README.md` (mapa).
 - [x] 2. `assistant@2`, `pickToolCalls` descarta `uploadPayable`, fake actualizado (AC-011-03, 05–08).
 - [x] 3. Web: subida directa en `send()` con pruebas (AC-011-01, 02, 04, 09).
-- [ ] 4. Contratos `conversations.ts` y su prueba (AC-011-14).
-- [ ] 5. Migración y módulo `conversations` con `conversations.int.test.ts` (AC-011-11, 12, 13, 15).
-- [ ] 6. Web: `conversations.api.ts`, lista, autoguardado y restauración con pruebas (AC-011-16, 17, 18).
+- [x] 4. Contratos `conversations.ts` y su prueba (AC-011-14).
+- [x] 5. Migración y módulo `conversations` con `conversations.int.test.ts` (AC-011-11, 12, 13, 15).
+- [x] 6. Web: `conversations.api.ts`, lista, autoguardado y restauración con pruebas (AC-011-16, 17, 18).
 - [ ] 7. Verificación manual (AC-011-10) y bitácora.
 
 ## Fuera de alcance y decisiones
@@ -187,3 +187,6 @@ turnos (`assistant.answered`) no cambia.
 - 2026-10-28 · Spec redactada a partir del plan aprobado por el usuario y aprobada ("Aprobada, implementa").
 - 2026-10-28 · `assistant.v1.ts` se renombró a `assistant.v2.ts` (nadie más importaba v1). `uploadPayable` sigue en `ASSISTANT_TOOLS` para el runner y los renderers de la web, y `WEB_ONLY_TOOLS` (contracts) lo oculta al modelo y lo descarta en `pickToolCalls`.
 - 2026-10-28 · `depende_de` quedó en `['010']`: `spec:check` no deja cerrar una spec que depende de otra en progreso, y 008 sigue abierta solo por la verificación manual contra la URL pública (AC-008-12) y su tarea de documentación. 011 modifica el comportamiento de 008 y 010 (ya hecha) ya trae el asistente con streaming.
+- 2026-10-28 · Las decisiones de las propuestas se guardan en una columna `decisions Json` de `conversations` (no en cada mensaje): se escriben junto con la conversación completa y mantienen `conversation_messages.payload` igual al `AssistantMessage` del contrato. Las lecturas (`runs`) no se guardan: se reconstruyen del mensaje `tool`; si el resultado fue recortado por el tope, la fila se ve sin su componente.
+- 2026-10-28 · `configureApp` sube el límite del JSON a 4 MB: el cuerpo por defecto (100 KB) no alcanzaba para conversaciones con resultados de herramientas de hasta 20 000 caracteres.
+- 2026-10-28 · `⌘K` dentro de `/asistente/...` se queda en la conversación abierta; fuera del asistente abre una nueva.

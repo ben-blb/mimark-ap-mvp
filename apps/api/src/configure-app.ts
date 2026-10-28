@@ -10,6 +10,8 @@ import { env } from './config/env.js';
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api');
   (app as NestExpressApplication).set('trust proxy', true);
+  // Una conversación guardada puede traer resultados de herramientas de hasta 20 000 caracteres cada uno.
+  (app as NestExpressApplication).useBodyParser('json', { limit: '4mb' });
   app.use(requestContext);
 }
 

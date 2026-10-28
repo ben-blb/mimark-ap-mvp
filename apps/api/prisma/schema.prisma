@@ -179,3 +179,30 @@ model AuditEvent {
   @@index([action, at])
   @@index([requestId])
 }
+
+/// Conversaciones del asistente de cada persona (spec 011). Las escribe solo el módulo conversations.
+model Conversation {
+  id        String   @id @db.Uuid
+  actor     String
+  title     String
+  /// Qué se decidió de cada propuesta, por id de llamada: { confirmed | cancelled | failed | pending }.
+  decisions Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ConversationMessage[]
+
+  @@index([actor, updatedAt(sort: Desc)])
+  @@map("conversations")
+}
+
+/// Un mensaje de la conversación (`AssistantMessage` de contracts), en orden por `seq`.
+model ConversationMessage {
+  conversationId String       @db.Uuid
+  seq            Int
+  payload        Json
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, seq])
+  @@map("conversation_messages")
+}

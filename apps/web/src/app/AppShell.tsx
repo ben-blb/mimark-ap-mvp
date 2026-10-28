@@ -14,7 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useLogout, useSession } from '../features/session/session.api';
 import { ROLE_LABELS } from '../lib/labels';
 import { MOBILE_NAV_OFFSET, vars } from './theme';
@@ -247,16 +247,18 @@ function MobileChrome(props: { actor?: string; role?: string; onLogout: () => vo
 /** `⌘K` / `Ctrl+K` desde cualquier pantalla: abre el asistente con el compositor enfocado (AC-010-08). */
 function useComposerShortcut() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
       const state: FocusComposerState = { focusComposer: Date.now() };
-      void navigate('/asistente', { state });
+      // Dentro de una conversación guardada se queda en ella (spec 011).
+      void navigate(pathname.startsWith('/asistente') ? pathname : '/asistente', { state });
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate]);
+  }, [navigate, pathname]);
 }
 
 export function AppShell() {

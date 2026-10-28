@@ -45,14 +45,14 @@ const TOOLS = Object.fromEntries(
   Object.entries(ASSISTANT_TOOLS)
     .filter(([name]) => !WEB_ONLY_TOOLS.has(name))
     .map(([name, t]) => [
-    name,
-    tool({
-      description: t.description,
-      inputSchema: jsonSchema(
-        z.toJSONSchema(t.input, { io: 'input', target: 'draft-7' }) as JSONSchema7,
-      ),
-    }),
-  ]),
+      name,
+      tool({
+        description: t.description,
+        inputSchema: jsonSchema(
+          z.toJSONSchema(t.input, { io: 'input', target: 'draft-7' }) as JSONSchema7,
+        ),
+      }),
+    ]),
 );
 
 /** Habla con el LLM del asistente. Lleva instrucciones versionadas, la fecha y los metadatos del adjunto. */

@@ -2,23 +2,18 @@ import type { AssistantMessage, AssistantToolCall } from '@mimark/contracts/assi
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import {
-  type DragEvent,
-  type FormEvent,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import type { FocusComposerState } from '../../app/AppShell';
 import { ErrorAlert } from '../../components/ErrorAlert';
-import { PageHeader } from '../../components/PageHeader';
 import { useDashboard } from '../dashboard/dashboard.api';
 import { validateFile } from '../payables/UploadForm';
 import { isWrite, streamTurn, toToolResult, useRunTool } from './assistant.api';
+import { useFileDrop, useStickToBottom } from './chatHooks';
 import { Composer, DropOverlay, EmptyChat, SuggestionChips } from './AssistantParts';
 import { isAbort, lastRead, recent, toolMessage } from './conversation';
+import { useConversation } from './conversations.api';
+import { ConversationControls, useSavedConversation } from './ConversationControls';
 import { type Decision, MessageList } from './MessageList';
 import { followUpSuggestions, startSuggestions } from './suggestions';
 import type { ToolRun } from './ToolCallRow';
@@ -27,8 +22,6 @@ import type { ToolRun } from './ToolCallRow';
 const MAX_ROUNDS = 5;
 /** Texto del mensaje cuando la persona envía solo el archivo (AC-011-04). */
 const ATTACHED_PROMPT = 'Revisa la factura adjunta';
-/** A cuántos píxeles del final todavía se considera "abajo" para el desplazamiento automático. */
-const STICKY_PX = 120;
 
 interface Waiting {
   conversation: AssistantMessage[];
@@ -41,10 +34,12 @@ interface Waiting {
  * se dibujan con su componente; las escrituras se muestran como confirmación y solo se ejecutan con el clic de la
  * persona, por los mismos endpoints que usan las pantallas.
  */
-export function AssistantPage() {
+export function AssistantPage({ openId }: { openId?: string } = {}) {
   const runTool = useRunTool();
   const dashboard = useDashboard(7);
   const location = useLocation();
+  const opened = useConversation(openId);
+  const [conversationId] = useState(() => openId ?? crypto.randomUUID());
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [live, setLive] = useState<string | null>(null);
   const [runs, setRuns] = useState<Record<string, ToolRun>>({});
@@ -54,13 +49,10 @@ export function AssistantPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  const stick = useRef(true);
-  const dragDepth = useRef(0);
 
   // ⌘K desde cualquier pantalla (AppShell) llega aquí con el pedido de enfocar el compositor.
   const focusKey = (location.state as FocusComposerState | null)?.focusComposer;
@@ -68,18 +60,22 @@ export function AssistantPage() {
     input.current?.focus();
   }, [focusKey]);
 
-  // Desplazamiento automático solo mientras la persona está al final (AC-010-08).
-  useEffect(() => {
-    const onScroll = () => {
-      const { scrollHeight } = document.documentElement;
-      stick.current = window.innerHeight + window.scrollY >= scrollHeight - STICKY_PX;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  useLayoutEffect(() => {
-    if (stick.current) window.scrollTo?.({ top: document.documentElement.scrollHeight });
-  }, [messages, live, runs, decisions]);
+  useSavedConversation({
+    openId,
+    conversationId,
+    opened: opened.data,
+    busy,
+    messages,
+    decisions,
+    onRestore: (restored) => {
+      setMessages(restored.messages);
+      setRuns(restored.runs);
+      setDecisions(restored.decisions);
+    },
+    onSaveError: () => setNotice('No se pudo guardar la conversación.'),
+  });
+
+  const pinToBottom = useStickToBottom({ messages, live, runs, decisions });
 
   async function readAll(reads: AssistantToolCall[]) {
     setRuns((prev) => ({
@@ -202,7 +198,7 @@ export function AssistantPage() {
     event.preventDefault();
     const text = draft.trim() || (file ? ATTACHED_PROMPT : '');
     if (!text) return;
-    stick.current = true;
+    pinToBottom();
     setError(null);
     setNotice(null);
     const user: AssistantMessage = { role: 'user', text };
@@ -250,27 +246,7 @@ export function AssistantPage() {
   }
 
   // Soltar un archivo en cualquier parte del panel (AC-010-08).
-  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
-  const drop = {
-    onDragEnter: (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      dragDepth.current += 1;
-      setDragging(true);
-    },
-    onDragOver: (e: DragEvent) => {
-      if (hasFiles(e)) e.preventDefault();
-    },
-    onDragLeave: () => {
-      dragDepth.current = Math.max(0, dragDepth.current - 1);
-      if (dragDepth.current === 0) setDragging(false);
-    },
-    onDrop: (e: DragEvent) => {
-      e.preventDefault();
-      dragDepth.current = 0;
-      setDragging(false);
-      if (!busy) attach(e.dataTransfer.files[0]);
-    },
-  };
+  const { dragging, drop } = useFileDrop((dropped) => !busy && attach(dropped));
 
   const locked = busy || waiting !== null;
   const followUps =
@@ -290,7 +266,7 @@ export function AssistantPage() {
       }}
     >
       {dragging && <DropOverlay />}
-      <PageHeader title="Asistente" />
+      <ConversationControls conversationId={conversationId} busy={busy} onError={setError} />
       <Stack
         spacing={2.5}
         role="log"
@@ -313,7 +289,7 @@ export function AssistantPage() {
           <SuggestionChips aria-label="Seguimientos" suggestions={followUps} onPick={pick} />
         )}
         {notice && <Alert severity="info">{notice}</Alert>}
-        <ErrorAlert error={error} />
+        <ErrorAlert error={error ?? opened.error} />
       </Stack>
 
       <Composer

@@ -10,7 +10,8 @@ import { formatDay, formatMoney, formatPayDay, formatTime } from '../../lib/form
 import { ASSISTANT_TOOL_LABELS, FIELD_LABELS, PAYABLE_STATUS_LABELS } from '../../lib/labels';
 import { usePayable } from '../payables/payables.api';
 
-export type ProposalStatus = 'pending' | 'running' | 'confirmed' | 'cancelled' | 'failed';
+/** `stale`: una propuesta de una conversación guardada que nadie decidió (spec 011). */
+export type ProposalStatus = 'pending' | 'running' | 'confirmed' | 'cancelled' | 'failed' | 'stale';
 
 type Input = Record<string, unknown>;
 interface Change {
@@ -160,6 +161,7 @@ function StatusLine(props: { status: ProposalStatus; at?: Date; error?: string }
     confirmed: `Hecho${props.at ? ` · ${formatTime(props.at)}` : ''}`,
     cancelled: 'Cancelada',
     failed: 'No se pudo hacer',
+    stale: 'Sin decidir',
   }[props.status];
   return (
     <Typography variant="body2" sx={{ color, mt: 1.5 }}>

@@ -63,6 +63,28 @@ const payable: PayableDto = {
   allowedActions: [],
 };
 
+const schedule = {
+  id: 'c1',
+  name: 'schedulePayable',
+  input: { id: 'p1', payOn: '2026-10-30' },
+};
+
+const storedConversation = {
+  id: '3f2b1c2e-8a4d-4c55-9b6a-0d1e2f3a4b5c',
+  title: 'Programa p1 para el viernes',
+  updatedAt: '2026-10-27T18:00:00.000Z',
+  messages: [
+    { role: 'user', text: 'Programa p1 para el viernes' },
+    { role: 'assistant', text: 'Te propongo:', toolCalls: [schedule] },
+    { role: 'user', text: 'Y otra cosa' },
+    { role: 'assistant', text: 'Te propongo otra:', toolCalls: [{ ...schedule, id: 'c2' }] },
+  ],
+  decisions: {
+    c1: { status: 'confirmed', at: '2026-10-27T18:01:00.000Z' },
+    c2: { status: 'pending' },
+  },
+};
+
 const supplier = {
   id: 'cmh0supplier00000000000001',
   name: 'Aceros del Norte',
@@ -118,7 +140,15 @@ const list = {
 };
 
 /** Responde los turnos en orden y los endpoints de las herramientas con datos fijos. */
-function setup(turns: Turn[], options: { hold?: boolean; board?: typeof dashboard } = {}) {
+function setup(
+  turns: Turn[],
+  options: {
+    hold?: boolean;
+    board?: typeof dashboard;
+    saved?: (typeof storedConversation)[];
+    openId?: string;
+  } = {},
+) {
   const queue = [...turns, { text: 'Listo.', toolCalls: [] }];
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
     if (url === '/api/assistant/stream') {
@@ -127,8 +157,27 @@ function setup(turns: Turn[], options: { hold?: boolean; board?: typeof dashboar
         sse(turn, init?.signal, options.hold && queue.length === turns.length),
       );
     }
-    if (url === '/api/suppliers' && init?.method === 'POST')
-      return Promise.resolve(json(supplier));
+    if (url.startsWith('/api/conversations/') && init?.method === 'PUT') {
+      const stored = { ...JSON.parse(init.body as string), id: url.split('/').pop() };
+      return Promise.resolve(json({ ...stored, updatedAt: '2026-10-28T12:00:00.000Z' }));
+    }
+    if (url.startsWith('/api/conversations/') && init?.method === 'DELETE')
+      return Promise.resolve(new Response(null, { status: 204 }));
+    if (url.startsWith('/api/conversations/')) {
+      const found = (options.saved ?? []).find((c) => url.endsWith(c.id));
+      return Promise.resolve(json(found));
+    }
+    if (url === '/api/conversations')
+      return Promise.resolve(
+        json({
+          items: (options.saved ?? []).map(({ id, title, updatedAt }) => ({
+            id,
+            title,
+            updatedAt,
+          })),
+        }),
+      );
+    if (url === '/api/suppliers' && init?.method === 'POST') return Promise.resolve(json(supplier));
     if (url.startsWith('/api/suppliers')) return Promise.resolve(json({ items: [supplier] }));
     if (url.startsWith('/api/dashboard')) return Promise.resolve(json(options.board ?? dashboard));
     if (url === '/api/payables' && (init?.method ?? 'GET') === 'GET')
@@ -140,7 +189,7 @@ function setup(turns: Turn[], options: { hold?: boolean; board?: typeof dashboar
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
-        <AssistantPage />
+        <AssistantPage openId={options.openId} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -159,12 +208,6 @@ async function say(user: ReturnType<typeof userEvent.setup>, text: string) {
 }
 
 afterEach(() => vi.unstubAllGlobals());
-
-const schedule = {
-  id: 'c1',
-  name: 'schedulePayable',
-  input: { id: 'p1', payOn: '2026-10-30' },
-};
 
 describe('AssistantPage', () => {
   it('AC-008-06 ejecuta sola una lectura y envía su resultado en el siguiente turno', async () => {
@@ -252,7 +295,11 @@ describe('AssistantPage', () => {
         url === '/api/payables' && init?.method === 'POST'
           ? Promise.resolve(
               new Response(
-                JSON.stringify({ code: 'QUOTA_EXCEEDED', message: 'Límite diario de cargas.', requestId: 'r1' }),
+                JSON.stringify({
+                  code: 'QUOTA_EXCEEDED',
+                  message: 'Límite diario de cargas.',
+                  requestId: 'r1',
+                }),
                 { status: 429, headers: { 'content-type': 'application/json' } },
               ),
             )
@@ -277,7 +324,10 @@ describe('AssistantPage', () => {
 
     expect(await screen.findByText('Listo.')).toBeInTheDocument();
     expect(writes('/api/payables')).toHaveLength(1);
-    expect(turnBodies()[0].messages[0]).toEqual({ role: 'user', text: 'Revisa la factura adjunta' });
+    expect(turnBodies()[0].messages[0]).toEqual({
+      role: 'user',
+      text: 'Revisa la factura adjunta',
+    });
   });
 
   it('AC-011-09 un alta propuesta no escribe nada hasta Confirmar y el asistente propone la siguiente después', async () => {
@@ -311,6 +361,57 @@ describe('AssistantPage', () => {
     expect(writes('/api/suppliers')).toHaveLength(1);
     expect(calls('/api/purchase-orders').filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
     expect(screen.getAllByRole('button', { name: 'Confirmar' })).toHaveLength(1);
+  });
+
+  it('AC-011-16 guarda sola la conversación al terminar el turno y la lista la muestra', async () => {
+    const { calls, user } = setup([{ text: 'Hola, ¿en qué te ayudo?', toolCalls: [] }]);
+    await say(user, 'Hola');
+    await screen.findByText('Hola, ¿en qué te ayudo?');
+
+    await waitFor(() => {
+      const put = calls('/api/conversations/').find(([, i]) => i?.method === 'PUT');
+      expect(put).toBeDefined();
+      const sent = JSON.parse(put?.[1]?.body as string);
+      expect(sent.title).toBe('Hola');
+      expect(sent.messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant']);
+    });
+  });
+
+  it('AC-011-16 abre una conversación guardada y restaura sus mensajes', async () => {
+    setup([], { saved: [storedConversation], openId: storedConversation.id });
+    expect(await screen.findByText('Y otra cosa')).toBeInTheDocument();
+    expect(screen.getByText('Te propongo otra:')).toBeInTheDocument();
+  });
+
+  it('AC-011-17 las propuestas decididas aparecen resueltas, las pendientes sin botones, y nada se ejecuta', async () => {
+    const { writes, turnBodies } = setup([], {
+      saved: [storedConversation],
+      openId: storedConversation.id,
+    });
+    const cards = await screen.findAllByLabelText('Propuesta: Programar un pago');
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toHaveTextContent(/Hecho · \d{2}:\d{2}/);
+    expect(cards[1]).toHaveTextContent('Sin decidir');
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).toBeNull();
+    expect(writes('/api/payables')).toHaveLength(0);
+    expect(turnBodies()).toHaveLength(0);
+    expect(screen.getByLabelText('Mensaje')).not.toBeDisabled();
+  });
+
+  it('AC-011-18 Eliminar pide confirmación y solo entonces borra', async () => {
+    const { calls, user } = setup([], { saved: [storedConversation] });
+    await user.click(await screen.findByRole('button', { name: /^Conversaciones/ }));
+    await user.click(await screen.findByRole('button', { name: /^Eliminar Programa/ }));
+    expect(calls('/api/conversations/').filter(([, i]) => i?.method === 'DELETE')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await user.click(screen.getByRole('button', { name: /^Eliminar Programa/ }));
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }));
+    await waitFor(() =>
+      expect(calls('/api/conversations/').filter(([, i]) => i?.method === 'DELETE')).toHaveLength(
+        1,
+      ),
+    );
   });
 
   it('AC-008-10 muestra el contenido del asistente como texto, sin interpretar HTML', async () => {

@@ -1,8 +1,8 @@
 ---
 id: '013'
 titulo: Usuarios, contraseñas y roles
-estado: borrador # borrador | lista | en-progreso | hecha
-depende_de: ['001', '002', '003', '005', '008']
+estado: en-progreso # borrador | lista | en-progreso | hecha
+depende_de: ['001', '002', '003', '005']
 requisitos: Acceso, RF-22, RF-23 (extensión)
 ---
 
@@ -249,12 +249,12 @@ contraseñas ni hashes.
 - [ ] 2. Reglas puras con pruebas: token con `userId`, límites, contraseña, `can()`, `canChangeUser()`.
 - [ ] 3. Modelo `User`, migración `013-usuarios` y repositorios (escritura en `users`, lectura en `session`).
 - [ ] 4. `@Requires` y guard (401 / `PASSWORD_CHANGE_REQUIRED` / `FORBIDDEN`); ayudante `loginAs(role)` y migración de
-     las pruebas de integración existentes.
+      las pruebas de integración existentes.
 - [ ] 5. Entrada por correo, cambio de contraseña y límites por IP y por correo (AC-013-05…12).
 - [ ] 6. Configuración inicial (AC-013-01…04).
 - [ ] 7. Módulo `users` con auditoría (AC-013-18…23).
 - [ ] 8. `@Requires` en `suppliers`, `purchase-orders`, `payables`, `dashboard`, `assistant`, y filtro de herramientas
-     del asistente; prueba de recorrido por rol (AC-013-13…17).
+      del asistente; prueba de recorrido por rol (AC-013-13…17).
 - [ ] 9. Web: login, configuración inicial, cambio de contraseña, `/usuarios`, permisos en navegación y tutorial.
 - [ ] 10. Docs: ADR nuevo que reemplaza a ADR-07, `.env.example`, `infra/README.md`, `apps/api/AGENTS.md`,
       `apps/web/AGENTS.md`, nota en las specs 001 y 005 ("modificada por 013").
@@ -284,3 +284,6 @@ contraseñas ni hashes.
 
 - 2026-11-02 · Spec redactada en `borrador` a partir del plan acordado (sesión de 8 h en cookie, configuración
   inicial por pantalla, `warehouse` solo con órdenes, `manager` confirma y paga).
+- 2026-11-02 · Spec aprobada por el dueño y puesta en `en-progreso`. Se quitó `008` de `depende_de`: solo le falta
+  AC-008-12 (manual, contra la URL pública) y la 013 no lo necesita; solo ajusta qué herramientas del asistente se
+  ofrecen por rol. Entorno de pruebas: Postgres 16 local del contenedor (`mimark` y `mimark_test`).

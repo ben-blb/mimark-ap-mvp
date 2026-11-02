@@ -37,14 +37,12 @@ export class Api {
     this.base = url.replace(/\/+$/, '');
   }
 
-  /** Inicia sesión con el código de acceso. El código nunca se imprime ni se guarda. */
-  async login(code: string, name = 'probador'): Promise<void> {
-    const res = await this.request('POST', '/api/session', {
-      json: { code, name, role: 'payables' },
-    });
+  /** Inicia sesión con correo y contraseña. La contraseña nunca se imprime ni se guarda. */
+  async login(email: string, password: string): Promise<void> {
+    const res = await this.request('POST', '/api/session', { json: { email, password } });
     if (res.status !== 200)
       throw new Error(
-        `No se pudo iniciar sesión (HTTP ${res.status}). Revisa PROBADOR_CODE y la URL.`,
+        `No se pudo iniciar sesión (HTTP ${res.status}). Revisa PROBADOR_EMAIL, PROBADOR_PASSWORD y la URL.`,
       );
   }
 

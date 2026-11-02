@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { PAYABLE_ACTION_PERMISSION } from '../../lib/permissions';
 import { ActionBar, type PayableAction } from './ActionBar';
 
 /** allowedActions por estado, tal como los entrega la API (spec 005). */
@@ -45,5 +46,18 @@ describe('ActionBar', () => {
   it('AC-005-14 mientras una acción está en curso desactiva las demás', () => {
     render(<ActionBar actions={['correct', 'confirm']} onAction={vi.fn()} pending="confirm" />);
     expect(screen.getByRole('button', { name: 'Corregir' })).toBeDisabled();
+  });
+
+  it('AC-013-15 con isAllowed solo muestra las acciones que el rol puede hacer (manager no corrige ni descarta)', () => {
+    const managerCan = (action: PayableAction) =>
+      PAYABLE_ACTION_PERMISSION[action] === 'payables:pay';
+    render(
+      <ActionBar
+        actions={['correct', 'confirm', 'discard']}
+        onAction={vi.fn()}
+        isAllowed={managerCan}
+      />,
+    );
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Confirmar']);
   });
 });

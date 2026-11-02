@@ -9,6 +9,7 @@ import {
 } from '@mimark/contracts/suppliers';
 import { Ctx } from '../../common/ctx.js';
 import { SuppliersService } from './suppliers.service.js';
+import { Requires } from '../session/session.guard.js';
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
 @Controller('suppliers')
@@ -25,6 +26,7 @@ export class SuppliersController {
     return this.suppliers.get(id);
   }
 
+  @Requires('suppliers:write')
   @Post()
   create(
     @Body({ schema: CreateSupplierInput }) input: CreateSupplierInput,
@@ -33,6 +35,7 @@ export class SuppliersController {
     return this.suppliers.create(input, ctx);
   }
 
+  @Requires('suppliers:write')
   @Patch(':id')
   update(
     @Param('id', { schema: Id }) id: string,

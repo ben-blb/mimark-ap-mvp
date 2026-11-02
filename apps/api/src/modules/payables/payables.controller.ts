@@ -30,6 +30,7 @@ import { AppError } from '../../common/app-error.js';
 import { Ctx } from '../../common/ctx.js';
 import { PayablesReviewService } from './payables-review.service.js';
 import { PayablesService } from './payables.service.js';
+import { Requires } from '../session/session.guard.js';
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
 @Controller('payables')
@@ -39,6 +40,7 @@ export class PayablesController {
     private readonly review: PayablesReviewService,
   ) {}
 
+  @Requires('payables:write')
   @Post()
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_BYTES, files: 1 } }))
   upload(
@@ -52,16 +54,19 @@ export class PayablesController {
     return this.payables.upload(file, input, ctx);
   }
 
+  @Requires('payables:read')
   @Get()
   list(@Query({ schema: PayableListQuery }) query: PayableListQuery): Promise<PayableList> {
     return this.payables.list(query);
   }
 
+  @Requires('payables:read')
   @Get(':id')
   get(@Param('id', { schema: Id }) id: string): Promise<PayableDto> {
     return this.payables.get(id);
   }
 
+  @Requires('payables:read')
   @Get(':id/file')
   @Header('X-Content-Type-Options', 'nosniff')
   @Header('Cache-Control', 'private, no-store')
@@ -73,16 +78,19 @@ export class PayablesController {
     });
   }
 
+  @Requires('payables:read')
   @Get(':id/history')
   history(@Param('id', { schema: Id }) id: string): Promise<PayableHistory> {
     return this.payables.history(id);
   }
 
+  @Requires('payables:write')
   @Post(':id/retry')
   retry(@Param('id', { schema: Id }) id: string, @Ctx() ctx: Ctx): Promise<PayableDto> {
     return this.payables.retry(id, ctx);
   }
 
+  @Requires('payables:write')
   @Patch(':id/fields')
   correct(
     @Param('id', { schema: Id }) id: string,
@@ -92,11 +100,13 @@ export class PayablesController {
     return this.review.correct(id, input, ctx);
   }
 
+  @Requires('payables:pay')
   @Post(':id/confirm')
   confirm(@Param('id', { schema: Id }) id: string, @Ctx() ctx: Ctx): Promise<PayableDto> {
     return this.review.confirm(id, ctx);
   }
 
+  @Requires('payables:pay')
   @Post(':id/schedule')
   schedule(
     @Param('id', { schema: Id }) id: string,
@@ -106,6 +116,7 @@ export class PayablesController {
     return this.review.schedule(id, input, ctx);
   }
 
+  @Requires('payables:pay')
   @Post(':id/payment')
   pay(
     @Param('id', { schema: Id }) id: string,
@@ -115,6 +126,7 @@ export class PayablesController {
     return this.review.pay(id, input, ctx);
   }
 
+  @Requires('payables:write')
   @Patch(':id/documents')
   documents(
     @Param('id', { schema: Id }) id: string,
@@ -124,6 +136,7 @@ export class PayablesController {
     return this.review.documents(id, input, ctx);
   }
 
+  @Requires('payables:write')
   @Post(':id/discard')
   discard(
     @Param('id', { schema: Id }) id: string,

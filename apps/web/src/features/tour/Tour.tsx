@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useLayoutEffect, useState } from 'react';
 import { vars } from '../../app/theme';
-import { TOUR_STEPS } from './tour.steps';
+import { TOUR_STEPS, type TourStep } from './tour.steps';
 
 const GAP = 16;
 const PAD = 4;
@@ -46,13 +46,14 @@ function placement(rect: DOMRect): SxProps<Theme> {
 }
 
 /** Recorrido de bienvenida (spec 012): se monta abierto y avisa con `onClose` al terminar, saltar o pulsar Esc. */
-export function Tour(props: { onClose: () => void }) {
+export function Tour(props: { onClose: () => void; steps?: readonly TourStep[] }) {
+  const steps = props.steps ?? TOUR_STEPS;
   const [index, setIndex] = useState(0);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const step = TOUR_STEPS[index] ?? TOUR_STEPS[0];
+  const step = steps[index] ?? steps[0];
   const rect = useTargetRect(step?.anchor);
   if (!step) return null;
-  const last = index === TOUR_STEPS.length - 1;
+  const last = index === steps.length - 1;
 
   return (
     <>
@@ -94,7 +95,7 @@ export function Tour(props: { onClose: () => void }) {
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
           <Typography variant="caption" sx={{ color: 'text.tertiary' }}>
-            Paso {index + 1} de {TOUR_STEPS.length}
+            Paso {index + 1} de {steps.length}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {!last && <Button onClick={props.onClose}>Saltar</Button>}

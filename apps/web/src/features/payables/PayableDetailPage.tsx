@@ -7,6 +7,8 @@ import { Link as RouterLink, useParams } from 'react-router';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ApiError } from '../../lib/api-client';
 import { REVIEW_REASON_LABELS } from '../../lib/labels';
+import { PAYABLE_ACTION_PERMISSION } from '../../lib/permissions';
+import { useCan } from '../session/session.api';
 import { ActionBar, type PayableAction } from './ActionBar';
 import { PayableDetail } from './PayableDetail';
 import {
@@ -27,6 +29,7 @@ export function PayableDetailPage() {
   const history = usePayableHistory(id);
   const retry = useRetryPayable(id);
   const confirm = useConfirmPayable(id);
+  const can = useCan();
   const [dialog, setDialog] = useState<DialogName | null>(null);
 
   if (payable.isPending) return <LinearProgress />;
@@ -72,7 +75,14 @@ export function PayableDetailPage() {
       <PayableDetail
         payable={data}
         history={history.data?.items ?? []}
-        actions={<ActionBar actions={data.allowedActions} onAction={onAction} pending={pending} />}
+        actions={
+          <ActionBar
+            actions={data.allowedActions}
+            onAction={onAction}
+            pending={pending}
+            isAllowed={(action) => can(PAYABLE_ACTION_PERMISSION[action])}
+          />
+        }
       />
       {dialog === 'correct' && <CorrectDialog payable={data} onClose={close} />}
       {dialog === 'schedule' && <ScheduleDialog payable={data} onClose={close} />}

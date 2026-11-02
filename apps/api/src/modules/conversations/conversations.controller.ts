@@ -7,10 +7,12 @@ import {
 import { z } from 'zod';
 import { Ctx } from '../../common/ctx.js';
 import { ConversationsService } from './conversations.service.js';
+import { Requires } from '../session/session.guard.js';
 
 const ConversationId = z.uuid();
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
+@Requires('assistant:use')
 @Controller('conversations')
 export class ConversationsController {
   constructor(private readonly conversations: ConversationsService) {}

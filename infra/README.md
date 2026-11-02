@@ -38,20 +38,21 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
    - Deja activado "Include files outside the root directory" (lo necesita `packages/contracts`).
    - Variables (Production con la rama `main`, Preview con la rama `preview`):
 
-     | Variable                                 | Valor                                                    |
-     | ---------------------------------------- | -------------------------------------------------------- |
-     | `DATABASE_URL` / `DATABASE_URL_UNPOOLED` | URLs de Neon                                             |
-     | `ACCESS_CODE_HASH`                       | `pnpm --filter @mimark/api access:hash "<código largo>"` |
-     | `SESSION_SECRET`                         | `openssl rand -base64 48` (distinto por entorno)         |
-     | `BUSINESS_TZ`                            | `America/Monterrey`                                      |
-     | `ENABLE_EXPERIMENTAL_COREPACK`           | `1` (usa el pnpm de `packageManager`)                    |
+     | Variable                                             | Valor                                                    |
+     | ---------------------------------------------------- | -------------------------------------------------------- |
+     | `DATABASE_URL` / `DATABASE_URL_UNPOOLED`             | URLs de Neon                                             |
+     | `ACCESS_CODE_HASH` (código de configuración inicial) | `pnpm --filter @mimark/api access:hash "<código largo>"` |
+     | `SESSION_SECRET`                                     | `openssl rand -base64 48` (distinto por entorno)         |
+     | `BUSINESS_TZ`                                        | `America/Monterrey`                                      |
+     | `ENABLE_EXPERIMENTAL_COREPACK`                       | `1` (usa el pnpm de `packageManager`)                    |
 
    - El build corre `vercel-build`: `prisma migrate deploy` contra la rama del entorno y `nest build`. `scripts/bundle.mjs`
      deja la API en un solo archivo (`dist/server.mjs`).
 4. Variable `ENABLE_EXPERIMENTAL_COREPACK=1` en el proyecto (la usan ambos servicios).
 5. **Monorepo:** en Settings → Git activa "Skip deployments when there are no changes".
-6. **Verificar:** abre `https://<web>/api/health` → `{"status":"ok","db":"ok",...}`; entra con el código y registra
-   un proveedor.
+6. **Verificar:** abre `https://<web>/api/health` → `{"status":"ok","db":"ok",...}`; abre la web: la primera vez muestra
+   la configuración inicial (con el código de `ACCESS_CODE_HASH`) para crear al administrador; después entra con su
+   correo, crea los demás usuarios en «Usuarios» y registra un proveedor.
 7. **Semilla en producción** (una vez, datos sintéticos para la demo y el probador):
    `DATABASE_URL="<url directa de main>" pnpm db:seed`.
 
@@ -66,13 +67,13 @@ Sin Docker: usa cualquier Postgres 16 (por ejemplo una rama de Neon) y pon su UR
 
 ## Dónde vive cada secreto
 
-| Secreto                             | Local                                         | Vercel                                    |
-| ----------------------------------- | --------------------------------------------- | ----------------------------------------- |
-| Conexión a la base                  | `apps/api/.env`                               | proyecto `api`, por entorno               |
-| Hash del código y secreto de sesión | `apps/api/.env` (valores de desarrollo)       | proyecto `api`, por entorno               |
-| Token de Blob                       | opcional (sin él se usa `apps/api/.storage/`) | lo crea la integración                    |
-| Llave de IA                         | `apps/api/.env`                               | proyecto `api`                            |
-| Código de acceso en claro           | nunca en archivos                             | se comparte por separado con quien evalúa |
+| Secreto                                              | Local                                         | Vercel                         |
+| ---------------------------------------------------- | --------------------------------------------- | ------------------------------ |
+| Conexión a la base                                   | `apps/api/.env`                               | proyecto `api`, por entorno    |
+| Hash del código de configuración y secreto de sesión | `apps/api/.env` (valores de desarrollo)       | proyecto `api`, por entorno    |
+| Token de Blob                                        | opcional (sin él se usa `apps/api/.storage/`) | lo crea la integración         |
+| Llave de IA                                          | `apps/api/.env`                               | proyecto `api`                 |
+| Código de configuración en claro                     | nunca en archivos                             | solo lo conoce quien despliega |
 
 La web no tiene variables: llama a `/api` en su propio origen.
 

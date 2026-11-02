@@ -47,7 +47,7 @@ diga cuál reemplaza. Formato: decisión · alternativas · por qué · revisar 
 - **Por qué:** un documento tarda segundos y Hobby permite 300 s. Un flujo que se lee en un solo método.
 - **Revisar si:** cargas por lote o p95 mayor a 60 s → cola con un solo consumidor.
 
-## ADR-07 · Código de acceso y cookie firmada
+## ADR-07 · Código de acceso y cookie firmada (reemplazado por ADR-15)
 
 - **Decisión:** entrada con código, nombre y rol; cookie HMAC HttpOnly de 8 h; sin tabla de sesiones.
 - **Alternativas:** Auth.js, Clerk u otro proveedor de identidad.
@@ -115,3 +115,17 @@ diga cuál reemplaza. Formato: decisión · alternativas · por qué · revisar 
   actor real, sin duplicar lógica ni llamar services entre módulos. `useChat` saltaría `lib/api-client.ts` (regla 7).
 - **Revisar si:** se necesitan respuestas largas en tiempo real → streaming sobre el mismo contrato; o se quiere
   operar desde otro cliente → MCP sobre el mismo catálogo, manteniendo la confirmación humana.
+
+## ADR-15 · Usuarios con contraseña y permisos por rol (reemplaza ADR-07)
+
+- **Decisión:** tabla `users` (correo, hash scrypt, rol, activo); entrada con correo y contraseña; misma cookie HMAC de
+  8 h, ahora con `userId`, rol y bandera de cambio de contraseña; matriz fija de permisos en `contracts/permissions.ts`
+  exigida por la API con `@Requires` y reflejada en la web. El primer administrador se crea en una configuración
+  inicial protegida por el código `ACCESS_CODE_HASH`. «Borrar» un usuario lo desactiva.
+- **Alternativas:** Auth.js, Clerk u otro proveedor de identidad; sesiones en tabla con revisión por petición;
+  permisos editables desde una pantalla.
+- **Por qué:** la entrega necesita saber quién es cada persona y que cada rol haga solo lo suyo, sin dependencias
+  nuevas ni una consulta por petición. Con la cookie firmada, una baja o un cambio de rol rigen hasta que vence
+  (máximo 8 h); se aceptó a cambio de no tener tabla de sesiones.
+- **Revisar si:** una baja debe cortar la sesión al instante → consultar `users` en el guard (una lectura por clave
+  primaria); piloto real → proveedor de identidad reemplazando el módulo `session`.

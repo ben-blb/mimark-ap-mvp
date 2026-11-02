@@ -8,8 +8,10 @@ import type { Response } from 'express';
 import { AppError } from '../../common/app-error.js';
 import { Ctx } from '../../common/ctx.js';
 import { AssistantService } from './assistant.service.js';
+import { Requires } from '../session/session.guard.js';
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
+@Requires('assistant:use')
 @Controller('assistant')
 export class AssistantController {
   constructor(private readonly assistant: AssistantService) {}

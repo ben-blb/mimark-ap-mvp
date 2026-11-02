@@ -1,10 +1,5 @@
-import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
-import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LogoutOutlined from '@mui/icons-material/LogoutOutlined';
-import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
-import SpaceDashboardOutlined from '@mui/icons-material/SpaceDashboardOutlined';
-import StorefrontOutlined from '@mui/icons-material/StorefrontOutlined';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import ListSubheader from '@mui/material/ListSubheader';
@@ -14,50 +9,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { NavLink } from 'react-router';
+import { type NavItem } from './nav-items';
 import { MOBILE_NAV_OFFSET, vars } from './theme';
-
-/** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
-const NAV_ITEMS = [
-  {
-    to: '/',
-    tour: 'tablero',
-    label: 'Tablero',
-    short: 'Tablero',
-    icon: <SpaceDashboardOutlined />,
-  },
-  {
-    to: '/proveedores',
-    tour: 'proveedores',
-    label: 'Proveedores',
-    short: 'Proveedores',
-    icon: <StorefrontOutlined />,
-  },
-  {
-    to: '/ordenes',
-    tour: 'ordenes',
-    label: 'Órdenes de compra',
-    short: 'Órdenes',
-    icon: <ReceiptLongOutlined />,
-  },
-  {
-    to: '/expedientes',
-    tour: 'expedientes',
-    label: 'Expedientes',
-    short: 'Expedientes',
-    icon: <DescriptionOutlined />,
-  },
-  {
-    to: '/asistente',
-    tour: 'asistente',
-    label: 'Asistente',
-    short: 'Asistente',
-    icon: <AutoAwesomeOutlined />,
-  },
-] as const;
 
 export const SIDEBAR_WIDTH = 220;
 
 export interface UserProps {
+  items: NavItem[];
   actor?: string;
   role?: string;
   onLogout: () => void;
@@ -99,7 +57,7 @@ export function Sidebar(props: UserProps) {
         <Wordmark />
       </Box>
       <Stack component="nav" aria-label="Principal" sx={{ flexGrow: 1 }}>
-        {NAV_ITEMS.map((item) => (
+        {props.items.map((item) => (
           <Box
             key={item.to}
             component={NavLink}
@@ -251,12 +209,12 @@ export function MobileChrome(props: UserProps) {
           borderTop: 1,
           borderColor: 'divider',
           display: 'grid',
-          gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)`,
+          gridTemplateColumns: `repeat(${props.items.length}, 1fr)`,
           height: MOBILE_NAV_OFFSET,
           pb: 'env(safe-area-inset-bottom)',
         })}
       >
-        {NAV_ITEMS.map((item) => (
+        {props.items.map((item) => (
           <Box
             key={item.to}
             component={NavLink}

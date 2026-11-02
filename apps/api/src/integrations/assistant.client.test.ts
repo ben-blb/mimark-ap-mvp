@@ -36,6 +36,7 @@ describe('AssistantClient', () => {
       messages: [{ role: 'user', content: 'Sube esta factura' }],
       attachment: { fileName: 'factura-acme.pdf', mimeType: 'application/pdf', size: 1234 },
       today: '2026-10-27',
+      role: 'admin',
     });
 
     const [call] = m.doGenerateCalls;
@@ -68,6 +69,7 @@ describe('AssistantClient', () => {
     const result = await new AssistantClient().run(m, {
       messages: [{ role: 'user', content: '¿Qué vence?' }],
       today: '2026-10-27',
+      role: 'admin',
     });
 
     const tools = (m.doGenerateCalls[0]?.tools ?? []).map((t) => t.name);
@@ -104,12 +106,28 @@ describe('AssistantClient', () => {
     const deltas: string[] = [];
     const result = await new AssistantClient().runStream(
       m,
-      { messages: [{ role: 'user', content: '¿Qué vence?' }], today: '2026-10-27' },
+      {
+        messages: [{ role: 'user', content: '¿Qué vence?' }],
+        today: '2026-10-27',
+        role: 'admin',
+      },
       new AbortController().signal,
       (text) => deltas.push(text),
     );
     expect(deltas).toEqual(['Reviso ', 'el tablero.']);
     expect(result.text).toBe('Reviso el tablero.');
     expect(result.toolCalls).toEqual([{ id: 'c1', name: 'getDashboard', input: { horizon: 7 } }]);
+  });
+
+  it('AC-013-16 al modelo solo se le ofrecen las herramientas que el rol puede usar', async () => {
+    const m = model();
+    await new AssistantClient().run(m, {
+      messages: [{ role: 'user', content: '¿Qué hay?' }],
+      today: '2026-10-27',
+      role: 'warehouse',
+    });
+
+    const tools = (m.doGenerateCalls[0]?.tools ?? []).map((t) => t.name).sort();
+    expect(tools).toEqual(['listPurchaseOrders', 'listSuppliers', 'recordReceipt'].sort());
   });
 });

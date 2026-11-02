@@ -54,5 +54,5 @@ if (!ok) {
 console.log(`
 ✔ Listo. Siguiente paso:
     pnpm dev        → web en http://localhost:5173 · API en http://localhost:3000/api/health
-  Entra con el código de acceso local: mimark-local
+  La primera vez, crea tu administrador en /configuracion-inicial con el código local: mimark-local
 `);

@@ -7,6 +7,8 @@ import type { Request } from 'express';
  * nada de contexto implícito.
  */
 export interface Ctx {
+  /** La persona que actúa (spec 013). No se guarda en la auditoría: ahí va `actor`. */
+  userId: string;
   actor: string;
   role: Role;
   requestId: string;
@@ -17,7 +19,12 @@ export const Ctx = createParamDecorator((_: unknown, context: ExecutionContext):
   if (!req.session) {
     throw new Error('@Ctx() solo funciona en rutas protegidas; en rutas @Public() usa @ReqInfo()');
   }
-  return { actor: req.session.actor, role: req.session.role, requestId: req.requestId };
+  return {
+    userId: req.session.userId,
+    actor: req.session.actor,
+    role: req.session.role,
+    requestId: req.requestId,
+  };
 });
 
 /** Datos de la petición para rutas públicas (sin sesión). */

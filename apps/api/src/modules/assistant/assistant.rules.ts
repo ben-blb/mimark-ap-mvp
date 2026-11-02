@@ -1,9 +1,11 @@
 import {
   ASSISTANT_TOOLS,
+  toolAllowed,
   WEB_ONLY_TOOLS,
   type AssistantMessage,
   type AssistantToolCall,
 } from '@mimark/contracts/assistant';
+import type { Role } from '@mimark/contracts/session';
 import type { ModelMessage } from 'ai';
 import { AppError } from '../../common/app-error.js';
 
@@ -50,13 +52,14 @@ export function toModelMessages(messages: AssistantMessage[]): ModelMessage[] {
 }
 
 /**
- * Conserva solo las llamadas a herramientas del catálogo cuya entrada pasa su esquema. Devuelve la entrada tal
+ * Conserva solo las llamadas a herramientas del catálogo cuya entrada pasa su esquema y que el rol puede usar (spec 013). Devuelve la entrada tal
  * como la escribió el modelo: el endpoint que la reciba la vuelve a validar con el mismo esquema.
  */
-export function pickToolCalls(calls: RawToolCall[]): AssistantToolCall[] {
+export function pickToolCalls(calls: RawToolCall[], role: Role): AssistantToolCall[] {
   return calls.flatMap((call) => {
     if (!Object.hasOwn(ASSISTANT_TOOLS, call.name) || WEB_ONLY_TOOLS.has(call.name)) return [];
     const name = call.name as keyof typeof ASSISTANT_TOOLS;
+    if (!toolAllowed(name, role)) return [];
     if (!ASSISTANT_TOOLS[name].input.safeParse(call.input).success) return [];
     return [{ id: call.id, name, input: call.input }];
   });

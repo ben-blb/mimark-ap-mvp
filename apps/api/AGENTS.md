@@ -30,6 +30,9 @@ las pruebas vive en `src/configure-app.ts`.
   (`moneyToCents`) para comparar.
 - Sin `console.*`: la línea de log por petición ya existe (`common/request-context.ts`) y el detalle de negocio va
   a `audit_events`. Nunca registres el contenido de un documento.
+- Permisos (spec 013): cada ruta que cambia datos o expone facturas lleva `@Requires('permiso')` (matriz en
+  `contracts/permissions.ts`); una ruta nueva sin él solo exige sesión y la prueba `permissions.int.test.ts` falla
+  si no está declarada. `@Ctx()` trae `userId`, `actor`, `role` y `requestId`.
 - Auditoría: `entity` en singular (`supplier`) y `action` = `entidad.verbo_en_pasado` (`supplier.updated`).
 
 ## Base de datos
@@ -42,6 +45,7 @@ las pruebas vive en `src/configure-app.ts`.
 
 - Unitarias (`*.test.ts`): reglas y utilidades, sin base de datos. `pnpm --filter @mimark/api test:unit`.
 - Integración (`*.int.test.ts`): HTTP contra la app completa y Postgres de pruebas, con
-  `createTestApp()` de `test/app.ts`; `t.agent()` da un cliente con sesión y `t.reset()` vacía las tablas.
+  `createTestApp()` de `test/app.ts`; `t.agent(nombre, rol)` crea un usuario de ese rol (por defecto `admin`) y da un
+  cliente con sesión, `t.login(correo)` entra como un usuario existente y `t.reset()` vacía las tablas.
   Sustituye terceros con `createTestApp(b => b.overrideProvider(Client).useValue(fake))`.
 - La base de pruebas se recrea desde las migraciones en cada corrida (`test/global-setup.ts`).

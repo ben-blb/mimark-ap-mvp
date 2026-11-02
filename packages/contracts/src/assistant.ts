@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { Id } from './common.js';
 import { ErrorCode } from './errors.js';
 import { DashboardQuery } from './dashboard.js';
+import { can, type Permission } from './permissions.js';
+import type { Role } from './session.js';
 import {
   ALLOWED_MIME_TYPES,
   CorrectFieldsInput,
@@ -136,6 +138,37 @@ export type AssistantToolName = keyof typeof ASSISTANT_TOOLS;
 export const AssistantToolName = z.enum(
   Object.keys(ASSISTANT_TOOLS) as [AssistantToolName, ...AssistantToolName[]],
 );
+
+/**
+ * Permiso que exige cada herramienta (spec 013): el mismo que la ruta que acaba ejecutándola.
+ * `null` = basta con tener sesión.
+ */
+export const TOOL_PERMISSION: Record<AssistantToolName, Permission | null> = {
+  listSuppliers: null,
+  listPurchaseOrders: null,
+  listPayables: 'payables:read',
+  getPayable: 'payables:read',
+  getPayableHistory: 'payables:read',
+  getDashboard: 'dashboard:read',
+  createSupplier: 'suppliers:write',
+  updateSupplier: 'suppliers:write',
+  createPurchaseOrder: 'orders:write',
+  recordReceipt: 'orders:receive',
+  uploadPayable: 'payables:write',
+  retryPayable: 'payables:write',
+  correctFields: 'payables:write',
+  confirmPayable: 'payables:pay',
+  schedulePayable: 'payables:pay',
+  recordPayment: 'payables:pay',
+  updateDocuments: 'payables:write',
+  discardPayable: 'payables:write',
+};
+
+/** ¿Este rol puede usar la herramienta? */
+export function toolAllowed(name: AssistantToolName, role: Role): boolean {
+  const permission = TOOL_PERMISSION[name];
+  return permission === null || can(role, permission);
+}
 
 export const MAX_ASSISTANT_MESSAGES = 40;
 export const MAX_ASSISTANT_TEXT = 2000;

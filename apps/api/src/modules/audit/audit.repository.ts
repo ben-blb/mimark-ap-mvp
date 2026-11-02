@@ -21,7 +21,10 @@ export class AuditRepository {
 
   /** Pasa `tx` para que el evento se guarde en la misma transacción que el cambio. */
   async log(entry: AuditEntry, tx: Tx = this.db): Promise<void> {
-    await tx.auditEvent.create({ data: entry });
+    const { actor, role, requestId, entity, entityId, action, fromStatus, toStatus, data } = entry;
+    await tx.auditEvent.create({
+      data: { actor, role, requestId, entity, entityId, action, fromStatus, toStatus, data },
+    });
   }
 
   listFor(entity: string, entityId: string): Promise<AuditEvent[]> {
@@ -45,6 +48,16 @@ export class AuditRepository {
   countFailedLogins(ip: string, since: Date): Promise<number> {
     return this.db.auditEvent.count({
       where: { action: 'session.failed', at: { gte: since }, data: { path: ['ip'], equals: ip } },
+    });
+  }
+
+  countFailedLoginsByEmail(email: string, since: Date): Promise<number> {
+    return this.db.auditEvent.count({
+      where: {
+        action: 'session.failed',
+        at: { gte: since },
+        data: { path: ['email'], equals: email },
+      },
     });
   }
 }

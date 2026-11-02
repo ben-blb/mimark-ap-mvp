@@ -23,6 +23,8 @@ src/features/<x>/ una carpeta por recurso: <x>.api.ts, páginas, diálogos, form
 - Estilos solo con el tema (`app/theme.ts`) y la prop `sx`. Selects nativos (`slotProps={{ select: { native: true } }}`).
 - Prohibido `dangerouslySetInnerHTML`: el contenido de documentos y de la IA se muestra como texto (lint).
 - Las acciones de un expediente se dibujan desde `allowedActions` del DTO; la UI no repite reglas de negocio.
+- Permisos (spec 013): `useCan()('permiso')` decide qué botones y secciones se muestran; la API sigue siendo la
+  barrera real (403). Pantallas de un solo rol: `RequirePermission` en `app/router.tsx`.
 - Ruta nueva → `app/router.tsx`; pantalla de primer nivel → `NAV_ITEMS` en `app/AppNav.tsx`.
 - Tutorial (spec 012): los elementos que resalta llevan `data-tour="<id>"` (ids en `features/tour/tour.steps.ts`).
   La marca de «ya visto» vive en `localStorage` solo desde `features/tour/tour.storage.ts`; no lo uses para otra cosa.

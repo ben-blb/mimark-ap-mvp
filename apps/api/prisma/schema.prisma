@@ -157,6 +157,30 @@ model Payable {
   @@index([purchaseOrderId])
 }
 
+enum UserRole {
+  purchasing
+  warehouse
+  payables
+  manager
+  admin
+}
+
+/// Personas que entran al sistema (spec 013). Las escribe solo el módulo users.
+/// "Borrar" = active=false: la auditoría conserva su historial.
+model User {
+  id                 String   @id @default(cuid())
+  /// Siempre en minúsculas.
+  email              String   @unique
+  name               String
+  /// 'scrypt$<sal>$<hash>'.
+  passwordHash       String
+  role               UserRole
+  active             Boolean  @default(true)
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
 /// Registro de auditoría (spec 001). Una fila por acción relevante; nunca se edita ni se borra.
 /// También sirve para cuotas de uso y para rastrear una petición por su requestId.
 model AuditEvent {

@@ -13,6 +13,7 @@ import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.
 import { SessionGuard } from './modules/session/session.guard.js';
 import { SessionModule } from './modules/session/session.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 /** Todo lo que existe en el backend, de un vistazo. Cada spec agrega aquí su módulo. */
 @Module({
@@ -21,6 +22,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
     AuditModule,
     HealthModule,
     SessionModule,
+    UsersModule,
     SuppliersModule,
     PurchaseOrdersModule,
     PayablesModule,

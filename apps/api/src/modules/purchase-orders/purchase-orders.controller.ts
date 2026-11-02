@@ -10,6 +10,7 @@ import {
 } from '@mimark/contracts/purchase-orders';
 import { Ctx } from '../../common/ctx.js';
 import { PurchaseOrdersService } from './purchase-orders.service.js';
+import { Requires } from '../session/session.guard.js';
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
 @Controller('purchase-orders')
@@ -28,6 +29,7 @@ export class PurchaseOrdersController {
     return this.orders.get(id);
   }
 
+  @Requires('orders:write')
   @Post()
   create(
     @Body({ schema: CreatePurchaseOrderInput }) input: CreatePurchaseOrderInput,
@@ -36,6 +38,7 @@ export class PurchaseOrdersController {
     return this.orders.create(input, ctx);
   }
 
+  @Requires('orders:write')
   @Patch(':id')
   update(
     @Param('id', { schema: Id }) id: string,
@@ -45,6 +48,7 @@ export class PurchaseOrdersController {
     return this.orders.update(id, input, ctx);
   }
 
+  @Requires('orders:receive')
   @Post(':id/receipt')
   confirmReceipt(
     @Param('id', { schema: Id }) id: string,

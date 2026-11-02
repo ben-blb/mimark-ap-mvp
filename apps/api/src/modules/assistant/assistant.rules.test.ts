@@ -20,13 +20,33 @@ describe('pickToolCalls', () => {
     ['listPayables con varios estados', 'listPayables', { status: 'confirmed,scheduled' }, true],
     ['toString (propiedad heredada)', 'toString', {}, false],
   ])('AC-008-03 %s', (_, name, input, kept) => {
-    const result = pickToolCalls([{ id: 'c1', name, input }]);
+    const result = pickToolCalls([{ id: 'c1', name, input }], 'admin');
     expect(result).toEqual(kept ? [{ id: 'c1', name, input }] : []);
   });
 
   it('AC-008-03 devuelve la entrada sin transformar para que el endpoint la valide igual', () => {
-    const [call] = pickToolCalls([{ id: 'c1', name: 'listPayables', input: { status: 'paid' } }]);
+    const [call] = pickToolCalls(
+      [{ id: 'c1', name: 'listPayables', input: { status: 'paid' } }],
+      'admin',
+    );
     expect(call?.input).toEqual({ status: 'paid' });
+  });
+});
+
+describe('pickToolCalls por rol', () => {
+  const pay = { id, paidOn: '2026-10-27', amount: '100.00', reference: 'SPEI-1' };
+
+  it.each([
+    ['warehouse', 'recordPayment', pay, false],
+    ['warehouse', 'listPayables', {}, false],
+    ['warehouse', 'getDashboard', { horizon: 7 }, false],
+    ['warehouse', 'listPurchaseOrders', {}, true],
+    ['manager', 'recordPayment', pay, true],
+    ['manager', 'correctFields', { id, supplierName: 'X' }, false],
+    ['purchasing', 'confirmPayable', { id }, false],
+    ['purchasing', 'listPayables', {}, true],
+  ] as const)('AC-013-16 %s · %s → %s', (role, name, input, kept) => {
+    expect(pickToolCalls([{ id: 'c1', name, input }], role)).toHaveLength(kept ? 1 : 0);
   });
 });
 

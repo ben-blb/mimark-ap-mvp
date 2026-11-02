@@ -3,11 +3,13 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { useLogout, useSession } from '../features/session/session.api';
+import { useCan, useLogout, useSession } from '../features/session/session.api';
 import { Tour } from '../features/tour/Tour';
 import { hasSeenTour, markTourSeen } from '../features/tour/tour.storage';
+import { TOUR_STEPS } from '../features/tour/tour.steps';
 import { ROLE_LABELS } from '../lib/labels';
 import { MobileChrome, SIDEBAR_WIDTH, Sidebar } from './AppNav';
+import { navItemsFor } from './nav-items';
 import { MOBILE_NAV_OFFSET } from './theme';
 
 /** Estado de navegación con el que `⌘K` pide al asistente enfocar su compositor (AC-010-08). */
@@ -44,7 +46,13 @@ export function AppShell() {
   const [dismissed, setDismissed] = useState(false);
   const seen = useMemo(() => !actor || hasSeenTour(actor), [actor]);
   const tourOpen = requested || (!seen && !dismissed);
+  const items = navItemsFor(useCan());
+  // El recorrido no explica secciones que el rol no tiene (spec 013).
+  const steps = TOUR_STEPS.filter(
+    (step) => !step.anchor || step.anchor === 'ayuda' || items.some((i) => i.tour === step.anchor),
+  );
   const user = {
+    items,
     actor,
     role: session.data ? ROLE_LABELS[session.data.role] : undefined,
     onLogout: () => logout.mutate(),
@@ -55,6 +63,7 @@ export function AppShell() {
     <Box sx={{ minHeight: '100dvh' }}>
       {tourOpen && (
         <Tour
+          steps={steps}
           onClose={() => {
             if (actor) markTourSeen(actor);
             setRequested(false);

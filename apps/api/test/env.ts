@@ -1,8 +1,10 @@
 /**
  * Entorno de pruebas. Nada de aquí sirve fuera de las pruebas.
- * El hash corresponde al código TEST_ACCESS_CODE.
+ * El hash corresponde al código de configuración TEST_ACCESS_CODE.
  */
 export const TEST_ACCESS_CODE = 'codigo-de-prueba';
+/** Contraseña de todos los usuarios que crea `t.agent()` / `t.createUser()`. */
+export const TEST_PASSWORD = 'contrasena-de-prueba';
 
 export const TEST_ENV = {
   NODE_ENV: 'test',

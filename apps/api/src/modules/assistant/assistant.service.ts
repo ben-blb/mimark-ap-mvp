@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { AssistantTurnInput, AssistantTurnOutput } from '@mimark/contracts/assistant';
 import type { LocalDate } from '@mimark/contracts/common';
+import type { Role } from '@mimark/contracts/session';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { startOfLocalDay, toLocalDate } from '../../common/dates.js';
@@ -26,7 +27,7 @@ export class AssistantService {
     const today = await this.checkQuota(ctx);
     let result: AssistantResult;
     try {
-      result = await this.client.turn(this.request(input, today));
+      result = await this.client.turn(this.request(input, today, ctx.role));
     } catch {
       throw unavailable();
     }
@@ -47,7 +48,7 @@ export class AssistantService {
     const started = Date.now();
     let result: AssistantResult;
     try {
-      result = await this.client.stream(this.request(input, today), signal, onDelta);
+      result = await this.client.stream(this.request(input, today, ctx.role), signal, onDelta);
     } catch {
       if (!signal.aborted) throw unavailable();
       result = {
@@ -73,13 +74,18 @@ export class AssistantService {
     return today;
   }
 
-  private request(input: AssistantTurnInput, today: LocalDate) {
-    return { messages: toModelMessages(input.messages), attachment: input.attachment, today };
+  private request(input: AssistantTurnInput, today: LocalDate, role: Role) {
+    return {
+      messages: toModelMessages(input.messages),
+      attachment: input.attachment,
+      today,
+      role,
+    };
   }
 
   /** Filtra las llamadas con el catálogo y audita el turno. */
   private async finish(result: AssistantResult, ctx: Ctx): Promise<AssistantTurnOutput> {
-    const toolCalls = pickToolCalls(result.toolCalls);
+    const toolCalls = pickToolCalls(result.toolCalls, ctx.role);
     // Sin el texto de la conversación: puede traer datos de documentos.
     await this.audit.log({
       ...ctx,

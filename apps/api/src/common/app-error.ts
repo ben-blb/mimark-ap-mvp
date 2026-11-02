@@ -17,6 +17,12 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   STALE_STATUS: 409,
   REVIEW_REQUIRED: 409,
   DUPLICATE_INVOICE: 409,
+  FORBIDDEN: 403,
+  PASSWORD_CHANGE_REQUIRED: 403,
+  EMAIL_TAKEN: 409,
+  SETUP_DONE: 409,
+  LAST_ADMIN: 409,
+  SELF_PROTECTED: 409,
   INTERNAL: 500,
 };
 
@@ -24,7 +30,7 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
 const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   VALIDATION: 'Revisa los datos marcados.',
   UNAUTHENTICATED: 'Tu sesión terminó. Vuelve a entrar.',
-  ACCESS_DENIED: 'El código de acceso no es correcto.',
+  ACCESS_DENIED: 'Correo o contraseña incorrectos.',
   RATE_LIMITED: 'Demasiados intentos. Espera unos minutos y vuelve a intentar.',
   NOT_FOUND: 'No encontramos lo que buscas.',
   CONFLICT: 'Ya existe un registro con esos datos.',
@@ -36,6 +42,12 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   STALE_STATUS: 'Alguien más actualizó este expediente. Recarga para ver su estado actual.',
   REVIEW_REQUIRED: 'Antes de confirmar hay que revisar el expediente.',
   DUPLICATE_INVOICE: 'Esta factura ya está confirmada en otro expediente.',
+  FORBIDDEN: 'Tu rol no permite hacer esto.',
+  PASSWORD_CHANGE_REQUIRED: 'Cambia tu contraseña para continuar.',
+  EMAIL_TAKEN: 'Ya existe un usuario con ese correo.',
+  SETUP_DONE: 'La configuración inicial ya se hizo.',
+  LAST_ADMIN: 'Debe quedar al menos un administrador activo.',
+  SELF_PROTECTED: 'No puedes quitarte el rol de administrador ni desactivarte a ti mismo.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

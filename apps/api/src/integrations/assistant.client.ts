@@ -13,10 +13,13 @@ import {
 import { z } from 'zod';
 import {
   ASSISTANT_TOOLS,
+  toolAllowed,
   WEB_ONLY_TOOLS,
   type AssistantAttachment,
+  type AssistantToolName,
 } from '@mimark/contracts/assistant';
 import type { LocalDate } from '@mimark/contracts/common';
+import { ROLES, type Role } from '@mimark/contracts/session';
 import { env } from '../config/env.js';
 import { fakeAssistant } from './fake-assistant.js';
 import { ASSISTANT_PROMPT } from './prompts/assistant.v2.js';
@@ -25,6 +28,8 @@ export interface AssistantInput {
   messages: ModelMessage[];
   attachment?: AssistantAttachment;
   today: LocalDate;
+  /** Solo se ofrecen al modelo las herramientas que este rol puede usar (spec 013). */
+  role: Role;
 }
 
 export interface AssistantResult {
@@ -41,19 +46,28 @@ export interface AssistantResult {
  * Se describe la entrada como JSON Schema sin validarla, para devolver lo que escribió el modelo y validarlo una
  * sola vez en las reglas.
  */
-const TOOLS = Object.fromEntries(
-  Object.entries(ASSISTANT_TOOLS)
-    .filter(([name]) => !WEB_ONLY_TOOLS.has(name))
-    .map(([name, t]) => [
-      name,
-      tool({
-        description: t.description,
-        inputSchema: jsonSchema(
-          z.toJSONSchema(t.input, { io: 'input', target: 'draft-7' }) as JSONSchema7,
-        ),
-      }),
-    ]),
-);
+const ALL_TOOLS = Object.entries(ASSISTANT_TOOLS)
+  .filter(([name]) => !WEB_ONLY_TOOLS.has(name))
+  .map(
+    ([name, t]) =>
+      [
+        name as AssistantToolName,
+        tool({
+          description: t.description,
+          inputSchema: jsonSchema(
+            z.toJSONSchema(t.input, { io: 'input', target: 'draft-7' }) as JSONSchema7,
+          ),
+        }),
+      ] as const,
+  );
+
+/** Las herramientas que ve cada rol, calculadas una vez. */
+const TOOLS_BY_ROLE = Object.fromEntries(
+  ROLES.map((role) => [
+    role,
+    Object.fromEntries(ALL_TOOLS.filter(([name]) => toolAllowed(name, role))),
+  ]),
+) as Record<Role, Record<string, ReturnType<typeof tool>>>;
 
 /** Habla con el LLM del asistente. Lleva instrucciones versionadas, la fecha y los metadatos del adjunto. */
 @Injectable()
@@ -104,7 +118,7 @@ export class AssistantClient {
       timeout: 60_000,
       maxOutputTokens: 2000,
       messages: input.messages,
-      tools: TOOLS,
+      tools: TOOLS_BY_ROLE[input.role],
       abortSignal: signal,
     });
     let text = '';
@@ -144,7 +158,7 @@ export class AssistantClient {
       timeout: 60_000,
       maxOutputTokens: 2000,
       messages: input.messages,
-      tools: TOOLS,
+      tools: TOOLS_BY_ROLE[input.role],
     });
     return {
       text: result.text,

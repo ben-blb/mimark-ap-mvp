@@ -5,7 +5,13 @@ declare global {
   namespace Express {
     interface Request {
       requestId: string;
-      session?: { actor: string; role: Role; expiresAt: Date };
+      session?: {
+        userId: string;
+        actor: string;
+        role: Role;
+        mustChangePassword: boolean;
+        expiresAt: Date;
+      };
     }
     interface Locals {
       errorCode?: string;

@@ -11,7 +11,7 @@ Requisitos: Node 22.22+, pnpm 10 (`corepack enable`), Docker (o cualquier Postgr
 ```bash
 pnpm install
 pnpm bootstrap   # .env, Postgres, migraciones y datos sintéticos
-pnpm dev         # http://localhost:5173 · código de acceso local: mimark-local
+pnpm dev         # http://localhost:5173 · la primera vez abre /configuracion-inicial (código local: mimark-local)
 ```
 
 ## Comandos

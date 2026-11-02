@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import type { Role } from '@mimark/contracts/session';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sessionKey } from '../features/session/session.api';
 import { hasSeenTour, markTourSeen } from '../features/tour/tour.storage';
@@ -14,13 +15,15 @@ afterEach(() => {
 });
 
 /** Por defecto la persona ya vio el tutorial, para que no se abra solo en las demás pruebas. */
-function setup(width: number, tourSeen = true, actor = 'Ana López') {
+function setup(width: number, tourSeen = true, actor = 'Ana López', role: Role = 'payables') {
   if (tourSeen) markTourSeen('Ana López');
   setViewport(width);
   const client = new QueryClient();
   client.setQueryData(sessionKey, {
+    userId: 'u1',
     actor,
-    role: 'payables',
+    role,
+    mustChangePassword: false,
     expiresAt: '2026-10-28T00:00:00.000Z',
   });
   render(
@@ -152,5 +155,19 @@ describe('AppShell', () => {
     expect(screen.getByRole('dialog', { name: 'Bienvenida a MIMARK' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Saltar' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['warehouse', ['Proveedores', 'Órdenes de compra', 'Asistente']],
+    ['manager', ['Tablero', 'Proveedores', 'Órdenes de compra', 'Expedientes', 'Asistente']],
+    ['admin', [...SECTIONS, 'Usuarios']],
+  ] as const)('AC-013-25 %s ve en la navegación solo sus secciones', (role, expected) => {
+    setup(1440, true, 'Ana López', role);
+    const nav = screen.getByRole('navigation', { name: 'Principal' });
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((l) => l.textContent),
+    ).toEqual(expected);
   });
 });

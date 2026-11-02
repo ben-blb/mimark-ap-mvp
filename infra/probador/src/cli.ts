@@ -9,17 +9,23 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const EVIDENCE_DIR = `${ROOT}docs/entrega/evidencia`;
 
 /**
- * Lee la URL (`--url`) y entra con el código de `PROBADOR_CODE`. El código nunca se acepta como argumento
+ * Lee la URL (`--url`) y entra con `PROBADOR_EMAIL` y `PROBADOR_PASSWORD` (spec 013). Debe ser un usuario con rol
+ * `payables` llamado «probador» (así se reconocen sus expedientes). La contraseña nunca se acepta como argumento
  * (quedaría en el historial del shell) ni se lee de un archivo.
  */
 export async function connect(): Promise<{ api: Api; url: string }> {
   const { values } = parseArgs({ options: { url: { type: 'string' } } });
-  const code = process.env.PROBADOR_CODE;
+  const email = process.env.PROBADOR_EMAIL;
+  const password = process.env.PROBADOR_PASSWORD;
   if (!values.url) fatal('Falta --url <URL de la app>.');
-  if (!code) fatal('Falta la variable de entorno PROBADOR_CODE (el código de acceso).');
+  if (!email || !password) {
+    fatal(
+      'Faltan las variables de entorno PROBADOR_EMAIL y PROBADOR_PASSWORD (usuario «probador»).',
+    );
+  }
   const api = new Api(values.url);
   try {
-    await api.login(code);
+    await api.login(email, password);
   } catch (error) {
     fatal(error instanceof Error ? error.message : 'No se pudo iniciar sesión.');
   }

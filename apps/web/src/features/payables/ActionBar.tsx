@@ -13,7 +13,10 @@ export function ActionBar(props: {
   onAction: (action: PayableAction) => void;
   /** Acción en curso: su botón muestra progreso y todos se desactivan. */
   pending?: PayableAction | null;
+  /** Acciones que el rol puede hacer (spec 013). Sin esto se ofrecen todas las de `actions`. */
+  isAllowed?: (action: PayableAction) => boolean;
 }) {
+  const actions = props.isAllowed ? props.actions.filter(props.isAllowed) : props.actions;
   return (
     <Stack
       direction="row"
@@ -22,7 +25,7 @@ export function ActionBar(props: {
       aria-label="Acciones del expediente"
       sx={{ flexWrap: { sm: 'wrap' }, rowGap: 1, '& > .MuiButton-root': { flexShrink: 0 } }}
     >
-      {props.actions.map((action) => (
+      {actions.map((action) => (
         <Button
           key={action}
           variant={action === 'confirm' || action === 'pay' ? 'contained' : 'outlined'}

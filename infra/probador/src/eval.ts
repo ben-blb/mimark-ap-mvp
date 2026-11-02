@@ -5,7 +5,7 @@ import { formatEvalReport } from './report.js';
 import { EVAL_FIELDS, scoreEval, type EvalResult, type FieldValues } from './score.js';
 
 /**
- * `pnpm eval --url <URL>` (código de acceso en PROBADOR_CODE). Sube 30 documentos sintéticos, compara cada campo
+ * `pnpm eval --url <URL>` (usuario en PROBADOR_EMAIL y PROBADOR_PASSWORD). Sube 30 documentos sintéticos, compara cada campo
  * con su valor esperado y escribe docs/entrega/evidencia/eval.md. Descarta lo que subió.
  * La cuota diaria aplica: para 30 documentos conviene un entorno con DAILY_AI_LIMIT=100.
  */

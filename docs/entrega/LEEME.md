@@ -96,8 +96,8 @@ Con `AI_PROVIDER=fake` (por defecto en local) funciona sin llaves de IA. Para IA
 ### Probador y evaluación contra una URL
 
 ```bash
-PROBADOR_CODE='<código de acceso>' pnpm probador --url https://<url-publica>
-PROBADOR_CODE='<código de acceso>' pnpm eval --url https://<url-publica>
+PROBADOR_EMAIL='<correo del usuario probador>' PROBADOR_PASSWORD='<contraseña>' pnpm probador --url https://<url-publica>
+PROBADOR_EMAIL='<correo del usuario probador>' PROBADOR_PASSWORD='<contraseña>' pnpm eval --url https://<url-publica>
 ```
 
 El código se lee solo de la variable de entorno. La evaluación sube 30 documentos: usa un entorno con
@@ -105,12 +105,12 @@ El código se lee solo de la variable de entorno. La evaluación sube 30 documen
 
 ## Evidencia (`evidencia/`)
 
-| Archivo            | Qué es                                                                                           |
-| ------------------ | ------------------------------------------------------------------------------------------------ |
-| `probador.txt`     | Salida del probador: CA-01…CA-06 y PS-01…PS-06 con PASS/FAIL                                     |
-| `eval.md`          | Exactitud de la IA por campo, inventados y fuera de alcance                                      |
-| `1-pantalla.png`   | La aplicación en la URL pública (pantalla de Proveedores)                                        |
-| `2-plataforma.png` | La plataforma: despliegue de producción en Vercel (estado Ready)                                 |
-| `3-falla.png`      | Falla controlada: código de acceso incorrecto, con su mensaje y `Ref.` para buscarla en los logs |
+| Archivo            | Qué es                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `probador.txt`     | Salida del probador: CA-01…CA-06 y PS-01…PS-06 con PASS/FAIL                               |
+| `eval.md`          | Exactitud de la IA por campo, inventados y fuera de alcance                                |
+| `1-pantalla.png`   | La aplicación en la URL pública (pantalla de Proveedores)                                  |
+| `2-plataforma.png` | La plataforma: despliegue de producción en Vercel (estado Ready)                           |
+| `3-falla.png`      | Falla controlada: contraseña incorrecta, con su mensaje y `Ref.` para buscarla en los logs |
 
 Todo el material de prueba es sintético. No hay secretos ni documentos reales en el repositorio.

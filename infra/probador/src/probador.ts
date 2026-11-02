@@ -5,7 +5,7 @@ import { formatProbadorReport, type CaseResult } from './report.js';
 import { addDays, localDate } from './schedule.js';
 
 /**
- * `pnpm probador --url <URL>` (código de acceso en PROBADOR_CODE). Ejecuta CA-01…CA-06 y PS-01…PS-06 contra la
+ * `pnpm probador --url <URL>` (usuario en PROBADOR_EMAIL y PROBADOR_PASSWORD). Ejecuta CA-01…CA-06 y PS-01…PS-06 contra la
  * app y escribe docs/entrega/evidencia/probador.txt. Sale con código 1 si algún caso falla.
  */
 async function main(): Promise<void> {

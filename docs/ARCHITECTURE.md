@@ -110,8 +110,11 @@ mueve ningún estado. La tabla `TRANSITIONS` y `allowedActions` viven en `payabl
 | PS-05 acción no permitida  | No existe ningún endpoint de transferencias; `paid` solo lo registra una persona                                             |
 | PS-06 extracción masiva    | El modelo solo ve el archivo actual                                                                                          |
 
-Acceso: código compartido (hash scrypt en `ACCESS_CODE_HASH`) → cookie HMAC HttpOnly de 8 h. Guard global; rutas
-abiertas con `@Public()`. Cuotas contadas en `audit_events` (intentos fallidos por IP; extracciones y turnos del asistente por día).
+Acceso (spec 013): correo y contraseña (scrypt, tabla `users`) → cookie HMAC HttpOnly de 8 h con `userId`, rol y
+bandera de cambio de contraseña; el guard global no consulta la base de datos. Rutas abiertas con `@Public()` y
+permisos por rol con `@Requires('permiso')`, de la matriz de `contracts/permissions.ts`. El primer administrador se
+crea en la configuración inicial con el código `ACCESS_CODE_HASH`. Cuotas contadas en `audit_events` (intentos
+fallidos por IP y por correo; extracciones y turnos del asistente por día).
 
 ## 7. Observabilidad y errores
 

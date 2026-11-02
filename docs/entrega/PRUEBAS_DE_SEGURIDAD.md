@@ -65,7 +65,7 @@ que las reglas detectan. Ningún estado cambia por lo que diga un documento.
 ## Cómo repetirlas
 
 ```bash
-PROBADOR_CODE='<código de acceso>' pnpm probador --url https://<url-publica>
+PROBADOR_EMAIL='<correo del usuario probador>' PROBADOR_PASSWORD='<contraseña>' pnpm probador --url https://<url-publica>
 ```
 
 El probador sale con código 1 si algún caso falla y puede correrse varias veces seguidas: genera folios y UUID

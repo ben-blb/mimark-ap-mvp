@@ -1,7 +1,7 @@
 ---
 id: '013'
 titulo: Usuarios, contraseñas y roles
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['001', '002', '003', '005']
 requisitos: Acceso, RF-22, RF-23 (extensión)
 ---
@@ -146,16 +146,15 @@ configuración inicial** (misma variable, mismo formato scrypt, mismo `pnpm acce
 enum UserRole { purchasing warehouse payables manager admin }
 
 model User {
-  id                 String   @id @default(uuid()) @db.Uuid
-  email              String   @unique            // siempre en minúsculas
+  id                 String   @id @default(cuid())
+  email              String   @unique          // siempre en minúsculas
   name               String
-  passwordHash       String   @map("password_hash")
+  passwordHash       String                    // 'scrypt$<sal>$<hash>'
   role               UserRole
   active             Boolean  @default(true)
-  mustChangePassword Boolean  @default(true) @map("must_change_password")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-  @@map("users")
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 ```
 
@@ -245,20 +244,20 @@ contraseñas ni hashes.
 
 ## Tareas
 
-- [ ] 1. Contratos: sesión, usuarios, permisos y códigos de error nuevos, con sus pruebas.
-- [ ] 2. Reglas puras con pruebas: token con `userId`, límites, contraseña, `can()`, `canChangeUser()`.
-- [ ] 3. Modelo `User`, migración `013-usuarios` y repositorios (escritura en `users`, lectura en `session`).
-- [ ] 4. `@Requires` y guard (401 / `PASSWORD_CHANGE_REQUIRED` / `FORBIDDEN`); ayudante `loginAs(role)` y migración de
+- [x] 1. Contratos: sesión, usuarios, permisos y códigos de error nuevos, con sus pruebas.
+- [x] 2. Reglas puras con pruebas: token con `userId`, límites, contraseña, `can()`, `canChangeUser()`.
+- [x] 3. Modelo `User`, migración `013-usuarios` y repositorios (escritura en `users`, lectura en `session`).
+- [x] 4. `@Requires` y guard (401 / `PASSWORD_CHANGE_REQUIRED` / `FORBIDDEN`); ayudante `loginAs(role)` y migración de
       las pruebas de integración existentes.
-- [ ] 5. Entrada por correo, cambio de contraseña y límites por IP y por correo (AC-013-05…12).
-- [ ] 6. Configuración inicial (AC-013-01…04).
-- [ ] 7. Módulo `users` con auditoría (AC-013-18…23).
-- [ ] 8. `@Requires` en `suppliers`, `purchase-orders`, `payables`, `dashboard`, `assistant`, y filtro de herramientas
+- [x] 5. Entrada por correo, cambio de contraseña y límites por IP y por correo (AC-013-05…12).
+- [x] 6. Configuración inicial (AC-013-01…04).
+- [x] 7. Módulo `users` con auditoría (AC-013-18…23).
+- [x] 8. `@Requires` en `suppliers`, `purchase-orders`, `payables`, `dashboard`, `assistant`, y filtro de herramientas
       del asistente; prueba de recorrido por rol (AC-013-13…17).
-- [ ] 9. Web: login, configuración inicial, cambio de contraseña, `/usuarios`, permisos en navegación y tutorial.
-- [ ] 10. Docs: ADR nuevo que reemplaza a ADR-07, `.env.example`, `infra/README.md`, `apps/api/AGENTS.md`,
+- [x] 9. Web: login, configuración inicial, cambio de contraseña, `/usuarios`, permisos en navegación y tutorial.
+- [x] 10. Docs: ADR nuevo que reemplaza a ADR-07, `.env.example`, `infra/README.md`, `apps/api/AGENTS.md`,
       `apps/web/AGENTS.md`, nota en las specs 001 y 005 ("modificada por 013").
-- [ ] 11. `pnpm check` en verde y la spec pasa a `hecha`.
+- [x] 11. `pnpm check` en verde y la spec pasa a `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -287,3 +286,26 @@ contraseñas ni hashes.
 - 2026-11-02 · Spec aprobada por el dueño y puesta en `en-progreso`. Se quitó `008` de `depende_de`: solo le falta
   AC-008-12 (manual, contra la URL pública) y la 013 no lo necesita; solo ajusta qué herramientas del asistente se
   ofrecen por rol. Entorno de pruebas: Postgres 16 local del contenedor (`mimark` y `mimark_test`).
+- 2026-11-02 · Implementación en la rama `claude/login-roles-plan-pwf25r` (CLAUDE.md pide `main`; el dueño autorizó
+  trabajar en esa rama). Entorno: Postgres 16 local del contenedor (`mimark`, `mimark_test`).
+- 2026-11-02 · Diferencias con el diseño escrito: el id de `User` es `cuid` y las columnas no llevan `@map`, igual que
+  el resto de los modelos; `permissions.rules.ts` no existe: la matriz y `can()` viven en `contracts/permissions.ts`
+  (los usa también la web) y se prueban ahí; `toSessionDto` pasó a `session.rules.ts` (un service no importa a otro);
+  `SetupController`/`SetupService` viven en el módulo `users` y `session.service` lee y cambia contraseñas con
+  `UsersRepository` (exportado por `UsersModule`), como `suppliers` exporta el suyo.
+- 2026-11-02 · AC-001-01…04 quedaron cubiertos por las pruebas de 013 (el nombre cita ambos IDs). Efecto en 007: el
+  probador entra con `PROBADOR_EMAIL` y `PROBADOR_PASSWORD` (un usuario `payables` llamado «probador», porque
+  reconoce sus expedientes por `createdBy=probador`); se actualizaron `LEEME.md` y `PRUEBAS_DE_SEGURIDAD.md`.
+- 2026-11-02 · Hallazgo: `verifySecret` aceptaba un hash mal formado como `scrypt$a$b` (clave derivada de 0 bytes);
+  ahora lo rechaza (prueba en `session.rules.test.ts`).
+- 2026-11-02 · Asistente: `TOOL_PERMISSION` en `contracts/assistant.ts` liga cada herramienta a un permiso; el modelo
+  solo recibe las de su rol y `pickToolCalls(calls, role)` descarta las demás. La ejecución sigue pasando por las
+  rutas protegidas (AC-013-16).
+- 2026-11-02 · Verificación manual (AC-013-24 y AC-013-25) con `nest start` + `vite` y Chromium headless sobre la base
+  vacía: `/proveedores` sin usuarios → `/configuracion-inicial`; contraseña corta rechazada; con el código local se crea
+  el admin, entra y se abre el tutorial; el admin ve 6 secciones y crea a «Wanda» (Almacén); «Restablecer contraseña»
+  muestra 16 caracteres una vez; al entrar con la temporal solo se ve el cambio de contraseña; ya cambiada, Almacén ve
+  Proveedores, Órdenes y Asistente, aterriza en `/ordenes`, sin botones de alta, y `/usuarios` y `/expedientes` muestran
+  «Tu rol no tiene acceso a esta página». Encontró un fallo (tras crear el admin la web iba a `/login`): corregido y con
+  prueba (`SetupPage.test.tsx`).
+- 2026-11-02 · Pendiente fuera de esta spec: la 008 sigue abierta por AC-008-12 (URL pública).

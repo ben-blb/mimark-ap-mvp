@@ -17,6 +17,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
 import { StatusDot } from '../../components/StatusDot';
 import { paymentTermLabel } from '../../lib/format';
+import { useCan } from '../session/session.api';
 import { SupplierDialog } from './SupplierDialog';
 import { useSuppliers } from './suppliers.api';
 
@@ -29,6 +30,7 @@ function Active({ active }: { active: boolean }) {
 }
 
 export function SuppliersPage() {
+  const canWrite = useCan()('suppliers:write');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<Status>('active');
   const [editing, setEditing] = useState<SupplierDto | 'new' | null>(null);
@@ -39,9 +41,15 @@ export function SuppliersPage() {
       <PageHeader
         title="Proveedores"
         actions={
-          <Button variant="contained" startIcon={<AddOutlined />} onClick={() => setEditing('new')}>
-            Nuevo proveedor
-          </Button>
+          canWrite && (
+            <Button
+              variant="contained"
+              startIcon={<AddOutlined />}
+              onClick={() => setEditing('new')}
+            >
+              Nuevo proveedor
+            </Button>
+          )
         }
       />
 
@@ -93,7 +101,11 @@ export function SuppliersPage() {
           </TableRow>
         }
         row={(supplier) => (
-          <DataRow key={supplier.id} onOpen={() => setEditing(supplier)} label={supplier.name}>
+          <DataRow
+            key={supplier.id}
+            onOpen={canWrite ? () => setEditing(supplier) : undefined}
+            label={supplier.name}
+          >
             <TableCell sx={{ minWidth: 240 }}>
               <Ellipsis maxWidth={360}>{supplier.name}</Ellipsis>
             </TableCell>
@@ -106,9 +118,11 @@ export function SuppliersPage() {
               <Active active={supplier.active} />
             </TableCell>
             <TableCell align="right">
-              <Button size="small" color="inherit" onClick={() => setEditing(supplier)}>
-                Editar
-              </Button>
+              {canWrite && (
+                <Button size="small" color="inherit" onClick={() => setEditing(supplier)}>
+                  Editar
+                </Button>
+              )}
             </TableCell>
           </DataRow>
         )}
@@ -127,9 +141,11 @@ export function SuppliersPage() {
               <CardField label="Condición">{paymentTermLabel(supplier.creditDays)}</CardField>
               <CardField label="Moneda">{supplier.currency}</CardField>
               <Box sx={{ flexGrow: 1 }} />
-              <Button size="small" onClick={() => setEditing(supplier)}>
-                Editar
-              </Button>
+              {canWrite && (
+                <Button size="small" onClick={() => setEditing(supplier)}>
+                  Editar
+                </Button>
+              )}
             </Stack>
           </Stack>
         )}

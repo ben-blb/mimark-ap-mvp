@@ -13,7 +13,7 @@ describe('acceso (specs 001 y 013)', () => {
   afterAll(() => t.close());
   beforeEach(() => t.reset());
 
-  it('AC-013-05 con correo y contraseña crea una sesión de 8 h en una cookie HttpOnly', async () => {
+  it('AC-001-01 · AC-013-05 con correo y contraseña crea una sesión de 8 h en una cookie HttpOnly', async () => {
     const user = await t.createUser('Ana', 'payables');
     const res = await t
       .http()
@@ -42,25 +42,28 @@ describe('acceso (specs 001 y 013)', () => {
   it.each([
     ['contraseña incorrecta', 'ana@x.mx', 'otra-contrasena-larga'],
     ['correo inexistente', 'nadie@x.mx', TEST_PASSWORD],
-  ])('AC-013-06 %s: 401 ACCESS_DENIED sin cookie y lo audita', async (_name, email, password) => {
-    await t.db.user.create({
-      data: { email: 'ana@x.mx', name: 'Ana', role: 'payables', passwordHash: 'scrypt$a$b' },
-    });
-    const res = await t.http().post('/api/session').send({ email, password }).expect(401);
+  ])(
+    'AC-001-02 · AC-013-06 %s: 401 ACCESS_DENIED sin cookie y lo audita',
+    async (_name, email, password) => {
+      await t.db.user.create({
+        data: { email: 'ana@x.mx', name: 'Ana', role: 'payables', passwordHash: 'scrypt$a$b' },
+      });
+      const res = await t.http().post('/api/session').send({ email, password }).expect(401);
 
-    expect(res.body.code).toBe('ACCESS_DENIED');
-    expect(res.headers['set-cookie']).toBeUndefined();
-    const event = await t.db.auditEvent.findFirstOrThrow({ where: { action: 'session.failed' } });
-    expect(event.data).toMatchObject({ email, ip: expect.any(String) });
-  });
+      expect(res.body.code).toBe('ACCESS_DENIED');
+      expect(res.headers['set-cookie']).toBeUndefined();
+      const event = await t.db.auditEvent.findFirstOrThrow({ where: { action: 'session.failed' } });
+      expect(event.data).toMatchObject({ email, ip: expect.any(String) });
+    },
+  );
 
-  it('AC-013-06/09 un usuario inactivo recibe el mismo 401 aunque la contraseña sea correcta', async () => {
+  it('AC-013-06 · AC-013-09 un usuario inactivo recibe el mismo 401 aunque la contraseña sea correcta', async () => {
     const user = await t.createUser('Baja', 'payables', { active: false });
     const res = await t.http().post('/api/session').send(credentials(user.email)).expect(401);
     expect(res.body.code).toBe('ACCESS_DENIED');
   });
 
-  it('AC-013-07 tras 10 intentos fallidos desde una IP la bloquea, incluso con la contraseña correcta', async () => {
+  it('AC-001-03 · AC-013-07 tras 10 intentos fallidos desde una IP la bloquea, incluso con la contraseña correcta', async () => {
     const user = await t.createUser('Ana', 'payables');
     const ip = '203.0.113.7';
     for (let i = 0; i < 10; i++) {
@@ -172,7 +175,7 @@ describe('acceso (specs 001 y 013)', () => {
     expect(await t.db.auditEvent.count({ where: { action: 'user.password_changed' } })).toBe(1);
   });
 
-  it('AC-013-08 las rutas protegidas exigen una cookie válida', async () => {
+  it('AC-001-04 · AC-013-08 las rutas protegidas exigen una cookie válida', async () => {
     const res = await t.http().get('/api/suppliers').expect(401);
     expect(res.body.code).toBe('UNAUTHENTICATED');
 

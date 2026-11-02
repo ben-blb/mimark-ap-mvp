@@ -22,6 +22,7 @@ import { PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
 import { PurchaseOrderDialog } from './PurchaseOrderDialog';
 import { ReceiptDialog } from './ReceiptDialog';
 import { usePurchaseOrders } from './purchase-orders.api';
+import { useCan } from '../session/session.api';
 
 type Dialog =
   { kind: 'edit'; order?: PurchaseOrderDto } | { kind: 'receipt'; order: PurchaseOrderDto } | null;
@@ -57,21 +58,25 @@ function Receipt({ order }: { order: PurchaseOrderDto }) {
 
 function OrderActions(props: { order: PurchaseOrderDto; onOpen: (dialog: Dialog) => void }) {
   const { order } = props;
+  const can = useCan();
   return (
     <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-      {order.status === 'open' && order.receiptStatus === 'pending' && (
+      {can('orders:receive') && order.status === 'open' && order.receiptStatus === 'pending' && (
         <Button size="small" onClick={() => props.onOpen({ kind: 'receipt', order })}>
           Confirmar recepción
         </Button>
       )}
-      <Button size="small" color="inherit" onClick={() => props.onOpen({ kind: 'edit', order })}>
-        Editar
-      </Button>
+      {can('orders:write') && (
+        <Button size="small" color="inherit" onClick={() => props.onOpen({ kind: 'edit', order })}>
+          Editar
+        </Button>
+      )}
     </Stack>
   );
 }
 
 export function PurchaseOrdersPage() {
+  const canWrite = useCan()('orders:write');
   const [search, setSearch] = useState('');
   const [view, setView] = useState<View>('open');
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -84,13 +89,15 @@ export function PurchaseOrdersPage() {
       <PageHeader
         title="Órdenes de compra"
         actions={
-          <Button
-            variant="contained"
-            startIcon={<AddOutlined />}
-            onClick={() => setDialog({ kind: 'edit' })}
-          >
-            Nueva orden
-          </Button>
+          canWrite && (
+            <Button
+              variant="contained"
+              startIcon={<AddOutlined />}
+              onClick={() => setDialog({ kind: 'edit' })}
+            >
+              Nueva orden
+            </Button>
+          )
         }
       />
 
@@ -147,7 +154,7 @@ export function PurchaseOrdersPage() {
         row={(order) => (
           <DataRow
             key={order.id}
-            onOpen={() => setDialog({ kind: 'edit', order })}
+            onOpen={canWrite ? () => setDialog({ kind: 'edit', order }) : undefined}
             label={`${order.number} ${order.supplier.name}`}
           >
             <TableCell

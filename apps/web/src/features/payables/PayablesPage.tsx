@@ -24,6 +24,7 @@ import { PayableStatusDot } from '../../components/PayableStatusDot';
 import { formatDateTime, formatDay, formatMoney } from '../../lib/format';
 import { useSuppliers } from '../suppliers/suppliers.api';
 import { usePayables } from './payables.api';
+import { useCan } from '../session/session.api';
 import { UploadDialog } from './UploadDialog';
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
@@ -72,6 +73,7 @@ function FilterSelect(props: {
 type FilterKey = 'status' | 'search' | 'supplierId' | 'poNumber' | 'invoiceNumber' | 'due';
 
 export function PayablesPage() {
+  const can = useCan();
   const [params, setParams] = useSearchParams();
   const [uploading, setUploading] = useState(false);
   const suppliers = useSuppliers({ status: 'all' });
@@ -108,13 +110,15 @@ export function PayablesPage() {
       <PageHeader
         title="Expedientes"
         actions={
-          <Button
-            variant="contained"
-            startIcon={<UploadFileOutlined />}
-            onClick={() => setUploading(true)}
-          >
-            Subir documento
-          </Button>
+          can('payables:write') && (
+            <Button
+              variant="contained"
+              startIcon={<UploadFileOutlined />}
+              onClick={() => setUploading(true)}
+            >
+              Subir documento
+            </Button>
+          )
         }
       />
 

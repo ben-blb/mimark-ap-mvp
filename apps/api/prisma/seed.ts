@@ -1,5 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { lineAmount } from '../src/modules/purchase-orders/purchase-orders.rules.js';
 
 /**
  * Datos sintéticos para la demo y las pruebas manuales: `pnpm db:seed`.
@@ -88,6 +89,34 @@ const purchaseOrders = [
   },
 ] as const;
 
+/** Spec 014. La suma de partidas más 16 % de IVA da el total de cada OC (OC-1004, en USD, va sin IVA). */
+const lines: Record<
+  string,
+  [sku: string, description: string, quantity: string, unit: string, unitPrice: string][]
+> = {
+  'OC-1001': [
+    ['ALI-001', 'Tortilla de harina 1 kg', '100', 'bolsa', '50'],
+    ['ALI-014', 'Frijol refrito lata 400 g', '50', 'caja', '100'],
+  ],
+  'OC-1002': [
+    ['BEB-010', 'Refresco cola 600 ml', '120', 'paquete', '30'],
+    ['BEB-022', 'Agua mineral 355 ml', '60', 'paquete', '60'],
+  ],
+  'OC-1003': [
+    ['EMP-003', 'Vaso de papel 12 oz', '10', 'caja', '150'],
+    ['EMP-007', 'Tapa para vaso 12 oz', '5', 'caja', '200'],
+    ['EMP-015', 'Popote biodegradable', '25', 'paquete', '20'],
+  ],
+  'OC-1004': [
+    ['SNK-100', 'Papas fritas 150 g', '50', 'caja', '10'],
+    ['SNK-210', 'Cacahuate japonés 200 g', '30', 'caja', '25'],
+  ],
+  'OC-1005': [
+    ['CAF-001', 'Café molido 1 kg', '20', 'bolsa', '100'],
+    ['CAF-020', 'Filtros para cafetera', '10', 'caja', '50'],
+  ],
+};
+
 async function main(): Promise<void> {
   for (const supplier of suppliers) {
     await db.supplier.upsert({
@@ -107,7 +136,24 @@ async function main(): Promise<void> {
       receivedOn: receivedOn ? new Date(receivedOn) : null,
       receivedBy: receivedOn ? 'Semilla' : null,
     };
-    await db.purchaseOrder.upsert({ where: { number: po.number }, create: data, update: data });
+    const order = await db.purchaseOrder.upsert({
+      where: { number: po.number },
+      create: data,
+      update: data,
+    });
+    await db.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: order.id } });
+    await db.purchaseOrderLine.createMany({
+      data: (lines[po.number] ?? []).map(([sku, description, quantity, unit, unitPrice], i) => ({
+        purchaseOrderId: order.id,
+        position: i + 1,
+        sku,
+        description,
+        quantity,
+        unit,
+        unitPrice,
+        amount: lineAmount(quantity, unitPrice),
+      })),
+    });
   }
   console.log(
     `Semilla lista: ${suppliers.length} proveedores y ${purchaseOrders.length} órdenes de compra.`,

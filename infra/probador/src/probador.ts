@@ -66,17 +66,24 @@ async function createRunOrder(api: Parameters<typeof discardIds>[0], run: string
   const supplier = suppliers.body.items.find((s) => s.taxId === 'DAN010203AB1');
   if (!supplier)
     throw new Error('Falta el proveedor DAN010203AB1: corre `pnpm db:seed` en esa base.');
-  const created = await api.post<{ id: string; number: string }>('/api/purchase-orders', {
-    number: `OC-P${run}`,
-    supplierId: supplier.id,
-    issuedOn: addDays(today, -30),
-    total: '11600.00',
-    currency: 'MXN',
-  });
+  const created = await api.post<{ id: string; number: string; lines: { id: string }[] }>(
+    '/api/purchase-orders',
+    {
+      number: `OC-P${run}`,
+      supplierId: supplier.id,
+      issuedOn: addDays(today, -30),
+      total: '11600.00',
+      currency: 'MXN',
+      lines: [
+        { description: 'Partida de prueba', quantity: '1', unit: 'lote', unitPrice: '10000' },
+      ],
+    },
+  );
   if (created.status !== 201)
     throw new Error(`No se pudo crear la OC de la corrida (HTTP ${created.status}).`);
   await api.post(`/api/purchase-orders/${created.body.id}/receipt`, {
     receivedOn: addDays(today, -25),
+    checkedLineIds: created.body.lines.map((l) => l.id),
   });
   return created.body;
 }

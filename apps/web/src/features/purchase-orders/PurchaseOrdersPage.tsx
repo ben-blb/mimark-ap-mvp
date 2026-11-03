@@ -145,6 +145,7 @@ export function PurchaseOrdersPage() {
             <TableCell>Folio</TableCell>
             <TableCell>Proveedor</TableCell>
             <TableCell>Fecha</TableCell>
+            <TableCell align="right">Partidas</TableCell>
             <TableCell align="right">Total</TableCell>
             <TableCell>Recepción</TableCell>
             {showStatus && <TableCell>Estado</TableCell>}
@@ -171,6 +172,7 @@ export function PurchaseOrdersPage() {
               <Ellipsis maxWidth={320}>{order.supplier.name}</Ellipsis>
             </TableCell>
             <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDay(order.issuedOn)}</TableCell>
+            <TableCell align="right">{order.lines.length || '—'}</TableCell>
             <TableCell align="right">
               <Money amount={order.total} currency={order.currency} />
             </TableCell>
@@ -196,6 +198,7 @@ export function PurchaseOrdersPage() {
             </Stack>
             <Stack direction="row" spacing={3}>
               <CardField label="Fecha">{formatDay(order.issuedOn)}</CardField>
+              <CardField label="Partidas">{order.lines.length || '—'}</CardField>
               <CardField label="Recepción">
                 <Receipt order={order} />
               </CardField>

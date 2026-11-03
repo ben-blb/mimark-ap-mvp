@@ -82,8 +82,8 @@ export const ASSISTANT_TOOLS = {
   recordReceipt: {
     kind: 'write',
     description:
-      'Propone confirmar la recepción de la mercancía de una orden de compra (id de la OC).',
-    input: ReceiptInput.extend({ id: Id }),
+      'Propone confirmar la recepción de una orden de compra SIN partidas (id de la OC). Las órdenes con partidas se reciben en la web marcando el checklist.',
+    input: ReceiptInput.omit({ checkedLineIds: true }).extend({ id: Id }),
   },
   uploadPayable: {
     kind: 'write',

@@ -345,6 +345,9 @@ describe('AssistantPage', () => {
         issuedOn: '2026-10-10',
         total: '116.00',
         currency: 'MXN',
+        lines: [
+          { description: 'Según factura F-1', quantity: '1', unit: 'lote', unitPrice: '100.00' },
+        ],
       },
     };
     const { writes, calls, user } = setup([

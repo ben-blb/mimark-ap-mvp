@@ -1,5 +1,6 @@
 import {
   type CreatePurchaseOrderInput,
+  PurchaseOrderDraft,
   PurchaseOrderDto,
   PurchaseOrderList,
   type PurchaseOrderListQuery,
@@ -51,5 +52,16 @@ export function useConfirmReceipt(id: string) {
     mutationFn: (input: ReceiptInput) =>
       api.post(`/purchase-orders/${id}/receipt`, input, PurchaseOrderDto),
     onSuccess: invalidate,
+  });
+}
+
+/** Sube el PDF de ParLevel y devuelve un borrador: no crea ninguna OC (se guarda con useCreatePurchaseOrder). */
+export function useExtractPurchaseOrder() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api.upload('/purchase-orders/extract', form, PurchaseOrderDraft);
+    },
   });
 }

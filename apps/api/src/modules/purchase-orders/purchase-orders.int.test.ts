@@ -3,7 +3,7 @@ import { createTestApp, type TestApp } from '../../../test/app.js';
 import { seedCatalog } from '../../../test/fixtures.js';
 
 type Agent = Awaited<ReturnType<TestApp['agent']>>;
-type Order = { id: string; number: string };
+type Order = { id: string; number: string; lines: { id: string }[] };
 
 describe('órdenes de compra (spec 003)', () => {
   let t: TestApp;
@@ -16,10 +16,12 @@ describe('órdenes de compra (spec 003)', () => {
     issuedOn: '2026-10-01',
     total: '5800.00',
     currency: 'MXN',
+    lines: [{ description: 'Caja de vasos', quantity: '50', unit: 'caja', unitPrice: '100' }],
     ...over,
   });
   const create = async (over: Record<string, unknown> = {}) =>
     (await agent.post('/api/purchase-orders').send(newOrder(over)).expect(201)).body as Order;
+  const ids = (o: Order) => o.lines.map((l) => l.id);
   const numbers = (body: { items: Order[] }) => body.items.map((o) => o.number);
 
   beforeAll(async () => {
@@ -84,7 +86,7 @@ describe('órdenes de compra (spec 003)', () => {
     const po = await create();
     const res = await agent
       .post(`/api/purchase-orders/${po.id}/receipt`)
-      .send({ receivedOn: '2026-10-05', notes: ' Entrega completa ' })
+      .send({ receivedOn: '2026-10-05', notes: ' Entrega completa ', checkedLineIds: ids(po) })
       .expect(201);
     expect(res.body).toMatchObject({
       receiptStatus: 'received',
@@ -97,26 +99,32 @@ describe('órdenes de compra (spec 003)', () => {
       where: { action: 'purchase_order.received' },
     });
     expect(event).toMatchObject({ fromStatus: 'pending', toStatus: 'received', entityId: po.id });
-    expect(event.data).toEqual({ receivedOn: '2026-10-05', notes: 'Entrega completa' });
+    expect(event.data).toEqual({
+      receivedOn: '2026-10-05',
+      notes: 'Entrega completa',
+      lineCount: 1,
+    });
   });
 
   it('AC-003-05 rechaza confirmar dos veces o una OC cancelada, y fechas inválidas', async () => {
     const po = await create();
-    const receipt = (id: string, receivedOn: string) =>
-      agent.post(`/api/purchase-orders/${id}/receipt`).send({ receivedOn });
+    const receipt = (order: Order, receivedOn: string) =>
+      agent
+        .post(`/api/purchase-orders/${order.id}/receipt`)
+        .send({ receivedOn, checkedLineIds: ids(order) });
 
-    const future = await receipt(po.id, '2999-01-01').expect(400);
+    const future = await receipt(po, '2999-01-01').expect(400);
     expect(future.body.fieldErrors.receivedOn).toBeDefined();
-    const early = await receipt(po.id, '2026-09-30').expect(400);
+    const early = await receipt(po, '2026-09-30').expect(400);
     expect(early.body.fieldErrors.receivedOn).toBeDefined();
 
-    await receipt(po.id, '2026-10-05').expect(201);
-    const again = await receipt(po.id, '2026-10-06').expect(409);
+    await receipt(po, '2026-10-05').expect(201);
+    const again = await receipt(po, '2026-10-06').expect(409);
     expect(again.body.code).toBe('INVALID_TRANSITION');
 
     const other = await create({ number: 'OC-2002' });
     await agent.patch(`/api/purchase-orders/${other.id}`).send({ status: 'cancelled' }).expect(200);
-    const cancelled = await receipt(other.id, '2026-10-05').expect(409);
+    const cancelled = await receipt(other, '2026-10-05').expect(409);
     expect(cancelled.body.code).toBe('INVALID_TRANSITION');
   });
 

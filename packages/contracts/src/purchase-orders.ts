@@ -10,14 +10,57 @@ export const PoNumber = z
   .regex(/^[A-Z0-9][A-Z0-9/-]*$/, 'Folio inválido: letras, números y guiones, p. ej. OC-1001');
 export const PositiveMoney = Money.refine((v) => Number(v) > 0, 'El total debe ser mayor a 0');
 
+/** Cantidad como texto: > 0, hasta 3 decimales. */
+export const Quantity = z
+  .string()
+  .trim()
+  .regex(/^\d{1,9}(\.\d{1,3})?$/, 'Cantidad inválida: usa números con hasta 3 decimales')
+  .refine((v) => Number(v) > 0, 'La cantidad debe ser mayor a 0');
+/** Precio unitario como texto: ≥ 0, hasta 4 decimales. */
+export const UnitPrice = z
+  .string()
+  .trim()
+  .regex(/^\d{1,10}(\.\d{1,4})?$/, 'Precio inválido: usa números con hasta 4 decimales');
+
+export const MAX_PO_LINES = 200;
+
+export const PoLineInput = z.object({
+  sku: z.string().trim().max(60).optional(),
+  description: z.string().trim().min(1, 'Escribe la descripción').max(200),
+  quantity: Quantity,
+  unit: z.string().trim().min(1, 'Escribe la unidad').max(20),
+  unitPrice: UnitPrice,
+});
+export type PoLineInput = z.infer<typeof PoLineInput>;
+
+export const PoLineDto = z.object({
+  id: Id,
+  position: z.number().int(),
+  sku: z.string().nullable(),
+  description: z.string(),
+  quantity: z.string(),
+  unit: z.string(),
+  unitPrice: z.string(),
+  amount: Money,
+});
+export type PoLineDto = z.infer<typeof PoLineDto>;
+
+const PoLines = z
+  .array(PoLineInput)
+  .min(1, 'Agrega al menos una partida')
+  .max(MAX_PO_LINES, `Máximo ${MAX_PO_LINES} partidas`);
+
 export const PurchaseOrderDto = z.object({
   id: Id,
   number: z.string(),
   supplier: z.object({ id: Id, name: z.string(), taxId: z.string(), creditDays: z.number().int() }),
   issuedOn: LocalDate,
   total: Money,
+  /** total − suma de partidas (impuestos implícitos). Nulo si la OC no tiene partidas. */
+  taxes: Money.nullable(),
   currency: Currency,
   parlevelRef: z.string().nullable(),
+  lines: z.array(PoLineDto),
   status: z.enum(['open', 'cancelled']),
   receiptStatus: z.enum(['pending', 'received']),
   receivedOn: LocalDate.nullable(),
@@ -38,6 +81,7 @@ export const CreatePurchaseOrderInput = z.object({
   total: PositiveMoney,
   currency: Currency,
   parlevelRef: z.string().trim().max(60).optional(),
+  lines: PoLines,
 });
 export type CreatePurchaseOrderInput = z.infer<typeof CreatePurchaseOrderInput>;
 
@@ -52,6 +96,8 @@ export type UpdatePurchaseOrderInput = z.infer<typeof UpdatePurchaseOrderInput>;
 export const ReceiptInput = z.object({
   receivedOn: LocalDate,
   notes: z.string().trim().max(500).optional(),
+  /** Checklist: ids de todas las partidas recibidas. Vacío solo en OC sin partidas. */
+  checkedLineIds: z.array(Id).max(MAX_PO_LINES).default([]),
 });
 export type ReceiptInput = z.infer<typeof ReceiptInput>;
 
@@ -62,3 +108,45 @@ export const PurchaseOrderListQuery = z.object({
   status: z.enum(['open', 'cancelled', 'all']).default('open'),
 });
 export type PurchaseOrderListQuery = z.infer<typeof PurchaseOrderListQuery>;
+
+/** Aviso del borrador: no bloquea, dice a qué campo o partida se refiere ('lines.2.quantity'). */
+export const DraftWarning = z.object({ field: z.string(), message: z.string() });
+export type DraftWarning = z.infer<typeof DraftWarning>;
+
+/** Lo que la IA leyó del PDF, ya normalizado. Texto y nulos: la persona lo completa al verificar. */
+export const PoLineDraft = z.object({
+  sku: z.string().nullable(),
+  description: z.string().nullable(),
+  quantity: z.string().nullable(),
+  unit: z.string().nullable(),
+  unitPrice: z.string().nullable(),
+  /** Importe que trae el PDF; solo sirve para avisar si no cuadra. */
+  statedAmount: Money.nullable(),
+});
+export type PoLineDraft = z.infer<typeof PoLineDraft>;
+
+export const PurchaseOrderDraft = z.object({
+  number: z.string().nullable(),
+  supplierName: z.string().nullable(),
+  supplierTaxId: z.string().nullable(),
+  /** Proveedor activo que coincide por RFC. */
+  supplier: z
+    .object({
+      id: Id,
+      name: z.string(),
+      taxId: z.string(),
+      creditDays: z.number().int(),
+      currency: Currency,
+    })
+    .nullable(),
+  issuedOn: LocalDate.nullable(),
+  currency: Currency.nullable(),
+  parlevelRef: z.string().nullable(),
+  lines: z.array(PoLineDraft),
+  subtotal: Money.nullable(),
+  taxes: Money.nullable(),
+  total: Money.nullable(),
+  uncertainFields: z.array(z.string()),
+  warnings: z.array(DraftWarning),
+});
+export type PurchaseOrderDraft = z.infer<typeof PurchaseOrderDraft>;

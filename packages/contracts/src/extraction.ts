@@ -50,3 +50,45 @@ export const ExtractionSchema = z.object({
   ),
 });
 export type Extraction = z.infer<typeof ExtractionSchema>;
+
+/** Orden de compra de ParLevel (spec 014). Igual que las facturas: la IA solo copia datos del documento. */
+export const PO_EXTRACTED_FIELDS = [
+  'number',
+  'supplierName',
+  'supplierTaxId',
+  'issuedOn',
+  'currency',
+  'parlevelRef',
+  'lines',
+  'subtotal',
+  'taxes',
+  'total',
+] as const;
+export const PoExtractedField = z.enum(PO_EXTRACTED_FIELDS);
+export type PoExtractedField = z.infer<typeof PoExtractedField>;
+
+export const PoExtractionSchema = z.object({
+  isPurchaseOrder: z.boolean().describe('false si el documento no es una orden de compra'),
+  number: z.string().nullable().describe('Folio o número de la orden de compra'),
+  supplierName: z.string().nullable().describe('Proveedor al que se le compra'),
+  supplierTaxId: z.string().nullable().describe('RFC del proveedor'),
+  issuedOn: z.string().nullable().describe('Fecha de la orden AAAA-MM-DD'),
+  currency: z.enum(CURRENCIES).nullable(),
+  parlevelRef: z.string().nullable().describe('Referencia o folio interno de ParLevel si existe'),
+  lines: z.array(
+    z.object({
+      sku: z.string().nullable().describe('Código o SKU del producto'),
+      description: z.string().nullable(),
+      quantity: z.number().nullable(),
+      unit: z.string().nullable().describe('Unidad: pza, caja, kg...'),
+      unitPrice: z.number().nullable().describe('Precio unitario sin impuestos'),
+      amount: z.number().nullable().describe('Importe de la partida tal como aparece'),
+    }),
+  ),
+  subtotal: z.number().nullable(),
+  taxes: z.number().nullable().describe('Total de impuestos'),
+  total: z.number().nullable().describe('Total con impuestos'),
+  missingFields: z.array(PoExtractedField),
+  uncertainFields: z.array(PoExtractedField),
+});
+export type PoExtraction = z.infer<typeof PoExtractionSchema>;

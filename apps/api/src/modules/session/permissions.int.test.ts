@@ -12,6 +12,7 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'post', path: '/api/suppliers', permission: 'suppliers:write' },
   { verb: 'patch', path: '/api/suppliers/x', permission: 'suppliers:write' },
   { verb: 'post', path: '/api/purchase-orders', permission: 'orders:write' },
+  { verb: 'post', path: '/api/purchase-orders/extract', permission: 'orders:write' },
   { verb: 'patch', path: '/api/purchase-orders/x', permission: 'orders:write' },
   { verb: 'post', path: '/api/purchase-orders/x/receipt', permission: 'orders:receive' },
   { verb: 'get', path: '/api/payables', permission: 'payables:read' },

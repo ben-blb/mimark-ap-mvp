@@ -22,7 +22,7 @@ import type { LocalDate } from '@mimark/contracts/common';
 import { ROLES, type Role } from '@mimark/contracts/session';
 import { env } from '../config/env.js';
 import { fakeAssistant } from './fake-assistant.js';
-import { ASSISTANT_PROMPT } from './prompts/assistant.v2.js';
+import { ASSISTANT_PROMPT } from './prompts/assistant.v3.js';
 
 export interface AssistantInput {
   messages: ModelMessage[];

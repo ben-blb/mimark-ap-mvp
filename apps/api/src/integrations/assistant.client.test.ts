@@ -3,7 +3,7 @@ import { MockLanguageModelV4 } from 'ai/test';
 import { describe, expect, it } from 'vitest';
 import { ASSISTANT_TOOLS, WEB_ONLY_TOOLS } from '@mimark/contracts/assistant';
 import { AssistantClient } from './assistant.client.js';
-import { ASSISTANT_PROMPT } from './prompts/assistant.v2.js';
+import { ASSISTANT_PROMPT } from './prompts/assistant.v3.js';
 
 const usage = {
   inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -48,7 +48,7 @@ describe('AssistantClient', () => {
     expect(system).toContain('Hoy: 2026-10-27');
     expect(system).toContain('factura-acme.pdf (application/pdf, 1234 bytes)');
     expect(prompt).not.toContain('"type":"file"');
-    expect(result.promptVersion).toBe('assistant@2');
+    expect(result.promptVersion).toBe('assistant@3');
   });
 
   it('AC-011-05 el prompt guía el alta: proveedor por RFC, OC con id real, recepción preguntada y reevaluación', () => {

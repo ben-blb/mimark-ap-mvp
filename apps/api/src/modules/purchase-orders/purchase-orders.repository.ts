@@ -6,8 +6,20 @@ import { Db, isUniqueViolation, type Tx } from '../../common/db.js';
 import { toDbDate } from '../../common/dates.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
-const WITH_SUPPLIER = { supplier: true } satisfies Prisma.PurchaseOrderInclude;
+const WITH_SUPPLIER = {
+  supplier: true,
+  lines: { orderBy: { position: 'asc' } },
+} satisfies Prisma.PurchaseOrderInclude;
 export type PurchaseOrderRow = Prisma.PurchaseOrderGetPayload<{ include: typeof WITH_SUPPLIER }>;
+
+export interface NewLine {
+  sku?: string | undefined;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  amount: string;
+}
 
 export interface NewPurchaseOrder {
   number: string;
@@ -16,6 +28,7 @@ export interface NewPurchaseOrder {
   total: string;
   currency: 'MXN' | 'USD';
   parlevelRef?: string | undefined;
+  lines: NewLine[];
   createdBy: string;
 }
 
@@ -25,6 +38,8 @@ export interface PurchaseOrderChanges {
   currency?: 'MXN' | 'USD' | undefined;
   parlevelRef?: string | undefined;
   status?: 'open' | 'cancelled' | undefined;
+  /** Reemplaza todas las partidas. */
+  lines?: NewLine[] | undefined;
 }
 
 const DUPLICATE_NUMBER = new AppError('CONFLICT', 'Ya existe una OC con ese folio.', {
@@ -64,8 +79,13 @@ export class PurchaseOrdersRepository {
 
   async create(data: NewPurchaseOrder, tx: Tx = this.db): Promise<PurchaseOrderRow> {
     try {
+      const { lines, ...order } = data;
       return await tx.purchaseOrder.create({
-        data: { ...data, issuedOn: toDbDate(data.issuedOn) },
+        data: {
+          ...order,
+          issuedOn: toDbDate(order.issuedOn),
+          lines: { create: toLineRows(lines) },
+        },
         include: WITH_SUPPLIER,
       });
     } catch (error) {
@@ -74,11 +94,20 @@ export class PurchaseOrdersRepository {
     }
   }
 
-  update(id: string, changes: PurchaseOrderChanges, tx: Tx = this.db): Promise<PurchaseOrderRow> {
-    const { issuedOn, ...rest } = changes;
+  async update(
+    id: string,
+    changes: PurchaseOrderChanges,
+    tx: Tx = this.db,
+  ): Promise<PurchaseOrderRow> {
+    const { issuedOn, lines, ...rest } = changes;
+    if (lines) await tx.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: id } });
     return tx.purchaseOrder.update({
       where: { id },
-      data: { ...rest, ...(issuedOn && { issuedOn: toDbDate(issuedOn) }) },
+      data: {
+        ...rest,
+        ...(issuedOn && { issuedOn: toDbDate(issuedOn) }),
+        ...(lines && { lines: { create: toLineRows(lines) } }),
+      },
       include: WITH_SUPPLIER,
     });
   }
@@ -103,4 +132,8 @@ export class PurchaseOrdersRepository {
     }
     return tx.purchaseOrder.findUniqueOrThrow({ where: { id }, include: WITH_SUPPLIER });
   }
+}
+
+function toLineRows(lines: NewLine[]) {
+  return lines.map((line, i) => ({ ...line, sku: line.sku || null, position: i + 1 }));
 }

@@ -67,8 +67,27 @@ model PurchaseOrder {
   updatedAt     DateTime            @updatedAt
 
   payables      Payable[]
+  lines         PurchaseOrderLine[]
 
   @@index([supplierId])
+}
+
+/// Partida de una orden de compra (spec 014). Se reemplazan todas juntas mientras la recepción esté pendiente.
+model PurchaseOrderLine {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  /// Orden en el documento, desde 1.
+  position        Int
+  sku             String?
+  description     String
+  quantity        Decimal       @db.Decimal(12, 3)
+  unit            String
+  unitPrice       Decimal       @db.Decimal(14, 4)
+  /// round(quantity × unitPrice, 2), calculado por la regla `lineAmount`.
+  amount          Decimal       @db.Decimal(14, 2)
+
+  @@unique([purchaseOrderId, position])
 }
 
 enum PayableStatus {

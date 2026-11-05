@@ -130,7 +130,7 @@ export function PurchaseOrderForm({
         <TextField
           label="Proveedor"
           select
-          slotProps={{ select: { native: true } }}
+          slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
           {...form.field('supplierId')}
           helperText={form.errors.supplierId ?? matchedBy ?? ' '}
           onChange={(e) => chooseSupplier(e.target.value)}
@@ -171,7 +171,7 @@ export function PurchaseOrderForm({
           {...checked('issuedOn')}
         />
       </Stack>
-      <Stack direction="row" spacing={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 2 }}>
         <TextField
           label="Total con impuestos"
           slotProps={{ htmlInput: { inputMode: 'decimal' } }}

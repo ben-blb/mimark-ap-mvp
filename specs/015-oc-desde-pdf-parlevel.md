@@ -265,3 +265,20 @@ proveedor) y `-deposito` (una partida con depósito y cajas recibidas). Semilla:
 - 2026-11-05 · Ajustes de diseño antes de implementar: el depósito no se guarda en `PurchaseOrderLine` (solo en el
   borrador; menos migración y UI para un dato que hoy es 0); no hay PDF sintético versionado: la extracción simulada
   responde por nombre de archivo, como en 014; `totalWithVat` vive en contracts porque la usa la web.
+- 2026-11-05 · Implementadas las tareas 1–7. Hallazgos y decisiones: el subtotal se compara contra la suma de
+  `cantidad × precio + depósito` (el «Order Total» de ParLevel incluye el depósito, así que su suma también);
+  `pickSupplier` vive en `purchase-orders.rules.ts` y usa `normalizeName` de `suppliers.rules.ts`; el aviso del
+  proveedor no registrado sigue visible después de registrarlo (los avisos son del borrador, no se recalculan);
+  `PATCH /suppliers` no puede borrar el alias (vacío no se envía), igual que `parlevelRef` en 003. La migración se
+  generó con `prisma migrate dev` desde una terminal simulada (la advertencia del índice único pide confirmación
+  interactiva). La etiqueta «Proveedor» se encimaba con «Selecciona…» (venía de 014); ahora queda siempre arriba.
+- 2026-11-05 · AC-015-13 verificado con `pnpm dev` (`AI_PROVIDER=fake`, archivo `parlevel-warehouse.pdf`) y
+  Playwright: el borrador mostró «El PDF dice: Refrescos del Norte · Monterrey, Nuevo Leon 64890», folio P3062 y
+  fecha 2026-08-05 con el aviso de fecha ambigua; «Registrar proveedor» abrió el alta prellenada, con RFC sintético y
+  30 días quedó elegido (moneda MXN) sin perder el folio; «Subtotal + IVA 16 %» dio 35,815.58; tras marcar la
+  revisión se guardó y `/ordenes` mostró `P3062 · Refrescos del Norte · 5 ago · 9 partidas · $35,815.58`. Al subir
+  el mismo PDF otra vez el proveedor quedó «Reconocido por su nombre en ParLevel» y avisó «Ya existe una OC con ese
+  folio». A 375 px el paso de verificación no tiene scroll horizontal.
+- 2026-11-05 · **Pendiente: AC-015-12** (evaluar `extract-purchase-order@2` con el PDF real y un modelo real). El
+  contenedor no tiene `ANTHROPIC_API_KEY` ni `GOOGLE_GENERATIVE_AI_API_KEY`, así que la spec sigue `en-progreso`
+  con la tarea 8 abierta hasta correrla con `AI_PROVIDER=anthropic`.

@@ -5,6 +5,8 @@ export const SupplierDto = z.object({
   id: Id,
   name: z.string(),
   taxId: z.string(),
+  /** Nombre del proveedor en ParLevel, normalizado (spec 015). */
+  parlevelName: z.string().nullable(),
   /** Días de crédito; 0 = contado. */
   creditDays: z.number().int(),
   currency: Currency,
@@ -22,6 +24,8 @@ export const CreateSupplierInput = z.object({
   taxId: TaxId,
   creditDays: intField({ min: 0, max: 365, required: 'Escribe los días de crédito (0 = contado)' }),
   currency: Currency,
+  /** Nombre tal como lo escribe ParLevel; sirve para reconocer al proveedor en un PDF sin RFC. */
+  parlevelName: z.string().trim().min(1).max(200, 'Máximo 200 caracteres').optional(),
 });
 export type CreateSupplierInput = z.infer<typeof CreateSupplierInput>;
 

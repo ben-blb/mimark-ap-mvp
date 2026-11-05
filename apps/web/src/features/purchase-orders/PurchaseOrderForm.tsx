@@ -4,6 +4,7 @@ import {
   type PurchaseOrderDraft,
   type PurchaseOrderDto,
   PoLineInput,
+  totalWithVat,
 } from '@mimark/contracts/purchase-orders';
 import type { SupplierDto } from '@mimark/contracts/suppliers';
 import Alert from '@mui/material/Alert';
@@ -39,6 +40,10 @@ interface Props {
   today: string;
   /** Borrador que leyó la IA del PDF: prellena el formulario y pide verificarlo antes de guardar. */
   draft?: PurchaseOrderDraft;
+  /** Proveedor recién registrado desde el borrador: queda elegido sin perder lo editado (spec 015). */
+  registeredSupplierId?: string;
+  /** Sin esta función (falta permiso) no se ofrece «Registrar proveedor». */
+  onRegisterSupplier?: (suggestion: NonNullable<PurchaseOrderDraft['supplierSuggestion']>) => void;
   pending: boolean;
   error: unknown;
   onSubmit: (values: PurchaseOrderFormValues) => void;
@@ -51,6 +56,8 @@ export function PurchaseOrderForm({
   suppliers,
   today,
   draft,
+  registeredSupplierId,
+  onRegisterSupplier,
   pending,
   error,
   onSubmit,
@@ -93,6 +100,21 @@ export function PurchaseOrderForm({
     if (supplier) form.setValue('currency', supplier.currency);
   }
 
+  // Un proveedor recién registrado queda elegido una sola vez (ajuste de estado al cambiar la prop).
+  const [appliedSupplierId, setAppliedSupplierId] = useState(registeredSupplierId);
+  if (registeredSupplierId && registeredSupplierId !== appliedSupplierId) {
+    setAppliedSupplierId(registeredSupplierId);
+    chooseSupplier(registeredSupplierId);
+  }
+
+  const suggestion =
+    draft && !draft.supplier && !form.values.supplierId ? draft.supplierSuggestion : null;
+  const matchedBy =
+    draft?.supplierMatch && form.values.supplierId === draft.supplier?.id
+      ? SUPPLIER_MATCH_LABELS[draft.supplierMatch]
+      : null;
+  const vatSubtotal = draft && draft.total === null ? draft.subtotal : null;
+
   /** Campos que la IA leyó con dudas se marcan en amarillo hasta que la persona los edita. */
   function checked(name: 'number' | 'issuedOn' | 'total' | 'currency' | 'parlevelRef') {
     const props = form.field(name);
@@ -110,6 +132,7 @@ export function PurchaseOrderForm({
           select
           slotProps={{ select: { native: true } }}
           {...form.field('supplierId')}
+          helperText={form.errors.supplierId ?? matchedBy ?? ' '}
           onChange={(e) => chooseSupplier(e.target.value)}
         >
           <option value="">Selecciona…</option>
@@ -119,6 +142,25 @@ export function PurchaseOrderForm({
             </option>
           ))}
         </TextField>
+      )}
+      {suggestion && (
+        <Alert
+          severity="info"
+          aria-label="Proveedor del PDF"
+          action={
+            onRegisterSupplier && (
+              <Button color="inherit" size="small" onClick={() => onRegisterSupplier(suggestion)}>
+                Registrar proveedor
+              </Button>
+            )
+          }
+        >
+          El PDF dice: {suggestion.name}
+          {suggestion.city ? ` · ${suggestion.city}` : ''}.{' '}
+          {onRegisterSupplier
+            ? 'Regístralo o elige uno de la lista.'
+            : `Pide a un administrador que registre a ${suggestion.name}.`}
+        </Alert>
       )}
       <Stack direction="row" spacing={2}>
         <TextField label="Folio" disabled={Boolean(order)} {...checked('number')} />
@@ -135,6 +177,16 @@ export function PurchaseOrderForm({
           slotProps={{ htmlInput: { inputMode: 'decimal' } }}
           {...checked('total')}
         />
+        {vatSubtotal && (
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ alignSelf: 'flex-start', mt: 1, flexShrink: 0 }}
+            onClick={() => form.setValue('total', totalWithVat(vatSubtotal))}
+          >
+            Subtotal + IVA 16 %
+          </Button>
+        )}
         <TextField
           label="Moneda"
           select
@@ -197,6 +249,12 @@ export function PurchaseOrderForm({
     </Stack>
   );
 }
+
+const SUPPLIER_MATCH_LABELS = {
+  taxId: 'Reconocido por RFC',
+  alias: 'Reconocido por su nombre en ParLevel',
+  name: 'Reconocido por nombre: verifícalo',
+} as const;
 
 function toLineValues(line: PurchaseOrderDto['lines'][number]): LineValues {
   return {

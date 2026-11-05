@@ -1,4 +1,5 @@
 import type { PurchaseOrderDraft, PurchaseOrderDto } from '@mimark/contracts/purchase-orders';
+import type { SupplierDto } from '@mimark/contracts/suppliers';
 import UploadFileOutlined from '@mui/icons-material/UploadFileOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import Button from '@mui/material/Button';
@@ -10,6 +11,8 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useState } from 'react';
 import { ErrorAlert } from '../../components/ErrorAlert';
+import { useCan } from '../session/session.api';
+import { SupplierDialog } from '../suppliers/SupplierDialog';
 import { useSuppliers } from '../suppliers/suppliers.api';
 import { localToday } from './today';
 import { PurchaseOrderForm, type PurchaseOrderFormValues } from './PurchaseOrderForm';
@@ -37,6 +40,14 @@ export function PurchaseOrderDialog({
   const mutation = order ? update : create;
   const [step, setStep] = useState<Step>(order ? { kind: 'form' } : { kind: 'origin' });
   const fullScreen = useMediaQuery('(max-width:599.95px)');
+  const can = useCan();
+  /** Alta del proveedor que sugiere el PDF (spec 015): el diálogo de proveedores se abre encima. */
+  const [registering, setRegistering] = useState<{ name: string } | null>(null);
+  const [registered, setRegistered] = useState<SupplierDto | null>(null);
+  const supplierOptions = [
+    ...(suppliers.data?.items ?? []).filter((s) => s.id !== registered?.id),
+    ...(registered ? [registered] : []),
+  ];
 
   function submit(values: PurchaseOrderFormValues) {
     if (order) {
@@ -111,7 +122,11 @@ export function PurchaseOrderDialog({
             <PurchaseOrderForm
               order={order}
               draft={step.draft}
-              suppliers={suppliers.data?.items ?? []}
+              suppliers={supplierOptions}
+              registeredSupplierId={registered?.id}
+              onRegisterSupplier={
+                can('suppliers:write') ? (s) => setRegistering({ name: s.name }) : undefined
+              }
               today={localToday()}
               pending={mutation.isPending}
               error={mutation.error}
@@ -121,6 +136,13 @@ export function PurchaseOrderDialog({
           )
         )}
       </DialogContent>
+      {registering && (
+        <SupplierDialog
+          initial={{ name: registering.name, parlevelName: registering.name }}
+          onSaved={setRegistered}
+          onClose={() => setRegistering(null)}
+        />
+      )}
     </Dialog>
   );
 }

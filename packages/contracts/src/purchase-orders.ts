@@ -122,6 +122,10 @@ export const PoLineDraft = z.object({
   unitPrice: z.string().nullable(),
   /** Importe que trae el PDF; solo sirve para avisar si no cuadra. */
   statedAmount: Money.nullable(),
+  /** Depósito de envase (columna «Deposit» de ParLevel). No se guarda: solo cuadra y avisa (spec 015). */
+  deposit: Money.nullable(),
+  /** Cajas recibidas que ya trae el PDF; la recepción real es el checklist. */
+  receivedQuantity: z.string().nullable(),
 });
 export type PoLineDraft = z.infer<typeof PoLineDraft>;
 
@@ -129,7 +133,7 @@ export const PurchaseOrderDraft = z.object({
   number: z.string().nullable(),
   supplierName: z.string().nullable(),
   supplierTaxId: z.string().nullable(),
-  /** Proveedor activo que coincide por RFC. */
+  /** Proveedor activo que coincide por RFC, alias de ParLevel o nombre (`supplierMatch`). */
   supplier: z
     .object({
       id: Id,
@@ -139,6 +143,9 @@ export const PurchaseOrderDraft = z.object({
       currency: Currency,
     })
     .nullable(),
+  supplierMatch: z.enum(['taxId', 'alias', 'name']).nullable(),
+  /** Sin coincidencia: lo que dice el PDF del proveedor, para registrarlo. */
+  supplierSuggestion: z.object({ name: z.string(), city: z.string().nullable() }).nullable(),
   issuedOn: LocalDate.nullable(),
   currency: Currency.nullable(),
   parlevelRef: z.string().nullable(),
@@ -150,3 +157,14 @@ export const PurchaseOrderDraft = z.object({
   warnings: z.array(DraftWarning),
 });
 export type PurchaseOrderDraft = z.infer<typeof PurchaseOrderDraft>;
+
+/**
+ * Ayuda para capturar el total cuando el PDF solo trae subtotal (spec 015): round(subtotal × 1.16, 2), mitad
+ * hacia arriba y en centavos enteros. Es una sugerencia; el total lo decide la persona.
+ */
+export function totalWithVat(subtotal: Money): Money {
+  const [whole = '0', frac = ''] = subtotal.trim().split('.');
+  const cents = BigInt(whole + frac.padEnd(2, '0'));
+  const withVat = (cents * 116n + 50n) / 100n;
+  return `${withVat / 100n}.${String(withVat % 100n).padStart(2, '0')}`;
+}

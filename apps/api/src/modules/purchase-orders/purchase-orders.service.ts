@@ -35,6 +35,8 @@ import {
   lineAmount,
   linesSubtotal,
   normalizePoExtraction,
+  parseParlevelDate,
+  pickSupplier,
 } from './purchase-orders.rules.js';
 
 const AUDITED_FIELDS = ['issuedOn', 'total', 'currency', 'parlevelRef', 'status', 'lines'] as const;
@@ -157,24 +159,22 @@ export class PurchaseOrdersService {
     }
 
     const normalized = normalizePoExtraction(result.data);
-    const [supplier, existing] = await Promise.all([
-      normalized.supplierTaxId ? this.suppliers.findByTaxId(normalized.supplierTaxId) : null,
+    const [candidates, existing] = await Promise.all([
+      this.suppliers.listActive(),
       normalized.number ? this.orders.findByNumber(normalized.number) : null,
     ]);
-    const draft = {
-      ...normalized,
-      supplier: supplier?.active
-        ? {
-            id: supplier.id,
-            name: supplier.name,
-            taxId: supplier.taxId,
-            creditDays: supplier.creditDays,
-            currency: supplier.currency,
-          }
-        : null,
-    };
+    const { warnings: supplierWarnings, ...picked } = pickSupplier(
+      candidates,
+      { ...normalized, supplierCity: result.data.supplierCity },
+      env.BUYER_NAMES,
+    );
+    const draft = { ...normalized, ...picked };
     const warnings = result.data.isPurchaseOrder
-      ? buildDraftWarnings(draft, existing !== null)
+      ? buildDraftWarnings(normalized, existing !== null, {
+          supplierWarnings,
+          today: today(),
+          dateAmbiguous: parseParlevelDate(result.data.issuedOn ?? '').ambiguous,
+        })
       : [{ field: 'file', message: 'El documento no parece una orden de compra' }];
 
     await this.audit.log({
@@ -187,6 +187,7 @@ export class PurchaseOrdersService {
         promptVersion: result.promptVersion,
         ms: result.ms,
         lineCount: draft.lines.length,
+        supplierMatch: draft.supplierMatch,
       },
     });
     return { ...draft, warnings };

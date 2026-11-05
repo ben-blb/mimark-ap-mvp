@@ -49,3 +49,36 @@ describe('SupplierForm', () => {
     expect(screen.getByText('Ya existe un proveedor con ese RFC')).toBeInTheDocument();
   });
 });
+
+describe('SupplierForm · nombre en ParLevel (spec 015)', () => {
+  it('AC-015-06 abre prellenado con lo que dice el PDF y envía el alias', async () => {
+    const onSubmit = vi.fn();
+    render(
+      <SupplierForm
+        initial={{ name: 'Refrescos del Norte', parlevelName: 'Refrescos del Norte' }}
+        pending={false}
+        error={null}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+    const user = userEvent.setup();
+    expect(screen.getByLabelText('Razón social')).toHaveValue('Refrescos del Norte');
+    expect(screen.getByLabelText('Nombre en ParLevel (opcional)')).toHaveValue(
+      'Refrescos del Norte',
+    );
+
+    await user.type(screen.getByLabelText('RFC'), 'rdn010101ab1');
+    await user.type(screen.getByLabelText('Días de crédito'), '30');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      name: 'Refrescos del Norte',
+      parlevelName: 'Refrescos del Norte',
+      taxId: 'RDN010101AB1',
+      creditDays: 30,
+      currency: 'MXN',
+      active: true,
+    });
+  });
+});

@@ -10,13 +10,18 @@ const suppliers = [
   { id: 's2', name: 'Importadora Snacks', creditDays: 20, currency: 'USD' },
 ] as const;
 
-function setup(error: unknown = null, draft?: PurchaseOrderDraft) {
+function setup(
+  error: unknown = null,
+  draft?: PurchaseOrderDraft,
+  extra: Partial<Parameters<typeof PurchaseOrderForm>[0]> = {},
+) {
   const onSubmit = vi.fn();
   render(
     <PurchaseOrderForm
       suppliers={[...suppliers]}
       today="2026-10-20"
       draft={draft}
+      {...extra}
       pending={false}
       error={error}
       onSubmit={onSubmit}
@@ -89,6 +94,8 @@ const draft: PurchaseOrderDraft = {
     creditDays: 15,
     currency: 'MXN',
   },
+  supplierMatch: 'taxId',
+  supplierSuggestion: null,
   issuedOn: '2026-10-19',
   currency: 'MXN',
   parlevelRef: 'PL-42',
@@ -100,6 +107,8 @@ const draft: PurchaseOrderDraft = {
       unit: 'bolsa',
       unitPrice: '100',
       statedAmount: '2000.00',
+      deposit: null,
+      receivedQuantity: null,
     },
     {
       sku: null,
@@ -108,6 +117,8 @@ const draft: PurchaseOrderDraft = {
       unit: 'caja',
       unitPrice: '50',
       statedAmount: '500.00',
+      deposit: null,
+      receivedQuantity: null,
     },
   ],
   subtotal: '2500.00',
@@ -202,5 +213,84 @@ describe('PurchaseOrderForm · borrador del PDF', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(screen.getByText('Elige un proveedor')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe('PurchaseOrderForm · PDF de ParLevel (spec 015)', () => {
+  const parlevel: PurchaseOrderDraft = {
+    ...draft,
+    number: 'P3062',
+    supplier: null,
+    supplierMatch: null,
+    supplierSuggestion: { name: 'Refrescos del Norte', city: 'Monterrey, Nuevo Leon 64890' },
+    currency: null,
+    subtotal: '2500.00',
+    taxes: null,
+    total: null,
+    warnings: [
+      {
+        field: 'total',
+        message:
+          'El PDF de ParLevel no trae impuestos: captura el total de la cotización o la factura',
+      },
+    ],
+  };
+
+  it('AC-015-04 AC-015-06 muestra lo que dice el PDF del proveedor y ofrece registrarlo', async () => {
+    const onRegisterSupplier = vi.fn();
+    const { user } = setup(null, parlevel, { onRegisterSupplier });
+    expect(screen.getByLabelText('Proveedor del PDF')).toHaveTextContent(
+      'El PDF dice: Refrescos del Norte · Monterrey, Nuevo Leon 64890',
+    );
+    await user.click(screen.getByRole('button', { name: 'Registrar proveedor' }));
+    expect(onRegisterSupplier).toHaveBeenCalledWith(parlevel.supplierSuggestion);
+  });
+
+  it('AC-015-03 dice cómo se reconoció al proveedor', () => {
+    setup(null, { ...draft, supplierMatch: 'alias' });
+    expect(screen.getByText('Reconocido por su nombre en ParLevel')).toBeInTheDocument();
+  });
+
+  it('AC-015-07 sin total exige capturarlo; «Subtotal + IVA 16 %» lo propone y se puede cambiar', async () => {
+    const { onSubmit, user } = setup(null, { ...parlevel, supplier: draft.supplier });
+    expect(screen.getByLabelText('Total con impuestos')).toHaveValue('');
+    expect(screen.getByText(/no trae impuestos/)).toBeInTheDocument();
+    await user.click(screen.getByLabelText('Revisé las partidas contra el PDF'));
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Subtotal + IVA 16 %' }));
+    expect(screen.getByLabelText('Total con impuestos')).toHaveValue('2900.00');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ total: '2900.00' }));
+  });
+
+  it('AC-015-08 sin moneda en el PDF usa la del proveedor y la marca para revisar', () => {
+    setup(null, {
+      ...parlevel,
+      supplier: { ...draft.supplier!, currency: 'USD' },
+      uncertainFields: ['currency'],
+    });
+    expect(screen.getByLabelText('Moneda')).toHaveValue('USD');
+    expect(screen.getByText('Verifícalo contra el PDF')).toBeInTheDocument();
+  });
+
+  it('AC-015-06 un proveedor recién registrado queda elegido con su moneda', () => {
+    const onSubmit = vi.fn();
+    const props = {
+      suppliers: [...suppliers],
+      today: '2026-10-20',
+      draft: parlevel,
+      pending: false,
+      error: null,
+      onSubmit,
+      onCancel: vi.fn(),
+    };
+    const { rerender } = render(<PurchaseOrderForm {...props} />);
+    expect(screen.getByLabelText('Proveedor')).toHaveValue('');
+    rerender(<PurchaseOrderForm {...props} registeredSupplierId="s2" />);
+    expect(screen.getByLabelText('Proveedor')).toHaveValue('s2');
+    expect(screen.getByLabelText('Moneda')).toHaveValue('USD');
+    expect(screen.queryByLabelText('Proveedor del PDF')).not.toBeInTheDocument();
   });
 });

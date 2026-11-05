@@ -12,7 +12,7 @@ import { env } from '../config/env.js';
 import { fakeExtraction } from './fake-extraction.js';
 import { fakePoExtraction } from './fake-po-extraction.js';
 import { EXTRACT_INVOICE } from './prompts/extract-invoice.v1.js';
-import { EXTRACT_PURCHASE_ORDER } from './prompts/extract-purchase-order.v1.js';
+import { EXTRACT_PURCHASE_ORDER } from './prompts/extract-purchase-order.v2.js';
 
 export interface ExtractionResult {
   data: Extraction;

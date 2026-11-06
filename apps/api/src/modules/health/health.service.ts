@@ -1,13 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import type { Health as HealthDto } from '@mimark/contracts/health';
 import { Db } from '../../common/db.js';
 import { env } from '../../config/env.js';
 
-export interface HealthDto {
-  status: 'ok' | 'degraded';
-  db: 'ok' | 'error';
-  version: string;
-  environment: string;
-}
+export type { HealthDto };
 
 @Injectable()
 export class HealthService {

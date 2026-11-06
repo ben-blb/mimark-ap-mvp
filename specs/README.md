@@ -59,5 +59,6 @@ Sin Claude Code se siguen los mismos pasos a mano: están escritos en `.claude/s
 | [012 Tutorial](012-tutorial.md)                         | Recorrido guiado de bienvenida, repetible                  | Usabilidad (extensión)               |
 | [014 Partidas de OC](014-partidas-y-checklist-de-oc.md) | Partidas, checklist de recepción y PDF de ParLevel         | RF-02, RF-03 (extensión)             |
 | [015 OC desde ParLevel](015-oc-desde-pdf-parlevel.md)   | PDF real de ParLevel, alta del proveedor y total           | RF-01…03 (extensión)                 |
+| [016 Base dormida](016-aviso-base-dormida.md)           | Aviso y reintento cuando Neon está suspendida              | Usabilidad (extensión)               |
 
 El orden es el de implementación: cada spec depende de las anteriores (`depende_de`).

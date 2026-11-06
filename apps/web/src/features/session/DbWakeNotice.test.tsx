@@ -90,7 +90,11 @@ describe('DbWakeNotice', () => {
   });
 
   it('AC-016-05 si la consulta falla por red o con error HTTP muestra el aviso y reintenta', async () => {
-    const fetchMock = mockHealth(['network-error', { body: { code: 'INTERNAL' }, status: 500 }, { body: healthy }]);
+    const fetchMock = mockHealth([
+      'network-error',
+      { body: { code: 'INTERNAL' }, status: 500 },
+      { body: healthy },
+    ]);
     renderNotice();
 
     await advance(100);

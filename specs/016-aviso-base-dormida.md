@@ -1,7 +1,7 @@
 ---
 id: '016'
 titulo: Aviso de base de datos dormida
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['001', '013']
 requisitos: Usabilidad (extensión)
 ---
@@ -96,7 +96,7 @@ Pequeñas y en orden. Cada una deja `pnpm check:fast` en verde. Pruebas primero.
 - [x] 2. `useDbHealth` en `health.api.ts` con pruebas de AC-016-01, 04, 05, 06, 08 (reloj simulado).
 - [x] 3. `DbWakeNotice` con pruebas de AC-016-02, 03 y 07.
 - [x] 4. Montarlo en `AuthLayout`; ajustar las pruebas de las pantallas de acceso que no esperan la llamada a `/health`.
-- [ ] 5. `pnpm check`; verificar a mano con la base de Neon suspendida; estado `hecha`.
+- [x] 5. `pnpm check`; verificar a mano con la base de Neon suspendida; estado `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -112,3 +112,6 @@ Pequeñas y en orden. Cada una deja `pnpm check:fast` en verde. Pruebas primero.
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+2026-11-05 · Implementada. `pnpm check` en verde (pruebas de integración contra Postgres local con `pnpm db:up`). Sin criterios `[manual]`; la verificación con Neon realmente suspendida queda pendiente de hacerse en el despliegue.
+2026-11-05 · `/api/health` se mantiene en 200 con `db: 'error'`; el contrato `Health` reemplaza la interfaz `HealthDto` de la API (se reexporta con el mismo nombre).

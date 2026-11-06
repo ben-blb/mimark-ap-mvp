@@ -3,6 +3,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { FormEventHandler, ReactNode } from 'react';
+import { DbWakeNotice } from './DbWakeNotice';
 
 /** Tarjeta centrada con la marca, común a entrar, configuración inicial y cambio de contraseña. */
 export function AuthLayout(props: {
@@ -26,6 +27,7 @@ export function AuthLayout(props: {
               {props.title ?? 'Cuentas por pagar'}
             </Typography>
           </Box>
+          <DbWakeNotice />
           {props.children}
         </Stack>
       </Paper>

@@ -93,9 +93,9 @@ Sin eventos: es una lectura sin efectos.
 Pequeñas y en orden. Cada una deja `pnpm check:fast` en verde. Pruebas primero.
 
 - [x] 1. Contrato `Health` en `packages/contracts/src/health.ts` (con prueba) y `HealthDto` de la API usando ese tipo.
-- [ ] 2. `useDbHealth` en `health.api.ts` con pruebas de AC-016-01, 04, 05, 06, 08 (reloj simulado).
-- [ ] 3. `DbWakeNotice` con pruebas de AC-016-02, 03 y 07.
-- [ ] 4. Montarlo en `AuthLayout`; ajustar las pruebas de las pantallas de acceso que no esperan la llamada a `/health`.
+- [x] 2. `useDbHealth` en `health.api.ts` con pruebas de AC-016-01, 04, 05, 06, 08 (reloj simulado).
+- [x] 3. `DbWakeNotice` con pruebas de AC-016-02, 03 y 07.
+- [x] 4. Montarlo en `AuthLayout`; ajustar las pruebas de las pantallas de acceso que no esperan la llamada a `/health`.
 - [ ] 5. `pnpm check`; verificar a mano con la base de Neon suspendida; estado `hecha`.
 
 ## Fuera de alcance y decisiones

@@ -99,4 +99,47 @@ describe('proveedores (spec 002)', () => {
     const res = await agent.get('/api/suppliers/no-existe').expect(404);
     expect(res.body.code).toBe('NOT_FOUND');
   });
+
+  it('AC-015-05 guarda el nombre en ParLevel normalizado, único y auditado', async () => {
+    const created = await agent
+      .post('/api/suppliers')
+      .send({ ...norte, parlevelName: ' Refrescos  del Norte ' })
+      .expect(201);
+    expect(created.body.parlevelName).toBe('REFRESCOS DEL NORTE');
+    const event = await t.db.auditEvent.findFirstOrThrow({ where: { action: 'supplier.created' } });
+    expect(event.data).toMatchObject({ after: { parlevelName: 'REFRESCOS DEL NORTE' } });
+
+    const other = { ...norte, taxId: 'BFM980512KL3', name: 'Otro' };
+    const dup = await agent
+      .post('/api/suppliers')
+      .send({ ...other, parlevelName: 'refrescos del norte' })
+      .expect(409);
+    expect(dup.body).toMatchObject({
+      code: 'CONFLICT',
+      fieldErrors: { parlevelName: expect.any(String) },
+    });
+
+    const second = await agent.post('/api/suppliers').send(other).expect(201);
+    expect(second.body.parlevelName).toBeNull();
+    await agent
+      .patch(`/api/suppliers/${second.body.id}`)
+      .send({ parlevelName: 'Refrescos del Norte' })
+      .expect(409);
+    const renamed = await agent
+      .patch(`/api/suppliers/${second.body.id}`)
+      .send({ parlevelName: 'Otro proveedor' })
+      .expect(200);
+    expect(renamed.body.parlevelName).toBe('OTRO PROVEEDOR');
+    const updated = await t.db.auditEvent.findFirstOrThrow({
+      where: { action: 'supplier.updated' },
+    });
+    expect(updated.data).toMatchObject({
+      changes: { parlevelName: { from: null, to: 'OTRO PROVEEDOR' } },
+    });
+    // El propio proveedor puede volver a guardar su alias.
+    await agent
+      .patch(`/api/suppliers/${created.body.id}`)
+      .send({ parlevelName: 'REFRESCOS DEL NORTE' })
+      .expect(200);
+  });
 });

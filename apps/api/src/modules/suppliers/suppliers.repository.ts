@@ -37,6 +37,15 @@ export class SuppliersRepository {
     return tx.supplier.findUnique({ where: { taxId } });
   }
 
+  /** `parlevelName` ya normalizado (spec 015). */
+  findByParlevelName(parlevelName: string, tx: Tx = this.db): Promise<Supplier | null> {
+    return tx.supplier.findUnique({ where: { parlevelName } });
+  }
+
+  listActive(tx: Tx = this.db): Promise<Supplier[]> {
+    return tx.supplier.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+  }
+
   async create(data: CreateSupplierInput, tx: Tx = this.db): Promise<Supplier> {
     try {
       return await tx.supplier.create({ data });

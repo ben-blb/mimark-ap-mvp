@@ -13,6 +13,7 @@ const supplier = {
   taxId: 'CSM120304TR5',
   creditDays: 0,
   currency: 'MXN',
+  parlevelName: null,
   active: true,
   createdAt: '2026-10-01T00:00:00.000Z',
   updatedAt: '2026-10-01T00:00:00.000Z',
@@ -28,6 +29,8 @@ const draft = {
     creditDays: 0,
     currency: 'MXN',
   },
+  supplierMatch: 'taxId',
+  supplierSuggestion: null,
   issuedOn: '2026-10-19',
   currency: 'MXN',
   parlevelRef: null,
@@ -39,6 +42,8 @@ const draft = {
       unit: 'bolsa',
       unitPrice: '100',
       statedAmount: '2000.00',
+      deposit: null,
+      receivedQuantity: null,
     },
   ],
   subtotal: '2000.00',
@@ -48,8 +53,28 @@ const draft = {
   warnings: [],
 };
 
-function setup(extractResponse: () => Response) {
+const session = (role: string) => ({
+  userId: 'u1',
+  actor: 'Ana',
+  role,
+  mustChangePassword: false,
+  expiresAt: '2026-12-01T00:00:00.000Z',
+});
+const newSupplier = {
+  ...supplier,
+  id: 's9',
+  name: 'Refrescos del Norte',
+  taxId: 'RDN010101AB1',
+  parlevelName: 'REFRESCOS DEL NORTE',
+  creditDays: 30,
+};
+
+function setup(extractResponse: () => Response, role = 'admin') {
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    if (url === '/api/session') return Promise.resolve(json(session(role)));
+    if (url === '/api/suppliers' && init?.method === 'POST') {
+      return Promise.resolve(json(newSupplier, 201));
+    }
     if (url.startsWith('/api/suppliers')) return Promise.resolve(json({ items: [supplier] }));
     if (url === '/api/purchase-orders/extract') return Promise.resolve(extractResponse());
     if (url === '/api/purchase-orders' && init?.method === 'POST') {
@@ -107,5 +132,63 @@ describe('PurchaseOrderDialog · PDF de ParLevel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Capturar a mano' }));
     expect(await screen.findByLabelText('Folio')).toHaveValue('');
+  });
+});
+
+describe('PurchaseOrderDialog · proveedor nuevo desde el PDF (spec 015)', () => {
+  const unknown = {
+    ...draft,
+    number: 'P3062',
+    supplierName: 'Refrescos del Norte',
+    supplierTaxId: null,
+    supplier: null,
+    supplierMatch: null,
+    supplierSuggestion: { name: 'Refrescos del Norte', city: 'Monterrey, Nuevo Leon 64890' },
+    currency: null,
+    total: null,
+    taxes: null,
+    warnings: [{ field: 'supplierId', message: 'Proveedor no registrado' }],
+  };
+
+  it('AC-015-06 registra al proveedor prellenado y lo deja elegido sin perder lo editado', async () => {
+    const { fetchMock, user } = setup(() => json(unknown, 201));
+    await user.upload(screen.getByLabelText('Archivo PDF de ParLevel'), pdf);
+    await screen.findByText('Verificar la orden leída del PDF');
+
+    const folio = screen.getByLabelText('Folio');
+    await user.clear(folio);
+    await user.type(folio, 'P3062-B');
+
+    await user.click(await screen.findByRole('button', { name: 'Registrar proveedor' }));
+    expect(await screen.findByLabelText('Razón social')).toHaveValue('Refrescos del Norte');
+    expect(screen.getByLabelText('Nombre en ParLevel (opcional)')).toHaveValue(
+      'Refrescos del Norte',
+    );
+    await user.type(screen.getByLabelText('RFC'), 'RDN010101AB1');
+    await user.type(screen.getByLabelText('Días de crédito'), '30');
+    const saveButtons = screen.getAllByRole('button', { name: 'Guardar' });
+    await user.click(saveButtons[saveButtons.length - 1]!);
+
+    await waitFor(() => expect(screen.queryByLabelText('Razón social')).not.toBeInTheDocument());
+    const posted = fetchMock.mock.calls.find(
+      ([url, init]) => url === '/api/suppliers' && init?.method === 'POST',
+    );
+    expect(JSON.parse(posted![1]?.body as string)).toMatchObject({
+      name: 'Refrescos del Norte',
+      parlevelName: 'Refrescos del Norte',
+      taxId: 'RDN010101AB1',
+    });
+    expect(screen.getByLabelText('Proveedor')).toHaveValue('s9');
+    expect(screen.getByLabelText('Folio')).toHaveValue('P3062-B');
+    expect(screen.queryByRole('button', { name: 'Registrar proveedor' })).not.toBeInTheDocument();
+  });
+
+  it('AC-015-06 sin permiso de proveedores no ofrece el alta y pide a un administrador', async () => {
+    const { user } = setup(() => json(unknown, 201), 'warehouse');
+    await user.upload(screen.getByLabelText('Archivo PDF de ParLevel'), pdf);
+    expect(
+      await screen.findByText(/Pide a un administrador que registre a Refrescos del Norte/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Registrar proveedor' })).not.toBeInTheDocument();
   });
 });

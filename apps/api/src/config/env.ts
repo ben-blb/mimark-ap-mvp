@@ -35,6 +35,16 @@ const Env = z
     DAILY_AI_LIMIT: z.coerce.number().int().min(1).default(30),
     DAILY_AI_LIMIT_GLOBAL: z.coerce.number().int().min(1).default(200),
     DAILY_ASSISTANT_LIMIT: z.coerce.number().int().min(1).default(100),
+    /** Nombres del comprador (bloque «From:» de ParLevel), separados por comas: nunca son el proveedor. */
+    BUYER_NAMES: z
+      .string()
+      .default('SMART KIOSKO,MIMARK')
+      .transform((v) =>
+        v
+          .split(',')
+          .map((name) => name.trim())
+          .filter(Boolean),
+      ),
   })
   .refine((e) => e.VERCEL_ENV !== 'production' || !e.SESSION_SECRET.startsWith(DEV_SECRET_PREFIX), {
     message: 'SESSION_SECRET de desarrollo en producción: genera uno nuevo',

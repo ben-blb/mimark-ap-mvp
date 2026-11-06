@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CreatePurchaseOrderInput, ReceiptInput } from './purchase-orders.js';
+import { CreatePurchaseOrderInput, ReceiptInput, totalWithVat } from './purchase-orders.js';
 
 const valid = {
   number: 'OC-1001',
@@ -66,5 +66,16 @@ describe('partidas', () => {
 describe('ReceiptInput', () => {
   it('AC-014-06 checkedLineIds es opcional y vale [] por defecto', () => {
     expect(ReceiptInput.parse({ receivedOn: '2026-10-05' }).checkedLineIds).toEqual([]);
+  });
+});
+
+describe('totalWithVat (spec 015)', () => {
+  it.each([
+    ['30875.50', '35815.58'],
+    ['100', '116.00'],
+    ['0.03', '0.03'],
+    ['0.05', '0.06'],
+  ])('AC-015-07 %s + IVA 16 %% → %s', (subtotal, total) => {
+    expect(totalWithVat(subtotal)).toBe(total);
   });
 });

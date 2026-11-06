@@ -24,6 +24,8 @@ model Supplier {
   name       String
   /// RFC normalizado (mayúsculas, sin espacios).
   taxId      String   @unique
+  /// Nombre del proveedor tal como lo escribe ParLevel (bloque «To:»), normalizado. Sirve para reconocerlo sin RFC.
+  parlevelName String? @unique
   /// Días de crédito; 0 = contado.
   creditDays Int
   currency   Currency

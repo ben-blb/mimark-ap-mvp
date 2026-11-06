@@ -8,9 +8,15 @@ import { useCreateSupplier, useUpdateSupplier } from './suppliers.api';
 /** Conecta el formulario con la API: alta si no hay `supplier`, edición si lo hay. */
 export function SupplierDialog({
   supplier,
+  initial,
+  onSaved,
   onClose,
 }: {
   supplier?: SupplierDto;
+  /** Valores iniciales de un alta (p. ej. desde el PDF de ParLevel). */
+  initial?: { name?: string; parlevelName?: string };
+  /** Se llama con el proveedor guardado, antes de cerrar. */
+  onSaved?: (supplier: SupplierDto) => void;
   onClose: () => void;
 }) {
   const create = useCreateSupplier();
@@ -19,8 +25,12 @@ export function SupplierDialog({
 
   function submit(values: SupplierFormValues) {
     const { active, ...data } = values;
-    if (supplier) update.mutate({ ...data, active }, { onSuccess: onClose });
-    else create.mutate(data, { onSuccess: onClose });
+    const onSuccess = (saved: SupplierDto) => {
+      onSaved?.(saved);
+      onClose();
+    };
+    if (supplier) update.mutate({ ...data, active }, { onSuccess });
+    else create.mutate(data, { onSuccess });
   }
 
   return (
@@ -29,6 +39,7 @@ export function SupplierDialog({
       <DialogContent sx={{ pt: '8px !important' }}>
         <SupplierForm
           supplier={supplier}
+          initial={initial}
           pending={mutation.isPending}
           error={mutation.error}
           onSubmit={submit}

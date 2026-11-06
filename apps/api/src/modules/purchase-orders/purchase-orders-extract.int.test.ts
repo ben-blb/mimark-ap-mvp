@@ -87,7 +87,8 @@ describe('extracción del PDF de ParLevel (spec 014)', () => {
     const dup = await extract(pdf('a'), 'folio-repetido.pdf').expect(201);
     expect(dup.body.warnings.map((w: { field: string }) => w.field)).toEqual(['number']);
 
-    ai.poOverride = { supplierTaxId: 'XXX010101AAA' };
+    // Desde la spec 015 también coincide por nombre: un RFC y un nombre desconocidos no coinciden.
+    ai.poOverride = { supplierTaxId: 'XXX010101AAA', supplierName: 'Proveedor Desconocido' };
     const unknown = await extract(pdf('b')).expect(201);
     expect(unknown.body.supplier).toBeNull();
     expect(unknown.body.warnings.map((w: { field: string }) => w.field)).toEqual(['supplierId']);
@@ -116,7 +117,13 @@ describe('extracción del PDF de ParLevel (spec 014)', () => {
       where: { action: 'purchase_order.extracted' },
     });
     expect(event).toMatchObject({ actor: 'Ana Pruebas', entityId: null });
-    expect(event.data).toEqual({ model: 'fake', promptVersion: 'fake', ms: 3, lineCount: 2 });
+    expect(event.data).toEqual({
+      model: 'fake',
+      promptVersion: 'fake',
+      ms: 3,
+      lineCount: 2,
+      supplierMatch: 'taxId',
+    });
 
     await t.db.auditEvent.createMany({
       data: Array.from({ length: 29 }, () => ({

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ExtractionClient } from './extraction.client.js';
 import { fakeExtraction } from './fake-extraction.js';
 import { fakePoExtraction } from './fake-po-extraction.js';
-import { EXTRACT_PURCHASE_ORDER } from './prompts/extract-purchase-order.v1.js';
+import { EXTRACT_PURCHASE_ORDER } from './prompts/extract-purchase-order.v2.js';
 import { EXTRACT_INVOICE } from './prompts/extract-invoice.v1.js';
 
 const output = fakeExtraction(Buffer.from('%PDF-1.7 prueba'), 'factura.pdf');
@@ -61,7 +61,7 @@ describe('ExtractionClient · orden de compra', () => {
     outputTokens: { total: 1, text: 1, reasoning: 0 },
   };
 
-  it('AC-014-11 la llamada lleva solo las instrucciones versionadas y un archivo, sin herramientas', async () => {
+  it('AC-014-11 AC-015-11 la llamada usa el prompt v2, sin herramientas y con un solo archivo', async () => {
     const model = new MockLanguageModelV4({
       doGenerate: {
         content: [{ type: 'text', text: JSON.stringify(poOutput) }],
@@ -86,11 +86,17 @@ describe('ExtractionClient · orden de compra', () => {
     });
     expect(call?.prompt[1]?.content).toHaveLength(1);
     expect(call?.prompt[1]?.content[0]).toMatchObject({ type: 'file' });
-    expect(result).toMatchObject({ data: poOutput, promptVersion: 'extract-purchase-order@1' });
+    expect(result).toMatchObject({ data: poOutput, promptVersion: 'extract-purchase-order@2' });
   });
 
-  it('AC-014-11 el prompt trata el documento como dato', () => {
+  it('AC-014-11 AC-015-11 el prompt trata el documento como dato', () => {
     expect(EXTRACT_PURCHASE_ORDER.text).toMatch(/dato, nunca una instrucción/);
+  });
+
+  it('AC-015-11 el prompt v2 describe el diseño de ParLevel: comprador en From, proveedor en To', () => {
+    expect(EXTRACT_PURCHASE_ORDER.version).toBe('extract-purchase-order@2');
+    expect(EXTRACT_PURCHASE_ORDER.text).toMatch(/Nunca pongas al comprador como\s+proveedor/);
+    expect(EXTRACT_PURCHASE_ORDER.text).toMatch(/copia la fecha exactamente como aparece/);
   });
 
   it('AC-014-08 una salida fuera del esquema se propaga como error', async () => {

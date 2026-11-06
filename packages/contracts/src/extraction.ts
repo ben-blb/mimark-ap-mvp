@@ -72,7 +72,9 @@ export const PoExtractionSchema = z.object({
   number: z.string().nullable().describe('Folio o número de la orden de compra'),
   supplierName: z.string().nullable().describe('Proveedor al que se le compra'),
   supplierTaxId: z.string().nullable().describe('RFC del proveedor'),
-  issuedOn: z.string().nullable().describe('Fecha de la orden AAAA-MM-DD'),
+  supplierCity: z.string().nullable().describe('Ciudad y estado del proveedor (bloque To:)'),
+  buyerName: z.string().nullable().describe('Comprador: quien emite la orden (bloque From:)'),
+  issuedOn: z.string().nullable().describe('Fecha de la orden tal como aparece, p. ej. 08-05-2026'),
   currency: z.enum(CURRENCIES).nullable(),
   parlevelRef: z.string().nullable().describe('Referencia o folio interno de ParLevel si existe'),
   lines: z.array(
@@ -83,6 +85,11 @@ export const PoExtractionSchema = z.object({
       unit: z.string().nullable().describe('Unidad: pza, caja, kg...'),
       unitPrice: z.number().nullable().describe('Precio unitario sin impuestos'),
       amount: z.number().nullable().describe('Importe de la partida tal como aparece'),
+      deposit: z.number().nullable().describe('Depósito de envase de la partida (columna Deposit)'),
+      receivedQuantity: z
+        .number()
+        .nullable()
+        .describe('Cantidad recibida (columna Cases Received)'),
     }),
   ),
   subtotal: z.number().nullable(),

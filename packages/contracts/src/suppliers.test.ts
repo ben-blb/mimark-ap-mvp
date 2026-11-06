@@ -43,3 +43,16 @@ describe('CreateSupplierInput', () => {
     expect(result.error?.issues[0]?.path).toEqual(['creditDays']);
   });
 });
+
+describe('CreateSupplierInput · nombre en ParLevel (spec 015)', () => {
+  it('AC-015-05 acepta parlevelName opcional y rechaza uno vacío o de más de 200', () => {
+    expect(CreateSupplierInput.parse(valid).parlevelName).toBeUndefined();
+    expect(CreateSupplierInput.parse({ ...valid, parlevelName: ' Pepsico ' }).parlevelName).toBe(
+      'Pepsico',
+    );
+    expect(CreateSupplierInput.safeParse({ ...valid, parlevelName: '  ' }).success).toBe(false);
+    expect(CreateSupplierInput.safeParse({ ...valid, parlevelName: 'x'.repeat(201) }).success).toBe(
+      false,
+    );
+  });
+});

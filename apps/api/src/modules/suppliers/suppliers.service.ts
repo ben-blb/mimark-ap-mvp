@@ -8,13 +8,26 @@ import type {
 } from '@mimark/contracts/suppliers';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
-import { Db } from '../../common/db.js';
+import { Db, type Tx } from '../../common/db.js';
 import type { Supplier } from '../../generated/prisma/client.js';
 import { AuditRepository } from '../audit/audit.repository.js';
 import { diffFields } from '../audit/audit.rules.js';
 import { SuppliersRepository } from './suppliers.repository.js';
+import { normalizeName } from './suppliers.rules.js';
 
-const AUDITED_FIELDS = ['name', 'taxId', 'creditDays', 'currency', 'active'] as const;
+const AUDITED_FIELDS = [
+  'name',
+  'taxId',
+  'parlevelName',
+  'creditDays',
+  'currency',
+  'active',
+] as const;
+
+const DUPLICATE_PARLEVEL_NAME = () =>
+  new AppError('CONFLICT', 'Ya hay un proveedor con ese nombre en ParLevel.', {
+    fieldErrors: { parlevelName: 'Ya hay un proveedor con ese nombre en ParLevel' },
+  });
 
 /**
  * Casos de uso de proveedores. Es el módulo plantilla: un módulo nuevo copia esta forma.
@@ -41,14 +54,16 @@ export class SuppliersService {
 
   create(input: CreateSupplierInput, ctx: Ctx): Promise<SupplierDto> {
     return this.db.$transaction(async (tx) => {
-      const supplier = await this.suppliers.create(input, tx);
+      const data = withNormalizedAlias(input);
+      await this.checkAliasFree(data.parlevelName, null, tx);
+      const supplier = await this.suppliers.create(data, tx);
       await this.audit.log(
         {
           ...ctx,
           entity: 'supplier',
           entityId: supplier.id,
           action: 'supplier.created',
-          data: { after: input },
+          data: { after: data },
         },
         tx,
       );
@@ -61,7 +76,9 @@ export class SuppliersService {
       const before = await this.suppliers.findById(id, tx);
       if (!before) throw new AppError('NOT_FOUND', 'No existe ese proveedor.');
 
-      const after = await this.suppliers.update(id, input, tx);
+      const data = withNormalizedAlias(input);
+      await this.checkAliasFree(data.parlevelName, id, tx);
+      const after = await this.suppliers.update(id, data, tx);
       const changes = diffFields(before, after, AUDITED_FIELDS);
       if (Object.keys(changes).length > 0) {
         await this.audit.log(
@@ -78,6 +95,23 @@ export class SuppliersService {
       return toSupplierDto(after);
     });
   }
+
+  /** El alias de ParLevel es único: dos proveedores con el mismo nombre en el PDF no se distinguirían. */
+  private async checkAliasFree(
+    parlevelName: string | undefined,
+    ownId: string | null,
+    tx: Tx,
+  ): Promise<void> {
+    if (!parlevelName) return;
+    const owner = await this.suppliers.findByParlevelName(parlevelName, tx);
+    if (owner && owner.id !== ownId) throw DUPLICATE_PARLEVEL_NAME();
+  }
+}
+
+function withNormalizedAlias<T extends { parlevelName?: string }>(input: T): T {
+  return input.parlevelName === undefined
+    ? input
+    : { ...input, parlevelName: normalizeName(input.parlevelName) };
 }
 
 function toSupplierDto(supplier: Supplier): SupplierDto {
@@ -85,6 +119,7 @@ function toSupplierDto(supplier: Supplier): SupplierDto {
     id: supplier.id,
     name: supplier.name,
     taxId: supplier.taxId,
+    parlevelName: supplier.parlevelName,
     creditDays: supplier.creditDays,
     currency: supplier.currency,
     active: supplier.active,

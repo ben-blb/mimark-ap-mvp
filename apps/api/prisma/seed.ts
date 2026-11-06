@@ -33,6 +33,8 @@ const suppliers = [
   {
     name: 'Empaques y Desechables Regios SA de CV',
     taxId: 'EDR150720QW9',
+    // Alias de ParLevel (spec 015): así aparece en el bloque «To:» de sus OC.
+    parlevelName: 'EMPAQUES REGIOS',
     creditDays: 7,
     currency: 'MXN',
   },

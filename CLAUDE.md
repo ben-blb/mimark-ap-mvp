@@ -8,3 +8,5 @@
   terminar un turno con cambios de código, corren `pnpm check:fast`. Si el hook te devuelve un error, corrígelo.
 - Si no hay Postgres (sin Docker), pide al usuario una `DATABASE_URL`/`TEST_DATABASE_URL` (por ejemplo una rama de
   Neon) en vez de saltarte las pruebas de integración.
+- Pendientes de verificar: `docs/pendientes-de-verificar.md`. Si dejas algo sin comprobar (verificación manual,
+  decisión abierta), agrégalo ahí; quien lo resuelva lo borra y lo anota en la Bitácora de la spec.

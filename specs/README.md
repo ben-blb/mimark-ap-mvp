@@ -43,22 +43,25 @@ Sin Claude Code se siguen los mismos pasos a mano: están escritos en `.claude/s
 
 ## Mapa del MVP
 
-| Spec                                                    | Entrega                                                    | SRS                                  |
-| ------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| [001 Acceso](001-acceso.md)                             | Código de acceso, sesión, errores, auditoría, health       | Acceso, RF-22, RF-23                 |
-| [002 Proveedores](002-proveedores.md)                   | Proveedores con días de crédito (módulo plantilla)         | RF-01                                |
-| [003 Órdenes de compra](003-ordenes-de-compra.md)       | OC y confirmación de recepción                             | RF-02, RF-03                         |
-| [004 Procesamiento](004-procesamiento-de-documentos.md) | Carga, extracción con IA y validación determinista         | RF-04…12, CA-01…05, PS-01…03, PS-06  |
-| [005 Revisión y pago](005-revision-y-pago.md)           | Corrección, confirmación, vencimiento, programación y pago | RF-13…19, CA-04, CA-06, PS-04, PS-05 |
-| [006 Cartera](006-cartera.md)                           | Tablero 7/15/30 días y filtros                             | RF-17, RF-20, RF-21                  |
-| [007 Evidencia de entrega](007-evidencia-de-entrega.md) | Probador, evaluación de IA y documentos del curso          | Entregables                          |
-| [008 Asistente](008-asistente.md)                       | Operación en lenguaje natural: consulta y propone          | Extensión (PS-03, regla 6)           |
-| [009 Interfaz](009-interfaz.md)                         | Tema claro/oscuro, gráficas y responsive                   | Usabilidad (extensión)               |
-| [010 Identidad visual](010-identidad-visual.md)         | Sistema "libro mayor" y asistente con componentes y SSE    | Usabilidad (extensión)               |
-| [011 Flujo de factura](011-asistente-flujo-factura.md)  | Subida en un paso, alta guiada y conversaciones guardadas  | Extensión (modifica 008)             |
-| [012 Tutorial](012-tutorial.md)                         | Recorrido guiado de bienvenida, repetible                  | Usabilidad (extensión)               |
-| [014 Partidas de OC](014-partidas-y-checklist-de-oc.md) | Partidas, checklist de recepción y PDF de ParLevel         | RF-02, RF-03 (extensión)             |
-| [015 OC desde ParLevel](015-oc-desde-pdf-parlevel.md)   | PDF real de ParLevel, alta del proveedor y total           | RF-01…03 (extensión)                 |
-| [016 Base dormida](016-aviso-base-dormida.md)           | Aviso y reintento cuando Neon está suspendida              | Usabilidad (extensión)               |
+| Spec                                                       | Entrega                                                                          | SRS                                  |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------ |
+| [001 Acceso](001-acceso.md)                                | Código de acceso, sesión, errores, auditoría, health                             | Acceso, RF-22, RF-23                 |
+| [002 Proveedores](002-proveedores.md)                      | Proveedores con días de crédito (módulo plantilla)                               | RF-01                                |
+| [003 Órdenes de compra](003-ordenes-de-compra.md)          | OC y confirmación de recepción                                                   | RF-02, RF-03                         |
+| [004 Procesamiento](004-procesamiento-de-documentos.md)    | Carga, extracción con IA y validación determinista                               | RF-04…12, CA-01…05, PS-01…03, PS-06  |
+| [005 Revisión y pago](005-revision-y-pago.md)              | Corrección, confirmación, vencimiento, programación y pago                       | RF-13…19, CA-04, CA-06, PS-04, PS-05 |
+| [006 Cartera](006-cartera.md)                              | Tablero 7/15/30 días y filtros                                                   | RF-17, RF-20, RF-21                  |
+| [007 Evidencia de entrega](007-evidencia-de-entrega.md)    | Probador, evaluación de IA y documentos del curso                                | Entregables                          |
+| [008 Asistente](008-asistente.md)                          | Operación en lenguaje natural: consulta y propone                                | Extensión (PS-03, regla 6)           |
+| [009 Interfaz](009-interfaz.md)                            | Tema claro/oscuro, gráficas y responsive                                         | Usabilidad (extensión)               |
+| [010 Identidad visual](010-identidad-visual.md)            | Sistema "libro mayor" y asistente con componentes y SSE                          | Usabilidad (extensión)               |
+| [011 Flujo de factura](011-asistente-flujo-factura.md)     | Subida en un paso, alta guiada y conversaciones guardadas                        | Extensión (modifica 008)             |
+| [012 Tutorial](012-tutorial.md)                            | Recorrido guiado de bienvenida, repetible                                        | Usabilidad (extensión)               |
+| [014 Partidas de OC](014-partidas-y-checklist-de-oc.md)    | Partidas, checklist de recepción y PDF de ParLevel                               | RF-02, RF-03 (extensión)             |
+| [015 OC desde ParLevel](015-oc-desde-pdf-parlevel.md)      | PDF real de ParLevel, alta del proveedor y total                                 | RF-01…03 (extensión)                 |
+| [016 Base dormida](016-aviso-base-dormida.md)              | Aviso y reintento cuando Neon está suspendida                                    | Usabilidad (extensión)               |
+| [017 Roles estrictos](017-roles-estrictos-y-mi-trabajo.md) | Cada rol solo ve lo suyo, recepciones sin precios y «Mi trabajo»                 | Extensión (modifica 009, 012, 013)   |
+| [018 Recepción por partida](018-recepcion-por-partida.md)  | Cantidad recibida por partida y recepción con diferencias                        | RF-03 (modifica 003, 014)            |
+| [019 Vista de la orden](019-vista-de-oc-y-conciliacion.md) | Avance de la orden, cargar factura desde la OC y conciliación contra lo recibido | RF-09…11 (modifica 004)              |
 
 El orden es el de implementación: cada spec depende de las anteriores (`depende_de`).

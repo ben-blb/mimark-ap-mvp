@@ -58,4 +58,41 @@ describe('PurchaseOrdersPage', () => {
     expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Confirmar recepción/ })).toBeNull();
   });
+
+  it('AC-018-13 muestra «con diferencias» con tono de aviso y ofrece el filtro; la vista llega por la URL', async () => {
+    const fetchMock = vi.fn((_url: string) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            items: [
+              { ...order, receiptStatus: 'received_with_differences', receivedOn: '2026-10-10' },
+            ],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    setViewport(1440);
+    const client = new QueryClient();
+    client.setQueryData(sessionKey, {
+      userId: 'u1',
+      actor: 'Ana',
+      role: 'admin',
+      mustChangePassword: false,
+      expiresAt: '2026-10-28T00:00:00.000Z',
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/ordenes?view=openDifferences']}>
+          <PurchaseOrdersPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText(/con diferencias/)).toBeInTheDocument();
+    expect(fetchMock.mock.calls[0]![0]).toContain('receipt=received_with_differences');
+    expect(
+      screen.getByRole('option', { name: 'Abiertas · recibidas con diferencias' }),
+    ).toBeInTheDocument();
+  });
 });

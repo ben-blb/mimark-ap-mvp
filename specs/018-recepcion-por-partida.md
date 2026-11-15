@@ -30,10 +30,10 @@ diferencias se compara contra el total de la OC y cae en revisión por `TOTAL_MI
 
 - **AC-018-01** · (modifica AC-014-05) Dada una OC con partidas y recepción `pending`, cuando se envía `POST
 /api/purchase-orders/:id/receipt` con `receivedOn` y `lines` con **todas** las partidas, cada una con
-  `receivedQuantity` igual a lo pedido, entonces responde 200 con `receiptStatus: 'received'` y cada partida guarda
+  `receivedQuantity` igual a lo pedido, entonces responde 201 con `receiptStatus: 'received'` y cada partida guarda
   su `receivedQuantity`.
 - **AC-018-02** · Dada la misma OC, cuando alguna partida trae `receivedQuantity` menor a lo pedido (por ejemplo
-  «Pepsi 600 ml»: pedido 75, recibido 70) y `notes` no está vacío, entonces responde 200 con `receiptStatus:
+  «Pepsi 600 ml»: pedido 75, recibido 70) y `notes` no está vacío, entonces responde 201 con `receiptStatus:
 'received_with_differences'`.
 - **AC-018-03** · Con diferencias y sin `notes` responde 400 `VALIDATION` con `fieldErrors.notes` y la OC sigue
   `pending`.
@@ -102,7 +102,7 @@ diferencias se compara contra el total de la OC y cae en revisión por `TOTAL_MI
 
 ### Reglas
 
-`purchase-orders.rules.ts`: `checkReceiptLines(orderLines, input)` reemplaza a `checkChecklist` y devuelve los
+`receipt.rules.ts` (junto con `checkReceipt`, por el límite de líneas): `checkReceiptLines(orderLines, input)` reemplaza a `checkChecklist` y devuelve los
 errores de campo o el estado resultante. `checkReceipt` no cambia.
 
 | Pedido | Recibido | Notas | Resultado                               |

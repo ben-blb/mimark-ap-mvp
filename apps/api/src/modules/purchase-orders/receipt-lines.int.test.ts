@@ -143,6 +143,16 @@ describe('recepción por partida con diferencias (spec 018)', () => {
     expect(await statusOf(po)).toBe('pending');
   });
 
+  it('AC-018-05 una OC sin partidas se recibe con lines ausente y queda received', async () => {
+    const legacy = await t.db.purchaseOrder.findUniqueOrThrow({ where: { number: 'OC-1003' } });
+    await t.db.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: legacy.id } });
+    await warehouse
+      .post(`/api/purchase-orders/${legacy.id}/receipt`)
+      .send({ receivedOn: '2026-10-10' })
+      .expect(201)
+      .expect((res) => expect(res.body.receiptStatus).toBe('received'));
+  });
+
   it('AC-018-06 el evento registra toStatus, conteos y las partidas con diferencia', async () => {
     const po = await create('OC-6006');
     await receive(po, ['70', '40'], { notes: 'Faltaron 5' }).expect(201);

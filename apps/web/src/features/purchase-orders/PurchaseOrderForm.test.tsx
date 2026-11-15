@@ -293,4 +293,42 @@ describe('PurchaseOrderForm · PDF de ParLevel (spec 015)', () => {
     expect(screen.getByLabelText('Moneda')).toHaveValue('USD');
     expect(screen.queryByLabelText('Proveedor del PDF')).not.toBeInTheDocument();
   });
+
+  it('AC-018-13 una orden recibida con diferencias muestra pedido y recibido por partida', () => {
+    const line = (n: number, quantity: string, receivedQuantity: string) => ({
+      id: `l${n}`,
+      position: n,
+      sku: null,
+      description: `Producto ${n}`,
+      quantity,
+      unit: 'caja',
+      unitPrice: '10',
+      amount: '10.00',
+      receivedQuantity,
+    });
+    setup(null, undefined, {
+      order: {
+        id: 'o1',
+        number: 'OC-1',
+        supplier: { id: 's1', name: 'Distribuidora del Norte', taxId: 'X', creditDays: 15 },
+        issuedOn: '2026-10-01',
+        total: '116.00',
+        taxes: '16.00',
+        currency: 'MXN',
+        parlevelRef: null,
+        lines: [line(1, '75', '70'), line(2, '40', '40')],
+        status: 'open',
+        receiptStatus: 'received_with_differences',
+        receivedOn: '2026-10-10',
+        receivedBy: 'Wanda',
+        receiptNotes: 'Faltaron 5',
+        createdAt: '2026-10-01T10:00:00.000Z',
+        updatedAt: '2026-10-10T10:00:00.000Z',
+      },
+    });
+    const summary = screen.getByRole('region', { name: 'Recibido por partida' });
+    expect(summary).toHaveTextContent('Recibida con diferencias · Faltaron 5');
+    expect(summary).toHaveTextContent('Producto 1: pedido 75 · recibido 70 caja');
+    expect(summary).toHaveTextContent('Producto 2: pedido 40 · recibido 40 caja');
+  });
 });

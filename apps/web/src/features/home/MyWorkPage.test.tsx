@@ -23,6 +23,16 @@ const payable = (i: number, over: Record<string, unknown> = {}) => ({
   scheduledPayOn: null,
   ...over,
 });
+const poLine = (position: number, quantity: string) => ({
+  id: `l${position}`,
+  position,
+  sku: null,
+  description: `Partida ${position}`,
+  quantity,
+  unit: 'caja',
+  unitPrice: '1.00',
+  amount: '1.00',
+});
 const po = (i: number) => ({
   id: `o${i}`,
   number: `OC-${i}`,
@@ -32,7 +42,10 @@ const po = (i: number) => ({
   taxes: null,
   currency: 'MXN',
   parlevelRef: null,
-  lines: [],
+  lines: [
+    { ...poLine(1, '75'), receivedQuantity: '70' },
+    { ...poLine(2, '40'), receivedQuantity: '40' },
+  ],
   status: 'open',
   receiptStatus: 'pending',
   receivedOn: null,
@@ -95,14 +108,40 @@ describe('MyWorkPage', () => {
   });
 
   it('AC-017-10 compras ve solo «Órdenes por recibir» y no consulta facturas', async () => {
-    const fetchMock = setup('purchasing', { '/api/purchase-orders': [po(1), po(2)] });
+    const fetchMock = setup('purchasing', {
+      '/api/purchase-orders?status=open&receipt=pending': [po(1), po(2)],
+    });
     expect(await screen.findByText('OC-1 · Prov 1')).toBeInTheDocument();
-    expect(screen.getAllByRole('region')).toHaveLength(1);
+    expect(screen.getAllByRole('region')).toHaveLength(2);
     expect(block('Órdenes por recibir')).toHaveTextContent('2');
     expect(fetchMock.mock.calls.some((c) => c[0].startsWith('/api/payables'))).toBe(false);
     expect(
       within(block('Órdenes por recibir')).getByRole('link', { name: /Ver todas/ }),
     ).toHaveAttribute('href', '/ordenes?view=openPending');
+  });
+
+  it('AC-018-14 compras ve «Recibidas con diferencias» con las órdenes en ese estado', async () => {
+    const fetchMock = setup('purchasing', {
+      '/api/purchase-orders?status=open&receipt=received_with_differences': [
+        { ...po(7), receiptStatus: 'received_with_differences' },
+      ],
+    });
+    const differences = await screen.findByRole('region', { name: /Recibidas con diferencias/ });
+    expect(await within(differences).findByText('OC-7 · Prov 7')).toBeInTheDocument();
+    expect(differences).toHaveTextContent('1 partida con diferencia');
+    expect(within(differences).getByRole('link', { name: /Ver todas/ })).toHaveAttribute(
+      'href',
+      '/ordenes?view=openDifferences',
+    );
+    expect(
+      fetchMock.mock.calls.some((c) => c[0].includes('receipt=received_with_differences')),
+    ).toBe(true);
+  });
+
+  it('AC-018-14 un rol sin orders:write no ve el bloque', async () => {
+    setup('payables');
+    await screen.findAllByText('Nada pendiente');
+    expect(screen.queryByRole('region', { name: /Recibidas con diferencias/ })).toBeNull();
   });
 
   it('AC-017-10 muestra hasta 5 filas, la cuenta completa y «Ver todas» a la lista filtrada', async () => {

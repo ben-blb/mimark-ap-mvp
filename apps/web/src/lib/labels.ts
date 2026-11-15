@@ -25,6 +25,12 @@ export const PURCHASE_ORDER_STATUS_LABELS: Record<PurchaseOrderDto['status'], st
   cancelled: 'Cancelada',
 };
 
+export const RECEIPT_STATUS_LABELS: Record<PurchaseOrderDto['receiptStatus'], string> = {
+  pending: 'Pendiente',
+  received: 'Recibida',
+  received_with_differences: 'Recibida con diferencias',
+};
+
 export const PAYABLE_STATUS_LABELS: Record<PayableStatus, string> = {
   uploaded: 'Subido',
   processing: 'Procesando',

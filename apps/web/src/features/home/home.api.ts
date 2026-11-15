@@ -84,6 +84,29 @@ export const WORK_BLOCKS: readonly WorkBlock[] = [
       }));
     },
   },
+  {
+    key: 'differences',
+    title: 'Recibidas con diferencias',
+    permission: 'orders:write',
+    seeAll: '/ordenes?view=openDifferences',
+    load: async () => {
+      const list = await api.get(
+        '/purchase-orders?status=open&receipt=received_with_differences',
+        PurchaseOrderList,
+      );
+      return list.items.map((o) => {
+        const short = o.lines.filter(
+          (l) => l.receivedQuantity !== null && Number(l.receivedQuantity) < Number(l.quantity),
+        ).length;
+        return {
+          id: o.id,
+          title: `${o.number} · ${o.supplier.name}`,
+          detail: `${short} ${short === 1 ? 'partida con diferencia' : 'partidas con diferencia'}`,
+          to: '/ordenes?view=openDifferences',
+        };
+      });
+    },
+  },
   payableBlock('review', 'Facturas por revisar', 'requires_review', invoiceDetail),
   payableBlock('confirm', 'Por confirmar', 'pending_confirmation', invoiceDetail),
   payableBlock('schedule', 'Por programar', 'confirmed', invoiceDetail),

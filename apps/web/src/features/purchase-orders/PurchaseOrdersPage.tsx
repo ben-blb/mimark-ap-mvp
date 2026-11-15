@@ -31,6 +31,10 @@ const VIEWS = {
   open: { label: 'Abiertas', query: { status: 'open' } },
   openPending: { label: 'Abiertas · sin recepción', query: { status: 'open', receipt: 'pending' } },
   openReceived: { label: 'Abiertas · recibidas', query: { status: 'open', receipt: 'received' } },
+  openDifferences: {
+    label: 'Abiertas · recibidas con diferencias',
+    query: { status: 'open', receipt: 'received_with_differences' },
+  },
   cancelled: { label: 'Canceladas', query: { status: 'cancelled' } },
   all: { label: 'Todas', query: { status: 'all' } },
 } satisfies Record<string, { label: string; query: Partial<PurchaseOrderListQuery> }>;
@@ -41,7 +45,10 @@ function Receipt({ order }: { order: PurchaseOrderDto }) {
   if (!order.receivedOn) return <StatusDot tone="warning">Pendiente</StatusDot>;
   return (
     <Box>
-      <StatusDot tone="success">{formatDay(order.receivedOn)}</StatusDot>
+      <StatusDot tone={order.receiptStatus === 'received' ? 'success' : 'warning'}>
+        {formatDay(order.receivedOn)}
+        {order.receiptStatus === 'received_with_differences' && ' · con diferencias'}
+      </StatusDot>
       {order.receivedBy && (
         <Typography
           variant="caption"

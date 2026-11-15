@@ -16,11 +16,13 @@ import { CardField } from '../../components/CardField';
 import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { PageHeader } from '../../components/PageHeader';
+import { StatusDot } from '../../components/StatusDot';
 import { formatDay } from '../../lib/format';
+import { RECEIPT_STATUS_LABELS } from '../../lib/labels';
 import { ReceiptDialog } from './ReceiptDialog';
 import { useReceipts } from './receipts.api';
 
-type Status = 'pending' | 'received';
+type Status = 'pending' | 'received' | 'received_with_differences';
 
 /** Recepciones (spec 017): lo que Almacén necesita para recibir una orden, sin precios ni totales. */
 export function ReceiptsPage() {
@@ -29,6 +31,13 @@ export function ReceiptsPage() {
   const [receiving, setReceiving] = useState<ReceiptOrderDto | null>(null);
   const receipts = useReceipts({ status, search: useDeferredValue(search) });
   const pending = status === 'pending';
+
+  const statusDot = (order: ReceiptOrderDto) =>
+    order.receiptStatus === 'pending' ? null : (
+      <StatusDot tone={order.receiptStatus === 'received' ? 'success' : 'warning'}>
+        {RECEIPT_STATUS_LABELS[order.receiptStatus]}
+      </StatusDot>
+    );
 
   const action = (order: ReceiptOrderDto) =>
     pending ? (
@@ -49,6 +58,7 @@ export function ReceiptsPage() {
       >
         <Tab value="pending" label="Por recibir" />
         <Tab value="received" label="Recibidas" />
+        <Tab value="received_with_differences" label="Con diferencias" />
       </Tabs>
 
       <TextField
@@ -80,6 +90,7 @@ export function ReceiptsPage() {
             <TableCell>Folio</TableCell>
             <TableCell>Proveedor</TableCell>
             <TableCell>Fecha</TableCell>
+            <TableCell>Estado</TableCell>
             <TableCell align="right">Partidas</TableCell>
             <TableCell align="right" />
           </TableRow>
@@ -102,6 +113,7 @@ export function ReceiptsPage() {
             <TableCell sx={{ whiteSpace: 'nowrap' }}>
               {formatDay(order.receivedOn ?? order.issuedOn)}
             </TableCell>
+            <TableCell>{statusDot(order)}</TableCell>
             <TableCell align="right">{order.lines.length || '—'}</TableCell>
             <TableCell align="right">{action(order)}</TableCell>
           </DataRow>
@@ -119,6 +131,7 @@ export function ReceiptsPage() {
                 {formatDay(order.receivedOn ?? order.issuedOn)}
               </CardField>
               <CardField label="Partidas">{order.lines.length || '—'}</CardField>
+              {!pending && <CardField label="Estado">{statusDot(order)}</CardField>}
             </Stack>
             {action(order)}
           </Stack>

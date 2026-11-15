@@ -17,8 +17,24 @@ const order = (over: Partial<ReceiptOrderDto> = {}): ReceiptOrderDto => ({
   receivedBy: null,
   receiptNotes: null,
   lines: [
-    { id: 'l1', position: 1, sku: 'CAF-1', description: 'Café', quantity: '10', unit: 'caja' },
-    { id: 'l2', position: 2, sku: null, description: 'Vasos', quantity: '4', unit: 'caja' },
+    {
+      id: 'l1',
+      position: 1,
+      sku: 'CAF-1',
+      description: 'Café',
+      quantity: '10',
+      unit: 'caja',
+      receivedQuantity: null,
+    },
+    {
+      id: 'l2',
+      position: 2,
+      sku: null,
+      description: 'Vasos',
+      quantity: '4',
+      unit: 'caja',
+      receivedQuantity: null,
+    },
   ],
   ...over,
 });
@@ -77,13 +93,26 @@ describe('ReceiptsPage', () => {
     );
   });
 
-  it('AC-017-12 «Recibir» abre el checklist de las partidas', async () => {
+  it('AC-018-11 «Recibir» abre la lista de partidas con lo pedido precargado', async () => {
     const { user } = setup();
     await user.click(await screen.findByRole('button', { name: 'Recibir' }));
     expect(
       await screen.findByRole('dialog', { name: /Confirmar recepción de OC-1003/ }),
     ).toBeVisible();
-    expect(screen.getByText('0 de 2 recibidas')).toBeInTheDocument();
+    expect(screen.getByText('2 de 2 completas')).toBeInTheDocument();
+  });
+
+  it('AC-018-13 «Con diferencias» es un filtro y las recibidas con diferencias llevan estado de aviso', async () => {
+    const { fetchMock, user } = setup([
+      order({ receiptStatus: 'received_with_differences', receivedOn: '2026-10-10' }),
+    ]);
+    await user.click(await screen.findByRole('tab', { name: 'Con diferencias' }));
+    await vi.waitFor(() =>
+      expect(fetchMock.mock.calls.at(-1)![0]).toBe(
+        '/api/receipts?status=received_with_differences',
+      ),
+    );
+    expect(await screen.findByText('Recibida con diferencias')).toBeInTheDocument();
   });
 
   it('AC-017-12 sin pendientes lo dice', async () => {

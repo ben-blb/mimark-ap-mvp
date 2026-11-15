@@ -15,6 +15,7 @@ import { Ellipsis } from '../../components/DataTable';
 import { Money } from '../../components/Money';
 import { PayableStatusDot } from '../../components/PayableStatusDot';
 import { formatDay } from '../../lib/format';
+import { RECEIPT_STATUS_LABELS } from '../../lib/labels';
 
 /** Cuántos expedientes se dibujan en la mini tabla; el resto se cuenta. */
 const MAX_ROWS = 8;
@@ -147,8 +148,8 @@ export function ExpedienteDetail({ payable }: { payable: PayableDto }) {
     {
       label: 'Recepción',
       invoice: '',
-      order: po ? (po.receiptStatus === 'received' ? 'Recibida' : 'Pendiente') : '—',
-      ok: po ? po.receiptStatus === 'received' && !has('RECEIPT_NOT_CONFIRMED') : null,
+      order: po ? RECEIPT_STATUS_LABELS[po.receiptStatus] : '—',
+      ok: po ? po.receiptStatus !== 'pending' && !has('RECEIPT_NOT_CONFIRMED') : null,
     },
   ];
 

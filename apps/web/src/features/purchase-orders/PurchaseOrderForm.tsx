@@ -13,11 +13,16 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { z } from 'zod';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ApiError } from '../../lib/api-client';
 import { paymentTermLabel } from '../../lib/format';
-import { CURRENCY_LABELS, PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
+import {
+  CURRENCY_LABELS,
+  PURCHASE_ORDER_STATUS_LABELS,
+  RECEIPT_STATUS_LABELS,
+} from '../../lib/labels';
 import { useZodForm } from '../../lib/use-zod-form';
 import { useState } from 'react';
 import { EMPTY_LINE, type LineValues, PoLinesEditor } from './PoLinesEditor';
@@ -90,7 +95,7 @@ export function PurchaseOrderForm({
   const [reviewed, setReviewed] = useState(false);
   const uncertain = new Set(draft?.uncertainFields ?? []);
   const mustReview = (draft?.warnings.length ?? 0) > 0 && !reviewed;
-  const linesLocked = order?.receiptStatus === 'received';
+  const linesLocked = order !== undefined && order.receiptStatus !== 'pending';
   const generalError = error instanceof ApiError && error.code !== 'VALIDATION' ? error : null;
   const hasFieldError = generalError && Object.keys(generalError.fieldErrors).length > 0;
 
@@ -210,6 +215,7 @@ export function PurchaseOrderForm({
         readOnly={linesLocked}
         onChange={(lines) => form.setValue('lines', lines)}
       />
+      {order && order.receiptStatus !== 'pending' && <ReceivedSummary order={order} />}
       {order && (
         <TextField
           label="Estado"
@@ -287,4 +293,30 @@ function fromDraft(draft: PurchaseOrderDraft, today: string) {
           }))
         : [EMPTY_LINE],
   };
+}
+
+/** Pedido y recibido de cada partida de una orden ya recibida (spec 018). */
+function ReceivedSummary({ order }: { order: PurchaseOrderDto }) {
+  return (
+    <Stack component="section" aria-label="Recibido por partida" spacing={0.5}>
+      <Typography variant="subtitle2">
+        {RECEIPT_STATUS_LABELS[order.receiptStatus]}
+        {order.receiptNotes ? ` · ${order.receiptNotes}` : ''}
+      </Typography>
+      {order.lines.map((line) => {
+        const short =
+          line.receivedQuantity !== null && Number(line.receivedQuantity) < Number(line.quantity);
+        return (
+          <Typography
+            key={line.id}
+            variant="body2"
+            sx={{ color: short ? 'warning.dark' : 'text.secondary', fontWeight: short ? 600 : 400 }}
+          >
+            {line.description}: pedido {line.quantity} · recibido {line.receivedQuantity ?? '—'}{' '}
+            {line.unit}
+          </Typography>
+        );
+      })}
+    </Stack>
+  );
 }

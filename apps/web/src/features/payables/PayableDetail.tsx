@@ -190,12 +190,18 @@ export function PayableDetail(props: {
                   <Chip
                     size="small"
                     color={
-                      payable.purchaseOrder.receiptStatus === 'received' ? 'success' : 'default'
+                      payable.purchaseOrder.receiptStatus === 'pending'
+                        ? 'default'
+                        : payable.purchaseOrder.receiptStatus === 'received'
+                          ? 'success'
+                          : 'warning'
                     }
                     label={
-                      payable.purchaseOrder.receiptStatus === 'received'
-                        ? 'Recepción confirmada'
-                        : 'Sin recepción'
+                      payable.purchaseOrder.receiptStatus === 'pending'
+                        ? 'Sin recepción'
+                        : payable.purchaseOrder.receiptStatus === 'received'
+                          ? 'Recepción confirmada'
+                          : 'Recibida con diferencias'
                     }
                   />
                 </Stack>

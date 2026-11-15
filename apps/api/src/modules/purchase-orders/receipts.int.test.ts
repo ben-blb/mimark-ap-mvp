@@ -69,7 +69,10 @@ describe('recepciones sin precios (spec 017)', () => {
       .expect(200);
     const confirmed = await warehouse
       .post(`/api/purchase-orders/${first.id}/receipt`)
-      .send({ receivedOn: '2026-10-10', checkedLineIds: first.lines.map((l) => l.id) })
+      .send({
+        receivedOn: '2026-10-10',
+        lines: first.lines.map((l) => ({ lineId: l.id, receivedQuantity: '2' })),
+      })
       .expect(201);
     // La confirmación tampoco devuelve precios a quien recibe.
     expect(confirmed.body).toMatchObject({ number: 'OC-5001', receiptStatus: 'received' });

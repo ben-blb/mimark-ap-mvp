@@ -25,7 +25,15 @@ const RECEIPT_SELECT = {
   supplier: { select: { name: true } },
   lines: {
     orderBy: { position: 'asc' },
-    select: { id: true, position: true, sku: true, description: true, quantity: true, unit: true },
+    select: {
+      id: true,
+      position: true,
+      sku: true,
+      description: true,
+      quantity: true,
+      unit: true,
+      receivedQuantity: true,
+    },
   },
 } satisfies Prisma.PurchaseOrderSelect;
 export type ReceiptOrderRow = Prisma.PurchaseOrderGetPayload<{ select: typeof RECEIPT_SELECT }>;
@@ -89,7 +97,16 @@ export class PurchaseOrdersRepository {
 
   /** Órdenes abiertas (no canceladas) vistas desde Almacén: sin precios. */
   listReceipts(query: ReceiptListQuery): Promise<ReceiptOrderRow[]> {
-    const where: Prisma.PurchaseOrderWhereInput = { status: 'open', receiptStatus: query.status };
+    // `received` incluye las recibidas con diferencias.
+    const receiptStatus =
+      query.status === 'received'
+        ? { in: ['received', 'received_with_differences'] as const }
+        : query.status;
+    const where: Prisma.PurchaseOrderWhereInput = {
+      status: 'open',
+      receiptStatus:
+        typeof receiptStatus === 'string' ? receiptStatus : { in: [...receiptStatus.in] },
+    };
     if (query.search) {
       where.OR = [
         { number: { contains: query.search, mode: 'insensitive' } },
@@ -153,16 +170,25 @@ export class PurchaseOrdersRepository {
     });
   }
 
-  /** pending → received, condicionado al estado actual: dos confirmaciones simultáneas no pasan ambas. */
+  /**
+   * pending → received | received_with_differences, condicionado al estado actual: dos confirmaciones
+   * simultáneas no pasan ambas. Guarda lo recibido de cada partida.
+   */
   async markReceived(
     id: string,
-    receipt: { receivedOn: LocalDate; receivedBy: string; notes?: string | undefined },
+    receipt: {
+      status: 'received' | 'received_with_differences';
+      receivedOn: LocalDate;
+      receivedBy: string;
+      notes?: string | undefined;
+      lines: { lineId: string; receivedQuantity: string }[];
+    },
     tx: Tx = this.db,
   ): Promise<PurchaseOrderRow> {
     const { count } = await tx.purchaseOrder.updateMany({
       where: { id, status: 'open', receiptStatus: 'pending' },
       data: {
-        receiptStatus: 'received',
+        receiptStatus: receipt.status,
         receivedOn: toDbDate(receipt.receivedOn),
         receivedBy: receipt.receivedBy,
         receiptNotes: receipt.notes ?? null,
@@ -170,6 +196,12 @@ export class PurchaseOrdersRepository {
     });
     if (count === 0) {
       throw new AppError('INVALID_TRANSITION', 'La recepción ya fue confirmada.');
+    }
+    for (const line of receipt.lines) {
+      await tx.purchaseOrderLine.update({
+        where: { id: line.lineId },
+        data: { receivedQuantity: line.receivedQuantity },
+      });
     }
     return tx.purchaseOrder.findUniqueOrThrow({ where: { id }, include: WITH_SUPPLIER });
   }

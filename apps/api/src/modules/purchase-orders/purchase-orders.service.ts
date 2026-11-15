@@ -33,9 +33,9 @@ import {
 } from './purchase-orders.repository.js';
 import {
   buildDraftWarnings,
-  checkChecklist,
   checkIssuedOn,
   checkReceipt,
+  checkReceiptLines,
   checkTotalCoversLines,
   impliedTaxes,
   lineAmount,
@@ -118,7 +118,7 @@ export class PurchaseOrdersService {
 
       const { lines: newLines, ...rest } = input;
       const lines = newLines && withAmounts(newLines);
-      if (lines && before.receiptStatus === 'received') {
+      if (lines && before.receiptStatus !== 'pending') {
         throw new AppError('INVALID_TRANSITION', 'La recepción ya fue confirmada.');
       }
       const effectiveLines = lines ?? before.lines.map(toLineDto);
@@ -217,14 +217,20 @@ export class PurchaseOrdersService {
       const before = await this.orders.findById(id, tx);
       if (!before) throw NOT_FOUND();
       checkReceipt({ ...before, issuedOn: fromDbDate(before.issuedOn) }, input.receivedOn, today());
-      checkChecklist(
-        before.lines.map((l) => l.id),
-        input.checkedLineIds,
+      const result = checkReceiptLines(
+        before.lines.map((l) => ({ id: l.id, quantity: String(l.quantity) })),
+        input,
       );
 
       const after = await this.orders.markReceived(
         id,
-        { receivedOn: input.receivedOn, receivedBy: ctx.actor, notes: input.notes },
+        {
+          status: result.status,
+          receivedOn: input.receivedOn,
+          receivedBy: ctx.actor,
+          notes: input.notes,
+          lines: input.lines,
+        },
         tx,
       );
       await this.audit.log(
@@ -234,11 +240,13 @@ export class PurchaseOrdersService {
           entityId: id,
           action: 'purchase_order.received',
           fromStatus: 'pending',
-          toStatus: 'received',
+          toStatus: result.status,
           data: {
             receivedOn: input.receivedOn,
             notes: input.notes ?? null,
             lineCount: before.lines.length,
+            differenceCount: result.differences.length,
+            differences: result.differences,
           },
         },
         tx,
@@ -280,6 +288,7 @@ function toLineDto(line: PurchaseOrderRow['lines'][number]): PoLineDto {
     unit: line.unit,
     unitPrice: String(line.unitPrice),
     amount: line.amount.toFixed(2),
+    receivedQuantity: line.receivedQuantity === null ? null : String(line.receivedQuantity),
   };
 }
 
@@ -300,6 +309,7 @@ function toReceiptDto(row: ReceiptOrderRow): ReceiptOrderDto {
       description: line.description,
       quantity: String(line.quantity),
       unit: line.unit,
+      receivedQuantity: line.receivedQuantity === null ? null : String(line.receivedQuantity),
     })),
   };
 }

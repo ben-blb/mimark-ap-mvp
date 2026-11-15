@@ -64,8 +64,8 @@ describe('partidas', () => {
 });
 
 describe('ReceiptInput', () => {
-  it('AC-014-06 checkedLineIds es opcional y vale [] por defecto', () => {
-    expect(ReceiptInput.parse({ receivedOn: '2026-10-05' }).checkedLineIds).toEqual([]);
+  it('AC-018-05 lines es opcional y vale [] por defecto', () => {
+    expect(ReceiptInput.parse({ receivedOn: '2026-10-05' }).lines).toEqual([]);
   });
 });
 

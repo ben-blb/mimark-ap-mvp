@@ -154,6 +154,7 @@ async function main(): Promise<void> {
         unit,
         unitPrice,
         amount: lineAmount(quantity, unitPrice),
+        receivedQuantity: receivedOn ? quantity : null,
       })),
     });
   }

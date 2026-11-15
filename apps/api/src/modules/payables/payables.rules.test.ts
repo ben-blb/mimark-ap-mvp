@@ -210,6 +210,13 @@ describe('evaluatePayable', () => {
     ).toEqual(['PO_NOT_FOUND']);
   });
 
+  it('AC-018-10 una OC recibida con diferencias cuenta como recibida', () => {
+    const po = { ...po1001, receiptStatus: 'received_with_differences' } as const;
+    expect(evaluatePayable(baseFacts, ctx({ purchaseOrder: po })).reasons).not.toContain(
+      'RECEIPT_NOT_CONFIRMED',
+    );
+  });
+
   it('AC-004-06 OC sin recepción, cancelada o ya facturada', () => {
     expect(
       evaluatePayable(baseFacts, ctx({ purchaseOrder: { ...po1001, receiptStatus: 'pending' } }))

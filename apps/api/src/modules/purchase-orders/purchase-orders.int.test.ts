@@ -3,7 +3,7 @@ import { createTestApp, type TestApp } from '../../../test/app.js';
 import { seedCatalog } from '../../../test/fixtures.js';
 
 type Agent = Awaited<ReturnType<TestApp['agent']>>;
-type Order = { id: string; number: string; lines: { id: string }[] };
+type Order = { id: string; number: string; lines: { id: string; quantity: string }[] };
 
 describe('órdenes de compra (spec 003)', () => {
   let t: TestApp;
@@ -21,7 +21,8 @@ describe('órdenes de compra (spec 003)', () => {
   });
   const create = async (over: Record<string, unknown> = {}) =>
     (await agent.post('/api/purchase-orders').send(newOrder(over)).expect(201)).body as Order;
-  const ids = (o: Order) => o.lines.map((l) => l.id);
+  const everything = (o: Order) =>
+    o.lines.map((l) => ({ lineId: l.id, receivedQuantity: l.quantity }));
   const numbers = (body: { items: Order[] }) => body.items.map((o) => o.number);
 
   beforeAll(async () => {
@@ -86,7 +87,7 @@ describe('órdenes de compra (spec 003)', () => {
     const po = await create();
     const res = await agent
       .post(`/api/purchase-orders/${po.id}/receipt`)
-      .send({ receivedOn: '2026-10-05', notes: ' Entrega completa ', checkedLineIds: ids(po) })
+      .send({ receivedOn: '2026-10-05', notes: ' Entrega completa ', lines: everything(po) })
       .expect(201);
     expect(res.body).toMatchObject({
       receiptStatus: 'received',
@@ -103,6 +104,8 @@ describe('órdenes de compra (spec 003)', () => {
       receivedOn: '2026-10-05',
       notes: 'Entrega completa',
       lineCount: 1,
+      differenceCount: 0,
+      differences: [],
     });
   });
 
@@ -111,7 +114,7 @@ describe('órdenes de compra (spec 003)', () => {
     const receipt = (order: Order, receivedOn: string) =>
       agent
         .post(`/api/purchase-orders/${order.id}/receipt`)
-        .send({ receivedOn, checkedLineIds: ids(order) });
+        .send({ receivedOn, lines: everything(order) });
 
     const future = await receipt(po, '2999-01-01').expect(400);
     expect(future.body.fieldErrors.receivedOn).toBeDefined();

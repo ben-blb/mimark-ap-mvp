@@ -3,10 +3,16 @@ import { createTestApp, type TestApp } from '../../../test/app.js';
 import { seedCatalog } from '../../../test/fixtures.js';
 
 type Agent = Awaited<ReturnType<TestApp['agent']>>;
-type Line = { id: string; position: number; description: string; amount: string };
+type Line = {
+  id: string;
+  position: number;
+  description: string;
+  amount: string;
+  quantity: string;
+};
 type Order = { id: string; total: string; taxes: string | null; lines: Line[] };
 
-describe('partidas y checklist de recepción (spec 014)', () => {
+describe('partidas de la OC (spec 014)', () => {
   let t: TestApp;
   let agent: Agent;
   let supplierId: string;
@@ -30,10 +36,11 @@ describe('partidas y checklist de recepción (spec 014)', () => {
   });
   const create = async (over: Record<string, unknown> = {}) =>
     (await agent.post('/api/purchase-orders').send(body(over)).expect(201)).body as Order;
-  const receive = (id: string, checkedLineIds?: string[]) =>
+  const receive = (id: string, lines?: { lineId: string; receivedQuantity: string }[]) =>
     agent
       .post(`/api/purchase-orders/${id}/receipt`)
-      .send({ receivedOn: '2026-10-10', ...(checkedLineIds && { checkedLineIds }) });
+      .send({ receivedOn: '2026-10-10', ...(lines && { lines }) });
+  const full = (o: Order) => o.lines.map((l) => ({ lineId: l.id, receivedQuantity: l.quantity }));
 
   beforeAll(async () => {
     t = await createTestApp();
@@ -120,10 +127,7 @@ describe('partidas y checklist de recepción (spec 014)', () => {
     expect(tooBig.body.fieldErrors.total).toBeDefined();
     await agent.patch(`/api/purchase-orders/${po.id}`).send({ total: '100.00' }).expect(400);
 
-    await receive(
-      po.id,
-      po.lines.map((l) => l.id),
-    ).expect(201);
+    await receive(po.id, full(po)).expect(201);
     const res = await agent
       .patch(`/api/purchase-orders/${po.id}`)
       .send({ lines: [line()] })
@@ -131,17 +135,17 @@ describe('partidas y checklist de recepción (spec 014)', () => {
     expect(res.body.code).toBe('INVALID_TRANSITION');
   });
 
-  it('AC-014-05 exige marcar todas las partidas y ninguna ajena', async () => {
+  it('AC-014-05 exige capturar todas las partidas y ninguna ajena', async () => {
     const po = await create({
       total: '5000.00',
       lines: [line(), line({ description: 'Tapa', unitPrice: '10' })],
     });
-    const [a, b] = po.lines.map((l) => l.id) as [string, string];
+    const [a, b] = full(po) as [ReturnType<typeof full>[number], ReturnType<typeof full>[number]];
 
     const partial = await receive(po.id, [a]).expect(400);
-    expect(partial.body.fieldErrors.checkedLineIds).toBeDefined();
+    expect(partial.body.fieldErrors.lines).toBeDefined();
     await receive(po.id).expect(400);
-    await receive(po.id, [a, b, 'ajena']).expect(400);
+    await receive(po.id, [a, b, { lineId: 'ajena', receivedQuantity: '1' }]).expect(400);
     const still = await agent.get(`/api/purchase-orders/${po.id}`).expect(200);
     expect(still.body.receiptStatus).toBe('pending');
 
@@ -152,13 +156,14 @@ describe('partidas y checklist de recepción (spec 014)', () => {
     expect((event.data as { lineCount: number }).lineCount).toBe(2);
   });
 
-  it('AC-014-06 una OC sin partidas se recibe sin checklist y rechaza ids', async () => {
+  it('AC-014-06 una OC sin partidas se recibe con lines vacío y rechaza partidas', async () => {
     const legacy = await t.db.purchaseOrder.findUniqueOrThrow({ where: { number: 'OC-1003' } });
     await t.db.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: legacy.id } });
 
-    const withIds = await receive(legacy.id, ['x']).expect(400);
-    expect(withIds.body.fieldErrors.checkedLineIds).toBeDefined();
-    await receive(legacy.id).expect(201);
+    const withIds = await receive(legacy.id, [{ lineId: 'x', receivedQuantity: '1' }]).expect(400);
+    expect(withIds.body.fieldErrors.lines).toBeDefined();
+    const res = await receive(legacy.id).expect(201);
+    expect(res.body.receiptStatus).toBe('received');
   });
 
   it('AC-014-17 el detalle y la lista traen las partidas', async () => {

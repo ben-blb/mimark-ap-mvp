@@ -34,7 +34,7 @@ export interface PayableContext {
     status: 'open' | 'cancelled';
     totalCents: number;
     currency: Currency;
-    receiptStatus: 'pending' | 'received';
+    receiptStatus: 'pending' | 'received' | 'received_with_differences';
     supplierTaxId: string;
   } | null;
   /** Id de otro expediente vivo con el mismo UUID o RFC + folio. */
@@ -154,7 +154,7 @@ export function evaluatePayable(
     if (facts.totalCents !== null && facts.totalCents !== po.totalCents) {
       reasons.push('TOTAL_MISMATCH');
     }
-    if (po.receiptStatus !== 'received') reasons.push('RECEIPT_NOT_CONFIRMED');
+    if (po.receiptStatus === 'pending') reasons.push('RECEIPT_NOT_CONFIRMED');
     if (ctx.otherPayableForPo !== null) reasons.push('PO_ALREADY_INVOICED');
   }
   if (ctx.duplicateOf !== null) reasons.push('DUPLICATE');

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Currency, Id, LocalDate, Money, listOf } from './common.js';
 import { DOC_TYPES, ExtractedField } from './extraction.js';
-import { PoNumber } from './purchase-orders.js';
+import { PoNumber, ReceiptStatusValue } from './purchase-orders.js';
 
 export const PAYABLE_STATUSES = [
   'uploaded',
@@ -86,7 +86,7 @@ export const PayableDto = z.object({
       number: z.string(),
       total: Money,
       currency: Currency,
-      receiptStatus: z.enum(['pending', 'received']),
+      receiptStatus: ReceiptStatusValue,
     })
     .nullable(),
   supplier: z

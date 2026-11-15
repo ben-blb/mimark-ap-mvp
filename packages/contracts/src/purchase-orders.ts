@@ -22,6 +22,8 @@ export const UnitPrice = z
   .trim()
   .regex(/^\d{1,10}(\.\d{1,4})?$/, 'Precio inválido: usa números con hasta 4 decimales');
 
+export const ReceiptStatusValue = z.enum(['pending', 'received', 'received_with_differences']);
+
 export const MAX_PO_LINES = 200;
 
 export const PoLineInput = z.object({
@@ -42,6 +44,8 @@ export const PoLineDto = z.object({
   unit: z.string(),
   unitPrice: z.string(),
   amount: Money,
+  /** Lo recibido; nulo mientras la recepción esté pendiente (spec 018). */
+  receivedQuantity: z.string().nullable(),
 });
 export type PoLineDto = z.infer<typeof PoLineDto>;
 
@@ -62,7 +66,7 @@ export const PurchaseOrderDto = z.object({
   parlevelRef: z.string().nullable(),
   lines: z.array(PoLineDto),
   status: z.enum(['open', 'cancelled']),
-  receiptStatus: z.enum(['pending', 'received']),
+  receiptStatus: ReceiptStatusValue,
   receivedOn: LocalDate.nullable(),
   receivedBy: z.string().nullable(),
   receiptNotes: z.string().nullable(),
@@ -96,15 +100,21 @@ export type UpdatePurchaseOrderInput = z.infer<typeof UpdatePurchaseOrderInput>;
 export const ReceiptInput = z.object({
   receivedOn: LocalDate,
   notes: z.string().trim().max(500).optional(),
-  /** Checklist: ids de todas las partidas recibidas. Vacío solo en OC sin partidas. */
-  checkedLineIds: z.array(Id).max(MAX_PO_LINES).default([]),
+  /**
+   * Cantidad recibida de cada partida de la OC (≥ 0, hasta 3 decimales: lo valida `checkReceiptLines` para
+   * que el error caiga en `lines`). Vacío solo en OC sin partidas.
+   */
+  lines: z
+    .array(z.object({ lineId: Id, receivedQuantity: z.string().trim() }))
+    .max(MAX_PO_LINES)
+    .default([]),
 });
 export type ReceiptInput = z.infer<typeof ReceiptInput>;
 
 export const PurchaseOrderListQuery = z.object({
   search: z.string().trim().max(100).optional(),
   supplierId: Id.optional(),
-  receipt: z.enum(['pending', 'received']).optional(),
+  receipt: ReceiptStatusValue.optional(),
   status: z.enum(['open', 'cancelled', 'all']).default('open'),
 });
 export type PurchaseOrderListQuery = z.infer<typeof PurchaseOrderListQuery>;

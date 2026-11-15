@@ -1,7 +1,7 @@
 ---
 id: '017'
 titulo: Roles estrictos por función y «Mi trabajo»
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['009', '012', '013', '014']
 requisitos: Usabilidad y seguridad (extensión; modifica 009, 012 y 013)
 ---
@@ -154,7 +154,7 @@ Sin eventos nuevos (solo lecturas).
 - [x] 5. Web: `/recepciones` y retiro de «Confirmar recepción» en `/ordenes` (AC-017-12, 13).
 - [x] 6. Web: «Mi trabajo» (AC-017-10, 11).
 - [x] 7. Web: «Más» en la barra inferior y pasos del tutorial (AC-017-14, 15).
-- [ ] 8. `pnpm check`, verificación manual AC-017-16, actualizar ADR-15 y el mapa de `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check`, verificación manual AC-017-16, actualizar ADR-15 y el mapa de `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -171,11 +171,17 @@ Sin eventos nuevos (solo lecturas).
 
 - 2026-11-14 · La spec estaba en `borrador`; la persona dijo que ya estaba aprobada y se pasó a `en-progreso`.
 - 2026-11-15 · Con Postgres local (`pnpm db:up`), `pnpm check` completo en verde (162 pruebas de integración).
-- 2026-11-14 · «Pagos programados … con su fecha de pago»: `PayableSummaryDto` no trae `scheduledPayOn`. Se muestra el
-  vencimiento (`dueOn`) y se ordena por él (las vencidas salen primero). Si se quiere la fecha programada hay que
-  sumarla al resumen del listado.
-- 2026-11-14 · `POST /api/purchase-orders/:id/receipt` sigue devolviendo la OC completa (con precios) a Almacén; la web
-  solo lee el `id`. Se cierra en la spec 018, que rehace la recepción.
+- 2026-11-15 · «Pagos programados … con su fecha de pago»: se sumó `scheduledPayOn` a `PayableSummaryDto` (contrato y
+  `payables.dto.ts`) para poder mostrarla y ordenar por ella.
+- 2026-11-15 · `POST /api/purchase-orders/:id/receipt` ahora responde `ReceiptOrderDto` (sin precios) para no filtrarlos a
+  Almacén; la web solo lee el `id`.
 - 2026-11-14 · «Ver todas» de órdenes usa `/ordenes?view=openPending` (vista inicial leída de la URL).
 - 2026-11-14 · En el teléfono, los pasos del tutorial de secciones que quedan dentro de «Más» no se resaltan (el
   elemento no está montado); el paso se muestra igual, sin resaltado.
+- 2026-11-15 · Verificación manual de AC-017-16: `pnpm db:up`, API y web en local contra la base Docker `mimark` con
+  cinco usuarios sembrados (uno por rol). Con el navegador se entró con cada uno y se comparó contra AC-017-07:
+  almacén (1440 y 375 px) solo Recepciones y aterriza en `/recepciones`, sin precios; compras (375) Mi trabajo,
+  Órdenes, Proveedores y Asistente, sin «Más», y `/expedientes` dice «Tu rol no tiene acceso a esta página.»;
+  cuentas por pagar (375) 4 secciones y «Más» con Tablero y Asistente; gerencia (375) 5 secciones y aterriza en
+  `/tablero`; administración (1440) las 8 secciones con «Mi trabajo» de inicio. Los pasos del tutorial coinciden con
+  las secciones de cada rol (6, 7 y 9 pasos).

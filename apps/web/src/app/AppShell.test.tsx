@@ -215,4 +215,33 @@ describe('AppShell', () => {
     expect(within(nav).getAllByRole('link')).toHaveLength(5);
     expect(within(nav).queryByRole('button', { name: 'Más' })).not.toBeInTheDocument();
   });
+
+  it.each([
+    ['warehouse', ['Bienvenida a MIMARK', 'Recepciones', 'Cuando quieras repetirlo']],
+    [
+      'purchasing',
+      [
+        'Bienvenida a MIMARK',
+        'Mi trabajo',
+        'Órdenes de compra',
+        'Proveedores',
+        'Asistente',
+        'Cuando quieras repetirlo',
+      ],
+    ],
+  ] as const)(
+    'AC-017-15 el recorrido de %s solo explica las secciones que ve',
+    async (role, titles) => {
+      const user = setup(1440, true, 'Ana López', role);
+      await user.click(screen.getByRole('button', { name: 'Ver tutorial' }));
+      const seen: string[] = [];
+      for (let i = 0; i < titles.length; i++) {
+        seen.push(screen.getByRole('heading', { level: 2 }).textContent ?? '');
+        if (i < titles.length - 1)
+          await user.click(screen.getByRole('button', { name: 'Siguiente' }));
+      }
+      expect(seen).toEqual(titles);
+      expect(screen.getByRole('button', { name: 'Terminar' })).toBeInTheDocument();
+    },
+  );
 });

@@ -211,7 +211,8 @@ export class PurchaseOrdersService {
     return { ...draft, warnings };
   }
 
-  confirmReceipt(id: string, input: ReceiptInput, ctx: Ctx): Promise<PurchaseOrderDto> {
+  /** Responde sin precios: quien recibe (Almacén) no los ve (spec 017). */
+  confirmReceipt(id: string, input: ReceiptInput, ctx: Ctx): Promise<ReceiptOrderDto> {
     return this.db.$transaction(async (tx) => {
       const before = await this.orders.findById(id, tx);
       if (!before) throw NOT_FOUND();
@@ -242,9 +243,10 @@ export class PurchaseOrdersService {
         },
         tx,
       );
-      return toPurchaseOrderDto(after);
+      return toReceiptDto(after);
     });
   }
+
   private async checkExtractionQuota(actor: string): Promise<void> {
     const since = startOfLocalDay(today(), env.BUSINESS_TZ);
     const action = 'purchase_order.extracted';

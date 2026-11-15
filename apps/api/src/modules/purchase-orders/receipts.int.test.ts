@@ -67,10 +67,13 @@ describe('recepciones sin precios (spec 017)', () => {
       .patch(`/api/purchase-orders/${cancelled.id}`)
       .send({ status: 'cancelled' })
       .expect(200);
-    await warehouse
+    const confirmed = await warehouse
       .post(`/api/purchase-orders/${first.id}/receipt`)
       .send({ receivedOn: '2026-10-10', checkedLineIds: first.lines.map((l) => l.id) })
       .expect(201);
+    // La confirmación tampoco devuelve precios a quien recibe.
+    expect(confirmed.body).toMatchObject({ number: 'OC-5001', receiptStatus: 'received' });
+    for (const key of FORBIDDEN_KEYS) expect(keysDeep(confirmed.body).has(key), key).toBe(false);
 
     const pending = (await warehouse.get('/api/receipts').expect(200)).body.items as Receipt[];
     expect(pending.map((r) => r.number)).toContain('OC-5002');

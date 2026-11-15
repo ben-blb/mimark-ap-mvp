@@ -20,6 +20,7 @@ const payable = (i: number, over: Record<string, unknown> = {}) => ({
   total: '100.00',
   currency: 'MXN',
   dueOn: '2026-11-01',
+  scheduledPayOn: null,
   ...over,
 });
 const po = (i: number) => ({
@@ -122,15 +123,16 @@ describe('MyWorkPage', () => {
     );
   });
 
-  it('AC-017-10 los pagos programados salen con las vencidas primero', async () => {
+  it('AC-017-10 los pagos programados salen con su fecha de pago y la más próxima (vencida) primero', async () => {
     setup('payables', {
       '/api/payables?status=scheduled': [
-        payable(1, { status: 'scheduled', dueOn: '2026-12-01' }),
-        payable(2, { status: 'scheduled', dueOn: '2026-10-01' }),
+        payable(1, { status: 'scheduled', scheduledPayOn: '2026-12-01' }),
+        payable(2, { status: 'scheduled', scheduledPayOn: '2026-10-01' }),
       ],
     });
     const scheduled = await screen.findByRole('region', { name: /Pagos programados/ });
     await within(scheduled).findByText('Proveedor 1');
+    expect(scheduled).toHaveTextContent(/pago 1 oct/);
     expect(
       within(scheduled)
         .getAllByRole('listitem')

@@ -109,6 +109,7 @@ export function toPayableSummary(row: PayableRow): PayableSummaryDto {
     total: row.total?.toFixed(2) ?? null,
     currency: row.currency,
     dueOn: row.dueOn ? fromDbDate(row.dueOn) : null,
+    scheduledPayOn: row.scheduledPayOn ? fromDbDate(row.scheduledPayOn) : null,
   };
 }
 

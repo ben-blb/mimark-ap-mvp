@@ -135,6 +135,7 @@ const list = {
       total: '8352.00',
       currency: 'MXN',
       dueOn: '2026-10-30',
+      scheduledPayOn: null,
     },
   ],
 };

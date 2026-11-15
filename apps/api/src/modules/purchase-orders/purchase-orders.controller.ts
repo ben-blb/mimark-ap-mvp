@@ -21,6 +21,7 @@ import {
   ReceiptInput,
   UpdatePurchaseOrderInput,
 } from '@mimark/contracts/purchase-orders';
+import type { ReceiptOrderDto } from '@mimark/contracts/receipts';
 import { AppError } from '../../common/app-error.js';
 import { Ctx } from '../../common/ctx.js';
 import { PurchaseOrdersService } from './purchase-orders.service.js';
@@ -84,7 +85,7 @@ export class PurchaseOrdersController {
     @Param('id', { schema: Id }) id: string,
     @Body({ schema: ReceiptInput }) input: ReceiptInput,
     @Ctx() ctx: Ctx,
-  ): Promise<PurchaseOrderDto> {
+  ): Promise<ReceiptOrderDto> {
     return this.orders.confirmReceipt(id, input, ctx);
   }
 }

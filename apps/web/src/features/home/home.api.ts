@@ -54,9 +54,18 @@ const invoiceDetail = (p: PayableList['items'][number]) =>
     .filter(Boolean)
     .join(' · ') || p.fileName;
 
-/** Las más vencidas primero; sin fecha al final. */
-const byDueOn = (a: PayableList['items'][number], b: PayableList['items'][number]) =>
-  (a.dueOn ?? '9999-12-31').localeCompare(b.dueOn ?? '9999-12-31');
+const scheduledDetail = (p: PayableList['items'][number]) =>
+  [
+    p.invoiceNumber,
+    p.total && p.currency ? formatMoney(p.total, p.currency) : null,
+    p.scheduledPayOn ? `pago ${formatDay(p.scheduledPayOn)}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ') || p.fileName;
+
+/** Fecha de pago más próxima primero: las vencidas (fecha pasada) salen al principio; sin fecha, al final. */
+const byPayOn = (a: PayableList['items'][number], b: PayableList['items'][number]) =>
+  (a.scheduledPayOn ?? '9999-12-31').localeCompare(b.scheduledPayOn ?? '9999-12-31');
 
 /** Un bloque por tipo de pendiente, en el orden en que se muestran. Reusa los listados que ya existen. */
 export const WORK_BLOCKS: readonly WorkBlock[] = [
@@ -78,7 +87,7 @@ export const WORK_BLOCKS: readonly WorkBlock[] = [
   payableBlock('review', 'Facturas por revisar', 'requires_review', invoiceDetail),
   payableBlock('confirm', 'Por confirmar', 'pending_confirmation', invoiceDetail),
   payableBlock('schedule', 'Por programar', 'confirmed', invoiceDetail),
-  payableBlock('scheduled', 'Pagos programados', 'scheduled', invoiceDetail, byDueOn),
+  payableBlock('scheduled', 'Pagos programados', 'scheduled', scheduledDetail, byPayOn),
 ];
 
 /** Carga los bloques que el rol puede ver. Cada uno es su propia consulta: uno lento no frena a los demás. */

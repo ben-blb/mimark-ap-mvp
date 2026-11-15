@@ -130,6 +130,8 @@ export const PayableSummaryDto = PayableDto.pick({
   currency: Currency.nullable(),
   /** Vencimiento calculado (spec 010, AC-010-05); null si aún no se calcula. */
   dueOn: LocalDate.nullable(),
+  /** Fecha en que se programó el pago (spec 017); null si aún no está programado. */
+  scheduledPayOn: LocalDate.nullable(),
 });
 export type PayableSummaryDto = z.infer<typeof PayableSummaryDto>;
 

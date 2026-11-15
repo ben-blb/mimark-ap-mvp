@@ -40,13 +40,26 @@ describe('pickToolCalls por rol', () => {
     ['warehouse', 'recordPayment', pay, false],
     ['warehouse', 'listPayables', {}, false],
     ['warehouse', 'getDashboard', { horizon: 7 }, false],
-    ['warehouse', 'listPurchaseOrders', {}, true],
+    ['warehouse', 'listPurchaseOrders', {}, false],
+    ['warehouse', 'listSuppliers', {}, false],
+    ['purchasing', 'listPurchaseOrders', {}, true],
     ['manager', 'recordPayment', pay, true],
     ['manager', 'correctFields', { id, supplierName: 'X' }, false],
     ['purchasing', 'confirmPayable', { id }, false],
-    ['purchasing', 'listPayables', {}, true],
+    ['purchasing', 'listPayables', {}, false],
   ] as const)('AC-013-16 %s · %s → %s', (role, name, input, kept) => {
     expect(pickToolCalls([{ id: 'c1', name, input }], role)).toHaveLength(kept ? 1 : 0);
+  });
+});
+
+describe('pickToolCalls · lecturas con permiso (spec 017)', () => {
+  it.each([
+    ['warehouse', 'listPurchaseOrders', false],
+    ['warehouse', 'listSuppliers', false],
+    ['purchasing', 'listPurchaseOrders', true],
+    ['purchasing', 'listPayables', false],
+  ] as const)('AC-017-06 %s · %s → %s', (role, name, kept) => {
+    expect(pickToolCalls([{ id: 'c1', name, input: {} }], role)).toHaveLength(kept ? 1 : 0);
   });
 });
 

@@ -10,6 +10,11 @@ import type {
   ReceiptInput,
   UpdatePurchaseOrderInput,
 } from '@mimark/contracts/purchase-orders';
+import type {
+  ReceiptListQuery,
+  ReceiptOrderDto,
+  ReceiptOrderList,
+} from '@mimark/contracts/receipts';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { Db } from '../../common/db.js';
@@ -24,6 +29,7 @@ import {
   PurchaseOrdersRepository,
   type NewLine,
   type PurchaseOrderRow,
+  type ReceiptOrderRow,
 } from './purchase-orders.repository.js';
 import {
   buildDraftWarnings,
@@ -61,6 +67,18 @@ export class PurchaseOrdersService {
     const row = await this.orders.findById(id);
     if (!row) throw NOT_FOUND();
     return toPurchaseOrderDto(row);
+  }
+
+  /** Vista de Almacén (spec 017): las órdenes abiertas sin precios ni importes. */
+  async listReceipts(query: ReceiptListQuery): Promise<ReceiptOrderList> {
+    const rows = await this.orders.listReceipts(query);
+    return { items: rows.map(toReceiptDto) };
+  }
+
+  async getReceipt(id: string): Promise<ReceiptOrderDto> {
+    const row = await this.orders.findReceiptById(id);
+    if (!row) throw NOT_FOUND();
+    return toReceiptDto(row);
   }
 
   async create(input: CreatePurchaseOrderInput, ctx: Ctx): Promise<PurchaseOrderDto> {
@@ -260,6 +278,27 @@ function toLineDto(line: PurchaseOrderRow['lines'][number]): PoLineDto {
     unit: line.unit,
     unitPrice: String(line.unitPrice),
     amount: line.amount.toFixed(2),
+  };
+}
+
+function toReceiptDto(row: ReceiptOrderRow): ReceiptOrderDto {
+  return {
+    id: row.id,
+    number: row.number,
+    supplierName: row.supplier.name,
+    issuedOn: fromDbDate(row.issuedOn),
+    receiptStatus: row.receiptStatus,
+    receivedOn: row.receivedOn ? fromDbDate(row.receivedOn) : null,
+    receivedBy: row.receivedBy,
+    receiptNotes: row.receiptNotes,
+    lines: row.lines.map((line) => ({
+      id: line.id,
+      position: line.position,
+      sku: line.sku,
+      description: line.description,
+      quantity: String(line.quantity),
+      unit: line.unit,
+    })),
   };
 }
 

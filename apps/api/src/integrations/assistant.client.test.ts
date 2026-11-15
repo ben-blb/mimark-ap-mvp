@@ -119,7 +119,7 @@ describe('AssistantClient', () => {
     expect(result.toolCalls).toEqual([{ id: 'c1', name: 'getDashboard', input: { horizon: 7 } }]);
   });
 
-  it('AC-013-16 al modelo solo se le ofrecen las herramientas que el rol puede usar', async () => {
+  it('AC-013-16 AC-017-06 al modelo solo se le ofrecen las herramientas que el rol puede usar', async () => {
     const m = model();
     await new AssistantClient().run(m, {
       messages: [{ role: 'user', content: '¿Qué hay?' }],
@@ -128,6 +128,6 @@ describe('AssistantClient', () => {
     });
 
     const tools = (m.doGenerateCalls[0]?.tools ?? []).map((t) => t.name).sort();
-    expect(tools).toEqual(['listPurchaseOrders', 'listSuppliers', 'recordReceipt'].sort());
+    expect(tools).toEqual(['recordReceipt']);
   });
 });

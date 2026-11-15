@@ -4,7 +4,6 @@ import {
   PurchaseOrderDto,
   PurchaseOrderList,
   type PurchaseOrderListQuery,
-  type ReceiptInput,
   type UpdatePurchaseOrderInput,
 } from '@mimark/contracts/purchase-orders';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -42,15 +41,6 @@ export function useUpdatePurchaseOrder(id: string) {
   return useMutation({
     mutationFn: (input: UpdatePurchaseOrderInput) =>
       api.patch(`/purchase-orders/${id}`, input, PurchaseOrderDto),
-    onSuccess: invalidate,
-  });
-}
-
-export function useConfirmReceipt(id: string) {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: (input: ReceiptInput) =>
-      api.post(`/purchase-orders/${id}/receipt`, input, PurchaseOrderDto),
     onSuccess: invalidate,
   });
 }

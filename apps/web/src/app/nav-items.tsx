@@ -1,5 +1,7 @@
 import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
+import InboxOutlined from '@mui/icons-material/InboxOutlined';
+import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
 import PeopleOutlineOutlined from '@mui/icons-material/PeopleOutlineOutlined';
 import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import SpaceDashboardOutlined from '@mui/icons-material/SpaceDashboardOutlined';
@@ -10,33 +12,34 @@ import type { ReactElement } from 'react';
 export interface NavItem {
   to: string;
   tour: string;
-  /** Sin `permission`, la sección es para cualquier sesión. */
-  permission?: Permission;
+  permission: Permission;
   label: string;
   short: string;
   icon: ReactElement;
 }
 
-/** Navegación principal. Cada spec que agrega una pantalla de primer nivel la suma aquí. */
+/** Navegación principal, en el orden de la spec 017 (AC-017-07). Cada pantalla de primer nivel la suma aquí. */
 const NAV_ITEMS: NavItem[] = [
   {
     to: '/',
-    tour: 'tablero',
-    permission: 'dashboard:read',
-    label: 'Tablero',
-    short: 'Tablero',
-    icon: <SpaceDashboardOutlined />,
+    tour: 'mi-trabajo',
+    permission: 'inbox:read',
+    label: 'Mi trabajo',
+    short: 'Mi trabajo',
+    icon: <InboxOutlined />,
   },
   {
-    to: '/proveedores',
-    tour: 'proveedores',
-    label: 'Proveedores',
-    short: 'Proveedores',
-    icon: <StorefrontOutlined />,
+    to: '/recepciones',
+    tour: 'recepciones',
+    permission: 'orders:receive',
+    label: 'Recepciones',
+    short: 'Recepciones',
+    icon: <LocalShippingOutlined />,
   },
   {
     to: '/ordenes',
     tour: 'ordenes',
+    permission: 'orders:read',
     label: 'Órdenes de compra',
     short: 'Órdenes',
     icon: <ReceiptLongOutlined />,
@@ -45,9 +48,25 @@ const NAV_ITEMS: NavItem[] = [
     to: '/expedientes',
     tour: 'expedientes',
     permission: 'payables:read',
-    label: 'Expedientes',
-    short: 'Expedientes',
+    label: 'Facturas y pagos',
+    short: 'Facturas',
     icon: <DescriptionOutlined />,
+  },
+  {
+    to: '/proveedores',
+    tour: 'proveedores',
+    permission: 'suppliers:read',
+    label: 'Proveedores',
+    short: 'Proveedores',
+    icon: <StorefrontOutlined />,
+  },
+  {
+    to: '/tablero',
+    tour: 'tablero',
+    permission: 'dashboard:read',
+    label: 'Tablero',
+    short: 'Tablero',
+    icon: <SpaceDashboardOutlined />,
   },
   {
     to: '/asistente',
@@ -67,7 +86,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-/** Las secciones que el rol puede abrir (spec 013). Las que no tienen `permission` son para cualquier sesión. */
+/** Las secciones que el rol puede abrir (specs 013 y 017). */
 export function navItemsFor(can: (permission: Permission) => boolean): NavItem[] {
-  return NAV_ITEMS.filter((item) => !item.permission || can(item.permission));
+  return NAV_ITEMS.filter((item) => can(item.permission));
 }

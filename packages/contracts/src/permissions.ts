@@ -1,8 +1,10 @@
 import type { Role } from './session.js';
 
-/** Permisos de la spec 013. La API los exige y la web los usa para mostrar u ocultar acciones. */
+/** Permisos de las specs 013 y 017. La API los exige y la web los usa para mostrar u ocultar acciones. */
 export const PERMISSIONS = [
+  'suppliers:read',
   'suppliers:write',
+  'orders:read',
   'orders:write',
   'orders:receive',
   'payables:read',
@@ -10,22 +12,40 @@ export const PERMISSIONS = [
   'payables:pay',
   'dashboard:read',
   'assistant:use',
+  'inbox:read',
   'users:manage',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
-/** Matriz fija en código. Las lecturas de proveedores y órdenes están abiertas a cualquier sesión. */
+/** Matriz fija en código (spec 017): cada rol ve solo lo de su función. */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   purchasing: [
+    'inbox:read',
+    'suppliers:read',
     'suppliers:write',
+    'orders:read',
     'orders:write',
+    'assistant:use',
+  ],
+  warehouse: ['orders:receive'],
+  payables: [
+    'inbox:read',
+    'suppliers:read',
+    'orders:read',
     'payables:read',
+    'payables:write',
+    'payables:pay',
     'dashboard:read',
     'assistant:use',
   ],
-  warehouse: ['orders:receive', 'assistant:use'],
-  payables: ['payables:read', 'payables:write', 'payables:pay', 'dashboard:read', 'assistant:use'],
-  manager: ['payables:read', 'payables:pay', 'dashboard:read', 'assistant:use'],
+  manager: [
+    'suppliers:read',
+    'orders:read',
+    'payables:read',
+    'payables:pay',
+    'dashboard:read',
+    'assistant:use',
+  ],
   admin: PERMISSIONS,
 };
 

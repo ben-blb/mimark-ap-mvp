@@ -1,9 +1,12 @@
 import { Navigate } from 'react-router';
-import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { MyWorkPage } from '../features/home/MyWorkPage';
 import { useCan } from '../features/session/session.api';
 
-/** El tablero es la portada; quien no ve cartera (almacén) entra directo a las órdenes. */
+/** Inicio por rol (AC-017-09): «Mi trabajo», o la pantalla de su función si no tiene bandeja. */
 export function HomeRedirect() {
   const can = useCan();
-  return can('dashboard:read') ? <DashboardPage /> : <Navigate to="/ordenes" replace />;
+  if (can('inbox:read')) return <MyWorkPage />;
+  if (can('orders:receive')) return <Navigate to="/recepciones" replace />;
+  if (can('dashboard:read')) return <Navigate to="/tablero" replace />;
+  return <Navigate to="/ordenes" replace />;
 }

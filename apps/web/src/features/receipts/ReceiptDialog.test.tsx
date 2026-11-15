@@ -1,4 +1,4 @@
-import type { PurchaseOrderDto } from '@mimark/contracts/purchase-orders';
+import type { ReceiptOrderDto } from '@mimark/contracts/receipts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -12,33 +12,24 @@ const line = (n: number) => ({
   description: `Producto ${n}`,
   quantity: String(n * 10),
   unit: 'caja',
-  unitPrice: '50',
-  amount: '500.00',
 });
 
-const order = (lines = 3): PurchaseOrderDto => ({
+const order = (lines = 3): ReceiptOrderDto => ({
   id: 'o1',
   number: 'OC-1003',
-  supplier: { id: 's1', name: 'Empaques', taxId: 'EDR150720QW9', creditDays: 7 },
+  supplierName: 'Empaques',
   issuedOn: '2026-10-08',
-  total: '3480.00',
-  taxes: '480.00',
-  currency: 'MXN',
-  parlevelRef: null,
-  lines: Array.from({ length: lines }, (_, i) => line(i + 1)),
-  status: 'open',
   receiptStatus: 'pending',
   receivedOn: null,
   receivedBy: null,
   receiptNotes: null,
-  createdAt: '2026-10-08T10:00:00.000Z',
-  updatedAt: '2026-10-08T10:00:00.000Z',
+  lines: Array.from({ length: lines }, (_, i) => line(i + 1)),
 });
 
 function setup(po = order()) {
   const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
     Promise.resolve(
-      new Response(JSON.stringify({ ...po, receiptStatus: 'received' }), {
+      new Response(JSON.stringify({ id: po.id, total: '3480.00', receiptStatus: 'received' }), {
         status: 201,
         headers: { 'content-type': 'application/json' },
       }),

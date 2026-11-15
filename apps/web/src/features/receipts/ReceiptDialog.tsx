@@ -1,4 +1,5 @@
-import { type PurchaseOrderDto, ReceiptInput } from '@mimark/contracts/purchase-orders';
+import { ReceiptInput } from '@mimark/contracts/purchase-orders';
+import type { ReceiptOrderDto } from '@mimark/contracts/receipts';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
@@ -17,20 +18,14 @@ import { useState } from 'react';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { ApiError } from '../../lib/api-client';
 import { useZodForm } from '../../lib/use-zod-form';
-import { useConfirmReceipt } from './purchase-orders.api';
-import { localToday } from './today';
+import { localToday } from '../purchase-orders/today';
+import { useConfirmReceipt } from './receipts.api';
 
 /**
  * Confirmar la llegada de una OC. Con partidas es un checklist: se marcan todas (la API lo exige) y el
  * botón queda fijo abajo con el contador. Sin partidas (OC anteriores) solo se pide fecha y notas.
  */
-export function ReceiptDialog({
-  order,
-  onClose,
-}: {
-  order: PurchaseOrderDto;
-  onClose: () => void;
-}) {
+export function ReceiptDialog({ order, onClose }: { order: ReceiptOrderDto; onClose: () => void }) {
   const confirm = useConfirmReceipt(order.id);
   const error = confirm.error;
   const fullScreen = useMediaQuery('(max-width:599.95px)');

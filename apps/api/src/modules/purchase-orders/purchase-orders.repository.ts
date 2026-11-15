@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { LocalDate } from '@mimark/contracts/common';
 import type { PurchaseOrderListQuery } from '@mimark/contracts/purchase-orders';
+import type { ReceiptListQuery } from '@mimark/contracts/receipts';
 import { AppError } from '../../common/app-error.js';
 import { Db, isUniqueViolation, type Tx } from '../../common/db.js';
 import { toDbDate } from '../../common/dates.js';
@@ -11,6 +12,23 @@ const WITH_SUPPLIER = {
   lines: { orderBy: { position: 'asc' } },
 } satisfies Prisma.PurchaseOrderInclude;
 export type PurchaseOrderRow = Prisma.PurchaseOrderGetPayload<{ include: typeof WITH_SUPPLIER }>;
+
+/** Recepciones (spec 017): solo columnas sin precios ni importes. Un campo nuevo de la OC no entra aquí solo. */
+const RECEIPT_SELECT = {
+  id: true,
+  number: true,
+  issuedOn: true,
+  receiptStatus: true,
+  receivedOn: true,
+  receivedBy: true,
+  receiptNotes: true,
+  supplier: { select: { name: true } },
+  lines: {
+    orderBy: { position: 'asc' },
+    select: { id: true, position: true, sku: true, description: true, quantity: true, unit: true },
+  },
+} satisfies Prisma.PurchaseOrderSelect;
+export type ReceiptOrderRow = Prisma.PurchaseOrderGetPayload<{ select: typeof RECEIPT_SELECT }>;
 
 export interface NewLine {
   sku?: string | undefined;
@@ -66,6 +84,29 @@ export class PurchaseOrdersRepository {
       where,
       include: WITH_SUPPLIER,
       orderBy: [{ issuedOn: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  /** Órdenes abiertas (no canceladas) vistas desde Almacén: sin precios. */
+  listReceipts(query: ReceiptListQuery): Promise<ReceiptOrderRow[]> {
+    const where: Prisma.PurchaseOrderWhereInput = { status: 'open', receiptStatus: query.status };
+    if (query.search) {
+      where.OR = [
+        { number: { contains: query.search, mode: 'insensitive' } },
+        { supplier: { name: { contains: query.search, mode: 'insensitive' } } },
+      ];
+    }
+    return this.db.purchaseOrder.findMany({
+      where,
+      select: RECEIPT_SELECT,
+      orderBy: [{ issuedOn: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  findReceiptById(id: string): Promise<ReceiptOrderRow | null> {
+    return this.db.purchaseOrder.findFirst({
+      where: { id, status: 'open' },
+      select: RECEIPT_SELECT,
     });
   }
 

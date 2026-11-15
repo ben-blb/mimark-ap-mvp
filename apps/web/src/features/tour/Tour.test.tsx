@@ -76,14 +76,16 @@ describe('Tour', () => {
   it('AC-012-06 resalta el elemento del paso y no resalta si no está en pantalla', async () => {
     const { user } = setup();
     expect(document.querySelector('[data-tour-highlight]')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Siguiente' })); // Tablero: no existe
+    await user.click(screen.getByRole('button', { name: 'Siguiente' })); // Mi trabajo: no existe
     expect(document.querySelector('[data-tour-highlight]')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Siguiente' })); // Proveedores
+    for (let i = 0; i < 4; i++) {
+      await user.click(screen.getByRole('button', { name: 'Siguiente' })); // …hasta Proveedores
+    }
     expect(document.querySelector('[data-tour-highlight="proveedores"]')).not.toBeNull();
     expect(screen.getByRole('dialog', { name: 'Proveedores' })).toBeInTheDocument();
   });
 
-  it('AC-012-07 recorre el flujo completo en orden', async () => {
+  it('AC-012-07 AC-017-15 recorre el flujo completo en orden', async () => {
     const { user } = setup();
     const seen: string[] = [];
     for (let i = 0; i < N; i++) {
@@ -92,8 +94,8 @@ describe('Tour', () => {
     }
     expect(seen).toEqual(TOUR_STEPS.map((s) => s.title));
     expect(TOUR_STEPS.map((s) => s.title.toLowerCase()).join('|')).toMatch(
-      /bienvenida.*tablero.*proveedores.*órdenes.*expedientes.*asistente.*repetirlo/,
+      /bienvenida.*mi trabajo.*recepciones.*órdenes.*facturas y pagos.*proveedores.*tablero.*asistente.*repetirlo/,
     );
-    expect(TOUR_STEPS[4]?.body).toMatch(/nunca paga/);
+    expect(TOUR_STEPS.find((s) => s.anchor === 'expedientes')?.body).toMatch(/nunca paga/);
   });
 });

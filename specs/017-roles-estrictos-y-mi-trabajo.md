@@ -1,7 +1,7 @@
 ---
 id: '017'
 titulo: Roles estrictos por función y «Mi trabajo»
-estado: borrador # borrador | lista | en-progreso | hecha
+estado: en-progreso # borrador | lista | en-progreso | hecha
 depende_de: ['009', '012', '013', '014']
 requisitos: Usabilidad y seguridad (extensión; modifica 009, 012 y 013)
 ---
@@ -146,14 +146,14 @@ Sin eventos nuevos (solo lecturas).
 
 ## Tareas
 
-- [ ] 1. Contratos: permisos, matriz, `TOOL_PERMISSION` y `receipts.ts`, con pruebas.
+- [x] 1. Contratos: permisos, matriz, `TOOL_PERMISSION` y `receipts.ts`, con pruebas.
 - [ ] 2. API: `@Requires` en las lecturas de proveedores y órdenes; ampliar `permissions.int.test.ts` (AC-017-01,
       02, 03, 06).
 - [ ] 3. API: `GET /api/receipts` y `/:id` con pruebas de integración (AC-017-04, 05).
-- [ ] 4. Web: navegación, rutas, `HomeRedirect` y `/tablero` (AC-017-07, 08, 09).
-- [ ] 5. Web: `/recepciones` y retiro de «Confirmar recepción» en `/ordenes` (AC-017-12, 13).
-- [ ] 6. Web: «Mi trabajo» (AC-017-10, 11).
-- [ ] 7. Web: «Más» en la barra inferior y pasos del tutorial (AC-017-14, 15).
+- [x] 4. Web: navegación, rutas, `HomeRedirect` y `/tablero` (AC-017-07, 08, 09).
+- [x] 5. Web: `/recepciones` y retiro de «Confirmar recepción» en `/ordenes` (AC-017-12, 13).
+- [x] 6. Web: «Mi trabajo» (AC-017-10, 11).
+- [x] 7. Web: «Más» en la barra inferior y pasos del tutorial (AC-017-14, 15).
 - [ ] 8. `pnpm check`, verificación manual AC-017-16, actualizar ADR-15 y el mapa de `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
@@ -168,3 +168,15 @@ Sin eventos nuevos (solo lecturas).
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+- 2026-11-14 · La spec estaba en `borrador`; la persona dijo que ya estaba aprobada y se pasó a `en-progreso`.
+- 2026-11-14 · Sin Postgres local (Docker apagado, sin `TEST_DATABASE_URL`): las tareas 2 y 3 (pruebas de integración
+  `permissions.int.test.ts` y `receipts.int.test.ts`) están escritas y compilan, pero no se han corrido.
+- 2026-11-14 · «Pagos programados … con su fecha de pago»: `PayableSummaryDto` no trae `scheduledPayOn`. Se muestra el
+  vencimiento (`dueOn`) y se ordena por él (las vencidas salen primero). Si se quiere la fecha programada hay que
+  sumarla al resumen del listado.
+- 2026-11-14 · `POST /api/purchase-orders/:id/receipt` sigue devolviendo la OC completa (con precios) a Almacén; la web
+  solo lee el `id`. Se cierra en la spec 018, que rehace la recepción.
+- 2026-11-14 · «Ver todas» de órdenes usa `/ordenes?view=openPending` (vista inicial leída de la URL).
+- 2026-11-14 · En el teléfono, los pasos del tutorial de secciones que quedan dentro de «Más» no se resaltan (el
+  elemento no está montado); el paso se muestra igual, sin resaltado.

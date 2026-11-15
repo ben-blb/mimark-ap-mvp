@@ -9,6 +9,12 @@ type Verb = 'get' | 'post' | 'patch' | 'put' | 'delete';
 
 /** Una ruta por permiso; la prueba de cobertura exige que esta lista incluya todas las rutas con @Requires. */
 const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
+  { verb: 'get', path: '/api/suppliers', permission: 'suppliers:read' },
+  { verb: 'get', path: '/api/suppliers/x', permission: 'suppliers:read' },
+  { verb: 'get', path: '/api/purchase-orders', permission: 'orders:read' },
+  { verb: 'get', path: '/api/purchase-orders/x', permission: 'orders:read' },
+  { verb: 'get', path: '/api/receipts', permission: 'orders:receive' },
+  { verb: 'get', path: '/api/receipts/x', permission: 'orders:receive' },
   { verb: 'post', path: '/api/suppliers', permission: 'suppliers:write' },
   { verb: 'patch', path: '/api/suppliers/x', permission: 'suppliers:write' },
   { verb: 'post', path: '/api/purchase-orders', permission: 'orders:write' },
@@ -42,17 +48,10 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'delete', path: '/api/users/x', permission: 'users:manage' },
 ];
 
-/** Rutas protegidas que a propósito solo piden sesión (lecturas abiertas y la sesión misma). */
-const SESSION_ONLY = new Set([
-  'GET /api/suppliers',
-  'GET /api/suppliers/:id',
-  'GET /api/purchase-orders',
-  'GET /api/purchase-orders/:id',
-  'GET /api/session',
-  'POST /api/session/password',
-]);
+/** Rutas protegidas que a propósito solo piden sesión (la sesión misma). */
+const SESSION_ONLY = new Set(['GET /api/session', 'POST /api/session/password']);
 
-describe('permisos por rol (spec 013)', () => {
+describe('permisos por rol (specs 013 y 017)', () => {
   let t: TestApp;
   beforeAll(async () => {
     t = await createTestApp();
@@ -60,7 +59,7 @@ describe('permisos por rol (spec 013)', () => {
   afterAll(() => t.close());
   beforeEach(() => t.reset());
 
-  it('AC-013-13 cada rol recibe 403 sin ejecutar nada si no tiene el permiso, y nunca 403 si lo tiene', async () => {
+  it('AC-013-13 AC-017-01 cada rol recibe 403 sin ejecutar nada si no tiene el permiso, y nunca 403 si lo tiene', async () => {
     for (const role of ROLES) {
       const agent = await t.agent(`Persona ${role}`, role);
       const eventsBefore = await t.db.auditEvent.count();
@@ -114,13 +113,36 @@ describe('permisos por rol (spec 013)', () => {
     expect(found.filter((f) => f.guarded && !covered.has(f.key)).map((f) => f.key)).toEqual([]);
   });
 
-  it('AC-013-14 warehouse no ve facturas ni cartera pero sí proveedores y órdenes', async () => {
+  it('AC-013-14 AC-017-02 warehouse solo recibe: no ve proveedores, órdenes, facturas, cartera ni asistente', async () => {
     const warehouse = await t.agent('Wanda', 'warehouse');
-    await warehouse.get('/api/suppliers').expect(200);
-    await warehouse.get('/api/purchase-orders').expect(200);
-    await warehouse.get('/api/payables').expect(403);
-    await warehouse.get('/api/dashboard').expect(403);
+    for (const path of [
+      '/api/suppliers',
+      '/api/purchase-orders',
+      '/api/payables',
+      '/api/dashboard',
+    ]) {
+      const res = await warehouse.get(path).expect(403);
+      expect(res.body.code, path).toBe('FORBIDDEN');
+    }
+    await warehouse.post('/api/assistant/turn').send({}).expect(403);
     await warehouse.post('/api/payables/x/payment').send({}).expect(403);
+    await warehouse.get('/api/receipts').expect(200);
+    const receipt = await warehouse.post('/api/purchase-orders/x/receipt').send({});
+    expect(receipt.status).not.toBe(403);
+  });
+
+  it('AC-017-03 purchasing no ve facturas ni tablero pero sí crea proveedores y órdenes', async () => {
+    const purchasing = await t.agent('Paco', 'purchasing');
+    for (const path of ['/api/payables', '/api/payables/x', '/api/dashboard']) {
+      const res = await purchasing.get(path).expect(403);
+      expect(res.body.code, path).toBe('FORBIDDEN');
+    }
+    await purchasing.get('/api/suppliers').expect(200);
+    await purchasing.get('/api/purchase-orders').expect(200);
+    const created = await purchasing
+      .post('/api/suppliers')
+      .send({ name: 'Proveedor Uno', taxId: 'AAA010101AAA', creditDays: 30, currency: 'MXN' });
+    expect(created.status).not.toBe(403);
   });
 
   it('AC-013-15 manager confirma y paga pero no sube ni corrige facturas', async () => {

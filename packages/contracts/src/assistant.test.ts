@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { ASSISTANT_TOOLS, AssistantTurnInput } from './assistant.js';
+import { ASSISTANT_TOOLS, AssistantTurnInput, toolAllowed } from './assistant.js';
 
 const user = (text: string) => ({ role: 'user', text });
 
@@ -52,4 +52,13 @@ describe('ASSISTANT_TOOLS', () => {
       expect(() => z.toJSONSchema(tool.input, { io: 'input', target: 'draft-7' })).not.toThrow();
     },
   );
+});
+
+describe('permisos de las herramientas', () => {
+  it('AC-017-06 listSuppliers y listPurchaseOrders exigen suppliers:read y orders:read', () => {
+    expect(toolAllowed('listSuppliers', 'warehouse')).toBe(false);
+    expect(toolAllowed('listPurchaseOrders', 'warehouse')).toBe(false);
+    expect(toolAllowed('listSuppliers', 'purchasing')).toBe(true);
+    expect(toolAllowed('listPurchaseOrders', 'manager')).toBe(true);
+  });
 });

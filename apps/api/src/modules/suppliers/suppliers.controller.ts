@@ -16,11 +16,13 @@ import { Requires } from '../session/session.guard.js';
 export class SuppliersController {
   constructor(private readonly suppliers: SuppliersService) {}
 
+  @Requires('suppliers:read')
   @Get()
   list(@Query({ schema: SupplierListQuery }) query: SupplierListQuery): Promise<SupplierList> {
     return this.suppliers.list(query);
   }
 
+  @Requires('suppliers:read')
   @Get(':id')
   get(@Param('id', { schema: Id }) id: string): Promise<SupplierDto> {
     return this.suppliers.get(id);

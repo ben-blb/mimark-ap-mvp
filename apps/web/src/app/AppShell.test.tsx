@@ -41,10 +41,18 @@ function setup(width: number, tourSeen = true, actor = 'Ana López', role: Role 
   return userEvent.setup();
 }
 
-const SECTIONS = ['Tablero', 'Proveedores', 'Órdenes de compra', 'Expedientes', 'Asistente'];
+/** Navegación de `payables` (spec 017): su orden es el de AC-017-07. */
+const SECTIONS = [
+  'Mi trabajo',
+  'Órdenes de compra',
+  'Facturas y pagos',
+  'Proveedores',
+  'Tablero',
+  'Asistente',
+];
 
 describe('AppShell', () => {
-  it('AC-009-02 en escritorio, barra lateral con las 5 secciones, la activa marcada y «Salir»', () => {
+  it('AC-009-02 en escritorio, barra lateral con las secciones del rol, la activa marcada y «Salir»', () => {
     setup(1440);
     const nav = screen.getByRole('navigation', { name: 'Principal' });
     expect(
@@ -52,7 +60,7 @@ describe('AppShell', () => {
         .getAllByRole('link')
         .map((l) => l.textContent),
     ).toEqual(SECTIONS);
-    expect(within(nav).getByRole('link', { name: 'Expedientes' })).toHaveAttribute(
+    expect(within(nav).getByRole('link', { name: 'Facturas y pagos' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -78,15 +86,15 @@ describe('AppShell', () => {
     expect(screen.getByText('asistente')).toBeInTheDocument();
   });
 
-  it('AC-009-02 en el teléfono, barra inferior con las 5 secciones y la cuenta en un menú', async () => {
+  it('AC-009-02 en el teléfono, barra inferior de 4 secciones, «Más» con el resto y la cuenta en un menú', async () => {
     const user = setup(375);
     const nav = screen.getByRole('navigation', { name: 'Principal' });
     expect(
       within(nav)
         .getAllByRole('link')
         .map((l) => l.getAttribute('aria-label')),
-    ).toEqual(SECTIONS);
-    expect(within(nav).getByRole('link', { name: 'Expedientes' })).toHaveAttribute(
+    ).toEqual(SECTIONS.slice(0, 4));
+    expect(within(nav).getByRole('link', { name: 'Facturas y pagos' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -125,8 +133,8 @@ describe('AppShell', () => {
     const user = setup(1440);
     await user.click(screen.getByRole('button', { name: 'Ver tutorial' }));
     await user.click(screen.getByRole('button', { name: 'Siguiente' }));
-    expect(document.querySelector('[data-tour-highlight="tablero"]')).not.toBeNull();
-    expect(document.querySelector('[data-tour="tablero"]')).toHaveTextContent('Tablero');
+    expect(document.querySelector('[data-tour-highlight="mi-trabajo"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour="mi-trabajo"]')).toHaveTextContent('Mi trabajo');
   });
 
   it('AC-012-03 si Ana ya lo vio, otra persona en el mismo navegador lo ve solo', () => {
@@ -140,8 +148,8 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Ver tutorial' }));
     await user.click(screen.getByRole('button', { name: 'Siguiente' }));
     const target = screen.getByRole('navigation', { name: 'Principal', hidden: true });
-    expect(document.querySelector('[data-tour-highlight="tablero"]')).not.toBeNull();
-    expect(target.querySelector('[data-tour="tablero"]')).not.toBeNull();
+    expect(document.querySelector('[data-tour-highlight="mi-trabajo"]')).not.toBeNull();
+    expect(target.querySelector('[data-tour="mi-trabajo"]')).not.toBeNull();
   });
 
   it('AC-012-09 con localStorage bloqueado el tutorial abre, cierra y no se reabre', async () => {
@@ -158,10 +166,24 @@ describe('AppShell', () => {
   });
 
   it.each([
-    ['warehouse', ['Proveedores', 'Órdenes de compra', 'Asistente']],
-    ['manager', ['Tablero', 'Proveedores', 'Órdenes de compra', 'Expedientes', 'Asistente']],
-    ['admin', [...SECTIONS, 'Usuarios']],
-  ] as const)('AC-013-25 %s ve en la navegación solo sus secciones', (role, expected) => {
+    ['warehouse', ['Recepciones']],
+    ['purchasing', ['Mi trabajo', 'Órdenes de compra', 'Proveedores', 'Asistente']],
+    ['payables', SECTIONS],
+    ['manager', ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Asistente']],
+    [
+      'admin',
+      [
+        'Mi trabajo',
+        'Recepciones',
+        'Órdenes de compra',
+        'Facturas y pagos',
+        'Proveedores',
+        'Tablero',
+        'Asistente',
+        'Usuarios',
+      ],
+    ],
+  ] as const)('AC-013-25 AC-017-07 %s ve en la navegación solo sus secciones', (role, expected) => {
     setup(1440, true, 'Ana López', role);
     const nav = screen.getByRole('navigation', { name: 'Principal' });
     expect(
@@ -169,5 +191,28 @@ describe('AppShell', () => {
         .getAllByRole('link')
         .map((l) => l.textContent),
     ).toEqual(expected);
+  });
+
+  it('AC-017-14 con más de 5 secciones el teléfono muestra 4 y «Más» abre el resto', async () => {
+    const user = setup(375, true, 'Ana López', 'admin');
+    const nav = screen.getByRole('navigation', { name: 'Principal' });
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((l) => l.getAttribute('aria-label')),
+    ).toEqual(['Mi trabajo', 'Recepciones', 'Órdenes de compra', 'Facturas y pagos']);
+    await user.click(within(nav).getByRole('button', { name: 'Más' }));
+    expect(
+      within(screen.getByRole('menu'))
+        .getAllByRole('menuitem')
+        .map((i) => i.textContent),
+    ).toEqual(['Proveedores', 'Tablero', 'Asistente', 'Usuarios']);
+  });
+
+  it('AC-017-14 con 5 secciones o menos se muestran todas y no hay «Más»', () => {
+    setup(375, true, 'Ana López', 'manager');
+    const nav = screen.getByRole('navigation', { name: 'Principal' });
+    expect(within(nav).getAllByRole('link')).toHaveLength(5);
+    expect(within(nav).queryByRole('button', { name: 'Más' })).not.toBeInTheDocument();
   });
 });

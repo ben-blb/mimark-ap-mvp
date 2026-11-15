@@ -141,11 +141,10 @@ export const AssistantToolName = z.enum(
 
 /**
  * Permiso que exige cada herramienta (spec 013): el mismo que la ruta que acaba ejecutándola.
- * `null` = basta con tener sesión.
  */
-export const TOOL_PERMISSION: Record<AssistantToolName, Permission | null> = {
-  listSuppliers: null,
-  listPurchaseOrders: null,
+export const TOOL_PERMISSION: Record<AssistantToolName, Permission> = {
+  listSuppliers: 'suppliers:read',
+  listPurchaseOrders: 'orders:read',
   listPayables: 'payables:read',
   getPayable: 'payables:read',
   getPayableHistory: 'payables:read',
@@ -166,8 +165,7 @@ export const TOOL_PERMISSION: Record<AssistantToolName, Permission | null> = {
 
 /** ¿Este rol puede usar la herramienta? */
 export function toolAllowed(name: AssistantToolName, role: Role): boolean {
-  const permission = TOOL_PERMISSION[name];
-  return permission === null || can(role, permission);
+  return can(role, TOOL_PERMISSION[name]);
 }
 
 export const MAX_ASSISTANT_MESSAGES = 40;

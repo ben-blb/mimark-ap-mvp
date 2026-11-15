@@ -1,6 +1,8 @@
 import Typography from '@mui/material/Typography';
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, type RouteObject } from 'react-router';
 import { AssistantRoute } from '../features/assistant/AssistantRoute';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { ReceiptsPage } from '../features/receipts/ReceiptsPage';
 import { LoginPage } from '../features/session/LoginPage';
 import { SetupPage } from '../features/session/SetupPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -14,7 +16,7 @@ import { RequirePermission } from './RequirePermission';
 import { RequireSession } from './RequireSession';
 
 /** Todas las pantallas en un solo lugar. Cada spec agrega aquí su ruta. */
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   { path: '/configuracion-inicial', element: <SetupPage /> },
   {
@@ -25,8 +27,38 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <HomeRedirect /> },
-      { path: 'proveedores', element: <SuppliersPage /> },
-      { path: 'ordenes', element: <PurchaseOrdersPage /> },
+      {
+        path: 'proveedores',
+        element: (
+          <RequirePermission permission="suppliers:read">
+            <SuppliersPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'ordenes',
+        element: (
+          <RequirePermission permission="orders:read">
+            <PurchaseOrdersPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'recepciones',
+        element: (
+          <RequirePermission permission="orders:receive">
+            <ReceiptsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'tablero',
+        element: (
+          <RequirePermission permission="dashboard:read">
+            <DashboardPage />
+          </RequirePermission>
+        ),
+      },
       {
         path: 'expedientes',
         element: (
@@ -62,4 +94,6 @@ export const router = createBrowserRouter([
       { path: '*', element: <Typography>No existe esta página.</Typography> },
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);

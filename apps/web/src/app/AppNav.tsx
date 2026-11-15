@@ -1,5 +1,6 @@
 import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LogoutOutlined from '@mui/icons-material/LogoutOutlined';
+import MoreHorizOutlined from '@mui/icons-material/MoreHorizOutlined';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import ListSubheader from '@mui/material/ListSubheader';
@@ -8,7 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { type NavItem } from './nav-items';
 import { MOBILE_NAV_OFFSET, vars } from './theme';
 
@@ -126,8 +127,17 @@ export function Sidebar(props: UserProps) {
 }
 
 /** Barra superior compacta y barra inferior del teléfono (AC-009-02). */
+/** Con más de 5 secciones, la barra inferior muestra 4 y «Más» (AC-017-14). */
+const MOBILE_BAR_MAX = 5;
+
 export function MobileChrome(props: UserProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
+  const { pathname } = useLocation();
+  const overflow = props.items.length > MOBILE_BAR_MAX;
+  const bar = overflow ? props.items.slice(0, MOBILE_BAR_MAX - 1) : props.items;
+  const more = overflow ? props.items.slice(MOBILE_BAR_MAX - 1) : [];
+  const moreActive = more.some((item) => pathname.startsWith(item.to));
   return (
     <>
       <Box
@@ -209,12 +219,12 @@ export function MobileChrome(props: UserProps) {
           borderTop: 1,
           borderColor: 'divider',
           display: 'grid',
-          gridTemplateColumns: `repeat(${props.items.length}, 1fr)`,
+          gridTemplateColumns: `repeat(${bar.length + (overflow ? 1 : 0)}, 1fr)`,
           height: MOBILE_NAV_OFFSET,
           pb: 'env(safe-area-inset-bottom)',
         })}
       >
-        {props.items.map((item) => (
+        {bar.map((item) => (
           <Box
             key={item.to}
             component={NavLink}
@@ -246,7 +256,56 @@ export function MobileChrome(props: UserProps) {
             </Box>
           </Box>
         ))}
+        {overflow && (
+          <Box
+            component="button"
+            type="button"
+            aria-label="Más"
+            aria-haspopup="menu"
+            onClick={(e) => setMoreAnchor(e.currentTarget)}
+            sx={{
+              all: 'unset',
+              boxSizing: 'border-box',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.25,
+              color: moreActive ? 'primary.main' : 'text.secondary',
+              fontSize: '0.6875rem',
+              fontWeight: 500,
+              '& svg': { fontSize: 20 },
+              '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: -2 },
+            }}
+          >
+            <MoreHorizOutlined />
+            <span>Más</span>
+          </Box>
+        )}
       </Box>
+      <Menu
+        anchorEl={moreAnchor}
+        open={!!moreAnchor}
+        onClose={() => setMoreAnchor(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        {more.map((item) => (
+          <MenuItem
+            key={item.to}
+            component={NavLink}
+            to={item.to}
+            data-tour={item.tour}
+            onClick={() => setMoreAnchor(null)}
+          >
+            {item.icon}
+            <Box component="span" sx={{ ml: 1.5 }}>
+              {item.label}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
     </>
   );
 }

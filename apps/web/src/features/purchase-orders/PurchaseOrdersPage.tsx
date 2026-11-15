@@ -10,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useDeferredValue, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { MONO } from '../../app/theme';
 import { CardField } from '../../components/CardField';
 import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
@@ -20,12 +21,10 @@ import { StatusDot } from '../../components/StatusDot';
 import { formatDay } from '../../lib/format';
 import { PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
 import { PurchaseOrderDialog } from './PurchaseOrderDialog';
-import { ReceiptDialog } from './ReceiptDialog';
 import { usePurchaseOrders } from './purchase-orders.api';
 import { useCan } from '../session/session.api';
 
-type Dialog =
-  { kind: 'edit'; order?: PurchaseOrderDto } | { kind: 'receipt'; order: PurchaseOrderDto } | null;
+type Dialog = { kind: 'edit'; order?: PurchaseOrderDto } | null;
 
 /** Un solo filtro (AC-010-04): estado y recepción combinados en un select. */
 const VIEWS = {
@@ -61,11 +60,6 @@ function OrderActions(props: { order: PurchaseOrderDto; onOpen: (dialog: Dialog)
   const can = useCan();
   return (
     <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-      {can('orders:receive') && order.status === 'open' && order.receiptStatus === 'pending' && (
-        <Button size="small" onClick={() => props.onOpen({ kind: 'receipt', order })}>
-          Confirmar recepción
-        </Button>
-      )}
       {can('orders:write') && (
         <Button size="small" color="inherit" onClick={() => props.onOpen({ kind: 'edit', order })}>
           Editar
@@ -78,7 +72,12 @@ function OrderActions(props: { order: PurchaseOrderDto; onOpen: (dialog: Dialog)
 export function PurchaseOrdersPage() {
   const canWrite = useCan()('orders:write');
   const [search, setSearch] = useState('');
-  const [view, setView] = useState<View>('open');
+  // «Ver todas» de Mi trabajo llega con la vista en la URL (spec 017).
+  const [params] = useSearchParams();
+  const [view, setView] = useState<View>(() => {
+    const wanted = params.get('view');
+    return wanted && Object.hasOwn(VIEWS, wanted) ? (wanted as View) : 'open';
+  });
   const [dialog, setDialog] = useState<Dialog>(null);
   const orders = usePurchaseOrders({ search: useDeferredValue(search), ...VIEWS[view].query });
   // La columna Estado solo informa cuando la vista mezcla abiertas y canceladas.
@@ -213,9 +212,6 @@ export function PurchaseOrdersPage() {
 
       {dialog?.kind === 'edit' && (
         <PurchaseOrderDialog order={dialog.order} onClose={() => setDialog(null)} />
-      )}
-      {dialog?.kind === 'receipt' && (
-        <ReceiptDialog order={dialog.order} onClose={() => setDialog(null)} />
       )}
     </>
   );

@@ -31,6 +31,7 @@ import { Requires } from '../session/session.guard.js';
 export class PurchaseOrdersController {
   constructor(private readonly orders: PurchaseOrdersService) {}
 
+  @Requires('orders:read')
   @Get()
   list(
     @Query({ schema: PurchaseOrderListQuery }) query: PurchaseOrderListQuery,
@@ -52,6 +53,7 @@ export class PurchaseOrdersController {
     return this.orders.extract(file, ctx);
   }
 
+  @Requires('orders:read')
   @Get(':id')
   get(@Param('id', { schema: Id }) id: string): Promise<PurchaseOrderDto> {
     return this.orders.get(id);

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import type {
   CreatePurchaseOrderInput,
   PurchaseOrderDraft,
-  PoLineDto,
   PoLineInput,
   PurchaseOrderDto,
   PurchaseOrderList,
@@ -25,25 +24,19 @@ import { AuditRepository } from '../audit/audit.repository.js';
 import { diffFields } from '../audit/audit.rules.js';
 import { checkQuota, decodeFileName, detectFileType } from '../payables/file.rules.js';
 import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
-import {
-  PurchaseOrdersRepository,
-  type NewLine,
-  type PurchaseOrderRow,
-  type ReceiptOrderRow,
-} from './purchase-orders.repository.js';
+import { PurchaseOrdersRepository, type NewLine } from './purchase-orders.repository.js';
 import {
   buildDraftWarnings,
   checkIssuedOn,
-  checkReceipt,
-  checkReceiptLines,
   checkTotalCoversLines,
-  impliedTaxes,
   lineAmount,
   linesSubtotal,
   normalizePoExtraction,
   parseParlevelDate,
   pickSupplier,
 } from './purchase-orders.rules.js';
+import { checkReceipt, checkReceiptLines } from './receipt.rules.js';
+import { toLineDto, toPurchaseOrderDto, toReceiptDto } from './purchase-orders.dto.js';
 
 const AUDITED_FIELDS = ['issuedOn', 'total', 'currency', 'parlevelRef', 'status', 'lines'] as const;
 const NOT_FOUND = () => new AppError('NOT_FOUND', 'No existe esa orden de compra.');
@@ -276,67 +269,4 @@ function today() {
 /** El importe de cada partida lo calcula el servidor, nunca viene del cliente. */
 function withAmounts(lines: PoLineInput[]): NewLine[] {
   return lines.map((line) => ({ ...line, amount: lineAmount(line.quantity, line.unitPrice) }));
-}
-
-function toLineDto(line: PurchaseOrderRow['lines'][number]): PoLineDto {
-  return {
-    id: line.id,
-    position: line.position,
-    sku: line.sku,
-    description: line.description,
-    quantity: String(line.quantity),
-    unit: line.unit,
-    unitPrice: String(line.unitPrice),
-    amount: line.amount.toFixed(2),
-    receivedQuantity: line.receivedQuantity === null ? null : String(line.receivedQuantity),
-  };
-}
-
-function toReceiptDto(row: ReceiptOrderRow): ReceiptOrderDto {
-  return {
-    id: row.id,
-    number: row.number,
-    supplierName: row.supplier.name,
-    issuedOn: fromDbDate(row.issuedOn),
-    receiptStatus: row.receiptStatus,
-    receivedOn: row.receivedOn ? fromDbDate(row.receivedOn) : null,
-    receivedBy: row.receivedBy,
-    receiptNotes: row.receiptNotes,
-    lines: row.lines.map((line) => ({
-      id: line.id,
-      position: line.position,
-      sku: line.sku,
-      description: line.description,
-      quantity: String(line.quantity),
-      unit: line.unit,
-      receivedQuantity: line.receivedQuantity === null ? null : String(line.receivedQuantity),
-    })),
-  };
-}
-
-function toPurchaseOrderDto(row: PurchaseOrderRow): PurchaseOrderDto {
-  const lines = row.lines.map(toLineDto);
-  return {
-    id: row.id,
-    number: row.number,
-    supplier: {
-      id: row.supplier.id,
-      name: row.supplier.name,
-      taxId: row.supplier.taxId,
-      creditDays: row.supplier.creditDays,
-    },
-    issuedOn: fromDbDate(row.issuedOn),
-    total: row.total.toFixed(2),
-    taxes: impliedTaxes(row.total.toFixed(2), lines.length, linesSubtotal(lines)),
-    currency: row.currency,
-    parlevelRef: row.parlevelRef,
-    lines,
-    status: row.status,
-    receiptStatus: row.receiptStatus,
-    receivedOn: row.receivedOn ? fromDbDate(row.receivedOn) : null,
-    receivedBy: row.receivedBy,
-    receiptNotes: row.receiptNotes,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  };
 }

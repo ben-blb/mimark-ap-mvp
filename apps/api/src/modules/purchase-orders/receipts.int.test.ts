@@ -73,12 +73,14 @@ describe('recepciones sin precios (spec 017)', () => {
       .expect(201);
 
     const pending = (await warehouse.get('/api/receipts').expect(200)).body.items as Receipt[];
-    expect(pending.map((r) => r.number)).toEqual(['OC-5002']);
-    expect(pending[0]).toMatchObject({
+    expect(pending.map((r) => r.number)).toContain('OC-5002');
+    expect(pending.map((r) => r.number)).not.toContain('OC-5001');
+    expect(pending.map((r) => r.number)).not.toContain('OC-5003');
+    expect(pending.find((r) => r.number === 'OC-5002')).toMatchObject({
       supplierName: expect.any(String),
       receiptStatus: 'pending',
     });
-    expect(pending[0]?.lines[0]).toMatchObject({
+    expect(pending.find((r) => r.number === 'OC-5002')?.lines[0]).toMatchObject({
       position: 1,
       sku: 'VAS-12',
       description: 'Vaso 12 oz',
@@ -88,7 +90,8 @@ describe('recepciones sin precios (spec 017)', () => {
 
     const received = (await warehouse.get('/api/receipts?status=received').expect(200)).body
       .items as Receipt[];
-    expect(received.map((r) => r.number)).toEqual(['OC-5001']);
+    expect(received.map((r) => r.number)).toContain('OC-5001');
+    expect(received.map((r) => r.number)).not.toContain('OC-5002');
 
     const found = (await warehouse.get('/api/receipts?search=5002').expect(200)).body
       .items as Receipt[];

@@ -121,7 +121,9 @@ diga cuál reemplaza. Formato: decisión · alternativas · por qué · revisar 
 - **Decisión:** tabla `users` (correo, hash scrypt, rol, activo); entrada con correo y contraseña; misma cookie HMAC de
   8 h, ahora con `userId`, rol y bandera de cambio de contraseña; matriz fija de permisos en `contracts/permissions.ts`
   exigida por la API con `@Requires` y reflejada en la web. El primer administrador se crea en una configuración
-  inicial protegida por el código `ACCESS_CODE_HASH`. «Borrar» un usuario lo desactiva.
+  inicial protegida por el código `ACCESS_CODE_HASH`. «Borrar» un usuario lo desactiva. Spec 017: las lecturas de
+  proveedores y órdenes también exigen permiso (`suppliers:read`, `orders:read`) y cada rol ve solo lo de su función
+  (Almacén, solo recepciones sin precios).
 - **Alternativas:** Auth.js, Clerk u otro proveedor de identidad; sesiones en tabla con revisión por petición;
   permisos editables desde una pantalla.
 - **Por qué:** la entrega necesita saber quién es cada persona y que cada rol haga solo lo suyo, sin dependencias

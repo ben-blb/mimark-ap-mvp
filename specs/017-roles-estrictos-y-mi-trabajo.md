@@ -147,9 +147,9 @@ Sin eventos nuevos (solo lecturas).
 ## Tareas
 
 - [x] 1. Contratos: permisos, matriz, `TOOL_PERMISSION` y `receipts.ts`, con pruebas.
-- [ ] 2. API: `@Requires` en las lecturas de proveedores y órdenes; ampliar `permissions.int.test.ts` (AC-017-01,
+- [x] 2. API: `@Requires` en las lecturas de proveedores y órdenes; ampliar `permissions.int.test.ts` (AC-017-01,
       02, 03, 06).
-- [ ] 3. API: `GET /api/receipts` y `/:id` con pruebas de integración (AC-017-04, 05).
+- [x] 3. API: `GET /api/receipts` y `/:id` con pruebas de integración (AC-017-04, 05).
 - [x] 4. Web: navegación, rutas, `HomeRedirect` y `/tablero` (AC-017-07, 08, 09).
 - [x] 5. Web: `/recepciones` y retiro de «Confirmar recepción» en `/ordenes` (AC-017-12, 13).
 - [x] 6. Web: «Mi trabajo» (AC-017-10, 11).
@@ -170,8 +170,7 @@ Sin eventos nuevos (solo lecturas).
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
 
 - 2026-11-14 · La spec estaba en `borrador`; la persona dijo que ya estaba aprobada y se pasó a `en-progreso`.
-- 2026-11-14 · Sin Postgres local (Docker apagado, sin `TEST_DATABASE_URL`): las tareas 2 y 3 (pruebas de integración
-  `permissions.int.test.ts` y `receipts.int.test.ts`) están escritas y compilan, pero no se han corrido.
+- 2026-11-15 · Con Postgres local (`pnpm db:up`), `pnpm check` completo en verde (162 pruebas de integración).
 - 2026-11-14 · «Pagos programados … con su fecha de pago»: `PayableSummaryDto` no trae `scheduledPayOn`. Se muestra el
   vencimiento (`dueOn`) y se ordena por él (las vencidas salen primero). Si se quiere la fecha programada hay que
   sumarla al resumen del listado.

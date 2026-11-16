@@ -20,7 +20,8 @@ export function poFlowSteps(order: PurchaseOrderDto): FlowStep[] {
   if (stage === 'cancelled') return [];
   const current = CURRENT[stage];
   const dates: (string | null)[] = [
-    order.createdAt.slice(0, 10),
+    // Día local de quien mira (no el día UTC): una orden de la noche no debe salir creada «mañana».
+    new Date(order.createdAt).toLocaleDateString('en-CA'),
     order.receivedOn,
     null,
     null,

@@ -1,7 +1,7 @@
 ---
 id: '019'
 titulo: Vista de la orden y conciliación contra lo recibido
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['004', '005', '017', '018']
 requisitos: RF-09, RF-10, RF-11 (extensión; modifica 004)
 ---
@@ -166,7 +166,7 @@ Sin eventos nuevos: no hay escrituras nuevas.
 - [x] 5. Web: `FlowSteps` y `/ordenes/:id` (AC-019-10 a 13).
 - [x] 6. Web: etapa en `/ordenes` y bloque de «Mi trabajo» (AC-019-14, 15).
 - [x] 7. Web: cuadro y texto de la razón en el expediente (AC-019-16, 17).
-- [ ] 8. `pnpm check`, recorrido manual AC-019-18, mapa de `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check`, recorrido manual AC-019-18, mapa de `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -188,3 +188,6 @@ Sin eventos nuevos: no hay escrituras nuevas.
 - 2026-11-15 · `poStage` y `receivedSubtotalCents` viven en `purchase-orders.progress.rules.ts` (no en `purchase-orders.rules.ts`, que está en el límite de 300 líneas). «Expediente vivo» aquí es «no descartado», distinto del `NOT_LIVE` de duplicados (que excluye también `failed` y `out_of_scope`): así un expediente fallido sigue contando como «Factura en revisión».
 - 2026-11-15 · El filtro `stage` se aplica en el service sobre la etapa derivada (no en la base); `awaitingInvoice` sí es un filtro de relación en el repositorio.
 - 2026-11-15 · `PAYABLE_STATUSES`/`PayableStatus` se movieron a `contracts/payable-status.ts` (y `payables.ts` los reexporta) para que `purchase-orders.ts` los use sin un import circular.
+- 2026-11-15 · AC-019-18 verificado con `AI_PROVIDER=fake` (la lectura real del PDF falló con `AI_UNAVAILABLE`; queda en `docs/pendientes-de-verificar.md`) y el PDF real copiado como `parlevel-warehouse OC 3062.pdf`: Compras creó P3062 (9 partidas, subtotal 30,875.50), Almacén recibió 70 de 75 de «Refresco cola 600 ml» con nota (subtotal recibido 30,128.00), CxP la vio en «Órdenes listas para factura», la factura de 30,875.50 dio `RECEIVED_AMOUNT_MISMATCH` (descartada), la de 30,128.00 quedó por confirmar y se confirmó, programó y pagó; `/ordenes/:id` recorrió `to_receive → to_invoice → in_review → to_schedule → scheduled → paid` y Compras recibió 403 en `/api/payables`. El recorrido se ejecutó por HTTP con una sesión por rol y la web se revisó a 375 px; el recorrido completo con clics queda para `docs/verificacion-manual.md`.
+- 2026-11-15 · Para poder verificar, el modo `fake` de la extracción de facturas reconoce `p3062` (y `p3062-recibido`) en el nombre del archivo.
+- 2026-11-15 · Ajuste: la fecha «Creada» de la barra usa el día local del navegador, no el día UTC.

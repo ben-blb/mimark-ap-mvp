@@ -57,6 +57,18 @@ export function fakeExtraction(bytes: Buffer, fileName: string): Extraction {
       total: 8352,
       missingFields: ['purchaseOrderNumber'],
     };
+  } else if (name.includes('p3062')) {
+    // Orden P3062 (docs/verificacion-manual.md): `-recibido` factura lo que Almacén recibió; sin sufijo, todo lo pedido.
+    const received = name.includes('p3062-recibido');
+    data = {
+      ...base,
+      supplierName: 'Refrescos del Norte SA de CV',
+      supplierTaxId: 'RDN010101AB1',
+      purchaseOrderNumber: 'P3062',
+      subtotal: received ? 30128 : 30875.5,
+      taxes: received ? 4820.48 : 4940.08,
+      total: received ? 34948.48 : 35815.58,
+    };
   } else if (name.includes('total-distinto')) {
     data = {
       ...base,

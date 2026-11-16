@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
-    "access:hash": "tsx scripts/hash-access-code.ts"
+    "access:hash": "tsx scripts/hash-access-code.ts",
+    "db:verification-users": "tsx scripts/seed-verification-users.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.88",

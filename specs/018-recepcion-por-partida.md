@@ -1,7 +1,7 @@
 ---
 id: '018'
 titulo: Recepción por partida con diferencias
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['003', '014', '017']
 requisitos: RF-03 (extensión; modifica 003 y 014)
 ---
@@ -134,7 +134,7 @@ errores de campo o el estado resultante. `checkReceipt` no cambia.
 - [x] 5. Ajuste de `RECEIPT_NOT_CONFIRMED` con su prueba (AC-018-10).
 - [x] 6. Web: recepción con cantidades (AC-018-11, 12).
 - [x] 7. Web: estado, filtro, pedido/recibido y bloque de «Mi trabajo» (AC-018-13, 14).
-- [ ] 8. `pnpm check`, verificación manual AC-018-15, mapa de `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check`, verificación manual AC-018-15, mapa de `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -151,3 +151,4 @@ errores de campo o el estado resultante. `checkReceipt` no cambia.
 - 2026-11-15 · Los errores de cantidad (negativa, > 3 decimales, mayor a lo pedido) caen en `fieldErrors.lines` porque `checkReceiptLines` los valida; el contrato solo exige texto, ya que Zod los reportaría como `lines.0.receivedQuantity`.
 - 2026-11-15 · AC-014-06 y AC-014-14 conservan su prueba con el ID original (reescrita al nuevo formato); AC-018-05/11 las cubren con las suyas.
 - 2026-11-15 · Pendiente fuera de alcance: el prompt del asistente (`assistant.v3.ts`) aún dice «checklist completo»; solo es texto de ayuda.
+- 2026-11-15 · AC-018-15 verificado con la web a 375 px (marco de 375 px en Chrome) como Almacén sobre la orden P3063: el diálogo es la hoja a pantalla completa del tema (margen superior de ~50 px, igual que los demás diálogos), fecha y notas arriba, − y + de 48 × 48 px, «Faltan 2», notas obligatorias y botón «Confirmar con diferencias». Ajuste: el contador «N de M completas» pasó a la barra fija de abajo y esa barra admite varias líneas para que el botón no se corte. Guía: `docs/verificacion-manual.md`.

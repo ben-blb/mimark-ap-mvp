@@ -6,10 +6,11 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 
 ## Verificación manual
 
-- [ ] 2026-11-15 · 018 · AC-018-15: a 375 px la recepción ocupa toda la pantalla, − y + miden al menos 48 px,
-      fecha y notas van arriba y el botón de confirmar queda fijo abajo con el contador. Cómo: `pnpm dev`,
-      entrar como Almacén con un viewport de 375 px y recibir una orden con un faltante. Al verificarlo: anotarlo
-      en la Bitácora de la 018, marcar la tarea 8 y pasar la spec a `hecha`.
+- [ ] 2026-11-15 · 018/019 · Repetir el recorrido de `docs/verificacion-manual.md` con teclado y ratón en la web
+      (el 2026-11-15 se probó la API de punta a punta y la web a 375 px, pero el recorrido completo por la
+      interfaz no se hizo). Usuarios y archivos están en ese documento.
+- [ ] 2026-11-15 · 019 · Con `AI_PROVIDER=anthropic` la lectura del PDF falló con `AI_UNAVAILABLE` (llave, modelo
+      `claude-haiku-5-5` o red; no se investigó). Verificar la lectura real de `docs/OC 3062 PEPSI.pdf`.
 
 ## Decisiones o texto por revisar
 
@@ -18,3 +19,5 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-15 · 018 · Una cantidad como `'70.0'` queda así en el evento de auditoría y como `70` en la API.
       No afecta cálculos; opcional: normalizarla en `receipt.rules.ts`.
 - [ ] 2026-11-15 · 015 · `pnpm spec:check` la muestra `en-progreso` con tareas 7/8: revisar qué falta y cerrarla.
+- [ ] 2026-11-15 · 019 · Validar con la contadora que el subtotal de sus facturas sea comparable con cantidad × precio
+      unitario de la OC (por ejemplo, que el IEPS no venga dentro del precio).

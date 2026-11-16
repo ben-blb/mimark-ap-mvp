@@ -115,11 +115,8 @@ export function ReceiptDialog({ order, onClose }: { order: ReceiptOrderDto; onCl
               <>
                 <Stack
                   direction="row"
-                  sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 1 }}
+                  sx={{ alignItems: 'center', justifyContent: 'flex-end', pt: 1 }}
                 >
-                  <Typography variant="subtitle2" aria-live="polite">
-                    {completeCount} de {total} completas
-                  </Typography>
                   <Button
                     size="small"
                     onClick={() =>
@@ -181,7 +178,7 @@ export function ReceiptDialog({ order, onClose }: { order: ReceiptOrderDto; onCl
                               <Typography
                                 variant="body2"
                                 color="warning.dark"
-                                sx={{ fontWeight: 600 }}
+                                sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
                               >
                                 Faltan {short}
                               </Typography>
@@ -216,8 +213,19 @@ export function ReceiptDialog({ order, onClose }: { order: ReceiptOrderDto; onCl
             borderColor: 'divider',
             px: 3,
             py: 1.5,
+            flexWrap: 'wrap',
+            rowGap: 1,
           }}
         >
+          {total > 0 && (
+            <Typography
+              variant="subtitle2"
+              aria-live="polite"
+              sx={{ mr: 'auto', flexBasis: { xs: '100%', sm: 'auto' } }}
+            >
+              {completeCount} de {total} completas
+            </Typography>
+          )}
           <Button onClick={onClose}>Cancelar</Button>
           <Button
             type="submit"

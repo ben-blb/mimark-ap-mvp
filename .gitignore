@@ -26,3 +26,6 @@ apps/api/.storage/
 
 # Documentos reales de proveedores: nunca al repositorio
 docs/*.pdf
+
+# Paquete de pruebas manuales generado (pnpm paquete-manual)
+infra/probador/paquete-manual/

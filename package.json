@@ -20,6 +20,7 @@
     "spec:check": "node scripts/spec-check.mjs",
     "probador": "pnpm --filter @mimark/probador run probador",
     "eval": "pnpm --filter @mimark/probador run eval",
+    "paquete-manual": "pnpm --filter @mimark/probador run paquete-manual",
     "test": "pnpm test:unit && pnpm test:int",
     "test:unit": "pnpm -r --if-present run test:unit",
     "test:int": "pnpm --filter @mimark/api run test:int",

@@ -4,6 +4,9 @@ Recorrido paso a paso para probar a mano la recepción por partida (018) y el av
 (019). **Solo para una base local**: los usuarios y contraseñas de abajo son sintéticos y el script se niega a
 correr contra una base que no sea `localhost`.
 
+> Para probar **todo el flujo desde cero con IA real** (base vacía, sin seed, ~35 documentos sintéticos), usa
+> [`paquete-de-pruebas.md`](paquete-de-pruebas.md) (`pnpm paquete-manual`).
+
 ## Preparación
 
 ```bash

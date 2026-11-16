@@ -12,6 +12,10 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-15 · 019 · Con `AI_PROVIDER=anthropic` la lectura del PDF falló con `AI_UNAVAILABLE` (llave, modelo
       `claude-haiku-5-5` o red; no se investigó). Verificar la lectura real de `docs/OC 3062 PEPSI.pdf`.
 
+- [ ] 2026-11-15 · 004/015 · `pnpm paquete-manual` (guía `docs/paquete-de-pruebas.md`): los resultados esperados
+      se derivaron de las reglas, no se ejecutaron contra la IA real. Recorrerlos y corregir la guía donde difieran
+      (en especial `X07`/`X08`, `E11`, `E12` y `PO_MISMATCH`). PNG/JPG no se generan: exportar una factura a mano.
+
 ## Decisiones o texto por revisar
 
 - [ ] 2026-11-15 · 018 · `apps/api/src/integrations/prompts/assistant.v3.ts` aún dice «el checklist completo»;

@@ -146,4 +146,72 @@ describe('PayableDetail', () => {
     setup({}, <button type="button">Corregir</button>);
     expect(screen.getByRole('button', { name: 'Corregir' })).toBeInTheDocument();
   });
+
+  describe('cuadro Pedido / Recibido / Facturado (spec 019)', () => {
+    const order = (over: Partial<NonNullable<PayableDto['purchaseOrder']>> = {}) => ({
+      id: 'o1',
+      number: 'OC-3062',
+      total: '35815.58',
+      currency: 'MXN' as const,
+      receiptStatus: 'received_with_differences' as const,
+      linesSubtotal: '30875.50',
+      receivedSubtotal: '30128.00',
+      receivedOn: '2026-10-10',
+      receiptNotes: '<b>Faltaron 5 cajas</b>',
+      ...over,
+    });
+    const table = () => screen.getByRole('region', { name: 'Pedido, recibido y facturado' });
+
+    it('AC-019-16 muestra pedido, recibido y facturado, y marca el subtotal que no cuadra', () => {
+      setup({
+        purchaseOrder: order(),
+        fields: { ...payable.fields, subtotal: '30875.50', total: '35815.58' },
+        reviewReasons: [{ code: 'RECEIVED_AMOUNT_MISMATCH' }],
+      });
+      const view = within(table());
+      expect(view.getByText('Pedido (subtotal)').parentElement).toHaveTextContent('30,875.50');
+      expect(view.getByText('Recibido (subtotal)').parentElement).toHaveTextContent('30,128.00');
+      const billed = view.getByText('Facturado (subtotal)').parentElement!;
+      expect(billed).toHaveTextContent('30,875.50');
+      expect(billed).toHaveTextContent('No coincide con lo recibido');
+      expect(view.getByText('Total de la orden').parentElement).toHaveTextContent('35,815.58');
+      expect(view.getByText('Total de la factura').parentElement).toHaveTextContent('35,815.58');
+    });
+
+    it('AC-019-16 si el subtotal facturado cuadra con lo recibido, nada se marca', () => {
+      setup({
+        purchaseOrder: order(),
+        fields: { ...payable.fields, subtotal: '30128.00', total: '34948.48' },
+        reviewReasons: [],
+      });
+      expect(within(table()).queryByText(/No coincide/)).toBeNull();
+    });
+
+    it('AC-019-16 sin diferencias se marca el total de la factura si no es el de la orden', () => {
+      setup({
+        purchaseOrder: order({ receiptStatus: 'received', receivedSubtotal: '30875.50' }),
+        fields: { ...payable.fields, subtotal: '30875.50', total: '35815.59' },
+      });
+      expect(within(table()).getByText('No coincide con la orden')).toBeInTheDocument();
+    });
+
+    it('AC-019-16 las notas de recepción se muestran como texto, no como HTML', () => {
+      const { container } = setup({ purchaseOrder: order() });
+      expect(within(table()).getByText(/Faltaron 5 cajas/)).toBeInTheDocument();
+      expect(container.querySelector('region b, section b')).toBeNull();
+    });
+
+    it('AC-019-17 la razón se explica con los dos importes', () => {
+      setup({
+        purchaseOrder: order(),
+        fields: { ...payable.fields, subtotal: '30875.50' },
+        reviewReasons: [{ code: 'RECEIVED_AMOUNT_MISMATCH' }],
+      });
+      expect(
+        screen.getByText(
+          'El subtotal de la factura ($30,875.50) no coincide con lo que recibió Almacén ($30,128.00).',
+        ),
+      ).toBeInTheDocument();
+    });
+  });
 });

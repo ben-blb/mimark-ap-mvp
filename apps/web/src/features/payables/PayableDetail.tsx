@@ -19,6 +19,7 @@ import {
   REVIEW_REASON_LABELS,
 } from '../../lib/labels';
 import { ExtractedFields, PaymentCard, Section, Timeline } from './PayableDetailParts';
+import { ReconciliationCard, receivedMismatchText } from './ReconciliationCard';
 
 /**
  * Vista del expediente (sin API). Todo lo que viene del documento o de la IA se pinta como texto
@@ -104,7 +105,8 @@ export function PayableDetail(props: {
           <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
             {payable.reviewReasons.map((reason) => (
               <li key={`${reason.code}:${reason.field ?? ''}`}>
-                {REVIEW_REASON_LABELS[reason.code]}
+                {(reason.code === 'RECEIVED_AMOUNT_MISMATCH' && receivedMismatchText(payable)) ||
+                  REVIEW_REASON_LABELS[reason.code]}
                 {reason.field && ` (${FIELD_LABELS[reason.field]})`}
               </li>
             ))}
@@ -210,6 +212,7 @@ export function PayableDetail(props: {
                   Sin orden de compra ligada.
                 </Typography>
               )}
+              <ReconciliationCard payable={payable} />
               {payable.supplier && (
                 <Typography variant="body2">
                   {payable.supplier.name} ·{' '}

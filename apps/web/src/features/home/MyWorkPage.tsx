@@ -29,12 +29,25 @@ function Row({ row }: { row: WorkRow }) {
         color="inherit"
         sx={{ display: 'block', py: 1.25, '&:hover': { color: 'primary.main' } }}
       >
-        <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
-          {row.title}
-        </Typography>
-        <Typography variant="caption" noWrap component="div" sx={{ color: 'text.tertiary' }}>
-          {row.detail}
-        </Typography>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
+              {row.title}
+            </Typography>
+            <Typography variant="caption" noWrap component="div" sx={{ color: 'text.tertiary' }}>
+              {row.detail}
+            </Typography>
+          </Box>
+          {row.actionLabel && (
+            <Typography variant="body2" color="primary" sx={{ flexShrink: 0, fontWeight: 500 }}>
+              {row.actionLabel}
+            </Typography>
+          )}
+        </Stack>
       </Link>
     </Box>
   );

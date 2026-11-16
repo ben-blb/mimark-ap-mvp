@@ -1,10 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sessionKey } from '../session/session.api';
 import { setViewport } from '../../test/setup';
 import { PurchaseOrdersPage } from './PurchaseOrdersPage';
+
+function Where() {
+  return <span data-testid="where">{useLocation().pathname}</span>;
+}
 
 const order = {
   id: 'o1',
@@ -97,5 +102,45 @@ describe('PurchaseOrdersPage', () => {
     expect(
       screen.getByRole('option', { name: 'Abiertas · recibidas con diferencias' }),
     ).toBeInTheDocument();
+  });
+
+  it('AC-019-14 la fila abre /ordenes/:id, muestra la etapa y el filtro ofrece las etapas', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              items: [{ ...order, progress: { stage: 'to_invoice', invoice: null } }],
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
+        ),
+      ),
+    );
+    setViewport(1440);
+    const client = new QueryClient();
+    client.setQueryData(sessionKey, {
+      userId: 'u1',
+      actor: 'Ana',
+      role: 'purchasing',
+      mustChangePassword: false,
+      expiresAt: '2026-10-28T00:00:00.000Z',
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/ordenes?view=stageToInvoice']}>
+          <PurchaseOrdersPage />
+          <Where />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const row = await screen.findByRole('row', { name: /OC-1003/ });
+    expect(row).toHaveTextContent('Lista para factura');
+    expect(screen.queryByRole('columnheader', { name: 'Recepción' })).toBeNull();
+    expect(screen.getByRole('columnheader', { name: 'Etapa' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Etapa · Por programar' })).toBeInTheDocument();
+    await userEvent.setup().click(row);
+    expect(screen.getByTestId('where')).toHaveTextContent('/ordenes/o1');
   });
 });

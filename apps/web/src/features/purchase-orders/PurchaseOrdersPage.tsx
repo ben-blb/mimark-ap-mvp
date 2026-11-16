@@ -1,4 +1,8 @@
-import type { PurchaseOrderDto, PurchaseOrderListQuery } from '@mimark/contracts/purchase-orders';
+import type {
+  PoStage,
+  PurchaseOrderDto,
+  PurchaseOrderListQuery,
+} from '@mimark/contracts/purchase-orders';
 import AddOutlined from '@mui/icons-material/AddOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import Box from '@mui/material/Box';
@@ -10,16 +14,16 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useDeferredValue, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link as RouterLink, useSearchParams } from 'react-router';
 import { MONO } from '../../app/theme';
 import { CardField } from '../../components/CardField';
 import { DataRow, DataTable, Ellipsis } from '../../components/DataTable';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { Money } from '../../components/Money';
 import { PageHeader } from '../../components/PageHeader';
-import { StatusDot } from '../../components/StatusDot';
+import { type DotTone, StatusDot } from '../../components/StatusDot';
 import { formatDay } from '../../lib/format';
-import { PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
+import { PO_STAGE_LABELS, PURCHASE_ORDER_STATUS_LABELS } from '../../lib/labels';
 import { PurchaseOrderDialog } from './PurchaseOrderDialog';
 import { usePurchaseOrders } from './purchase-orders.api';
 import { useCan } from '../session/session.api';
@@ -35,27 +39,52 @@ const VIEWS = {
     label: 'Abiertas · recibidas con diferencias',
     query: { status: 'open', receipt: 'received_with_differences' },
   },
+  stageToReceive: { label: 'Etapa · Por recibir', query: { status: 'open', stage: 'to_receive' } },
+  stageToInvoice: {
+    label: 'Etapa · Lista para factura',
+    query: { status: 'open', stage: 'to_invoice' },
+  },
+  stageInReview: {
+    label: 'Etapa · Factura en revisión',
+    query: { status: 'open', stage: 'in_review' },
+  },
+  stageToSchedule: {
+    label: 'Etapa · Por programar',
+    query: { status: 'open', stage: 'to_schedule' },
+  },
+  stageScheduled: {
+    label: 'Etapa · Pago programado',
+    query: { status: 'open', stage: 'scheduled' },
+  },
+  stagePaid: { label: 'Etapa · Pagada', query: { status: 'open', stage: 'paid' } },
   cancelled: { label: 'Canceladas', query: { status: 'cancelled' } },
   all: { label: 'Todas', query: { status: 'all' } },
 } satisfies Record<string, { label: string; query: Partial<PurchaseOrderListQuery> }>;
 type View = keyof typeof VIEWS;
 
-/** Recepción: punto + fecha corta, y quién recibió en texto terciario (AC-010-04). */
-function Receipt({ order }: { order: PurchaseOrderDto }) {
-  if (!order.receivedOn) return <StatusDot tone="warning">Pendiente</StatusDot>;
+const STAGE_TONE: Record<PoStage, DotTone> = {
+  cancelled: 'neutral',
+  to_receive: 'warning',
+  to_invoice: 'primary',
+  in_review: 'primary',
+  to_schedule: 'primary',
+  scheduled: 'primary',
+  paid: 'success',
+};
+
+/** Etapa de la orden (spec 019): punto + texto; si se recibió con diferencias, lo dice debajo (spec 018). */
+function Stage({ order }: { order: PurchaseOrderDto }) {
+  const { stage } = order.progress;
   return (
     <Box>
-      <StatusDot tone={order.receiptStatus === 'received' ? 'success' : 'warning'}>
-        {formatDay(order.receivedOn)}
-        {order.receiptStatus === 'received_with_differences' && ' · con diferencias'}
-      </StatusDot>
-      {order.receivedBy && (
+      <StatusDot tone={STAGE_TONE[stage]}>{PO_STAGE_LABELS[stage]}</StatusDot>
+      {order.receiptStatus === 'received_with_differences' && (
         <Typography
           variant="caption"
           component="div"
-          sx={{ color: 'text.tertiary', pl: 1.75, lineHeight: 1.2 }}
+          sx={{ color: 'warning.dark', pl: 1.75, lineHeight: 1.2, fontWeight: 600 }}
         >
-          {order.receivedBy}
+          Recibida con diferencias
         </Typography>
       )}
     </Box>
@@ -153,7 +182,7 @@ export function PurchaseOrdersPage() {
             <TableCell>Fecha</TableCell>
             <TableCell align="right">Partidas</TableCell>
             <TableCell align="right">Total</TableCell>
-            <TableCell>Recepción</TableCell>
+            <TableCell>Etapa</TableCell>
             {showStatus && <TableCell>Estado</TableCell>}
             <TableCell align="right" />
           </TableRow>
@@ -161,7 +190,7 @@ export function PurchaseOrdersPage() {
         row={(order) => (
           <DataRow
             key={order.id}
-            onOpen={canWrite ? () => setDialog({ kind: 'edit', order }) : undefined}
+            to={`/ordenes/${order.id}`}
             label={`${order.number} ${order.supplier.name}`}
           >
             <TableCell
@@ -183,7 +212,7 @@ export function PurchaseOrdersPage() {
               <Money amount={order.total} currency={order.currency} />
             </TableCell>
             <TableCell sx={{ py: 0.5 }}>
-              <Receipt order={order} />
+              <Stage order={order} />
             </TableCell>
             {showStatus && <TableCell>{PURCHASE_ORDER_STATUS_LABELS[order.status]}</TableCell>}
             <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
@@ -205,14 +234,19 @@ export function PurchaseOrdersPage() {
             <Stack direction="row" spacing={3}>
               <CardField label="Fecha">{formatDay(order.issuedOn)}</CardField>
               <CardField label="Partidas">{order.lines.length || '—'}</CardField>
-              <CardField label="Recepción">
-                <Receipt order={order} />
+              <CardField label="Etapa">
+                <Stage order={order} />
               </CardField>
               {showStatus && (
                 <CardField label="Estado">{PURCHASE_ORDER_STATUS_LABELS[order.status]}</CardField>
               )}
             </Stack>
-            <OrderActions order={order} onOpen={setDialog} />
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Button size="small" component={RouterLink} to={`/ordenes/${order.id}`}>
+                Abrir
+              </Button>
+              <OrderActions order={order} onOpen={setDialog} />
+            </Stack>
           </Stack>
         )}
       />

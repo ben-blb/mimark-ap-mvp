@@ -11,6 +11,8 @@ export interface WorkRow {
   title: string;
   detail: string;
   to: string;
+  /** Acción que ofrece la fila (spec 019); la fila entera abre `to`. */
+  actionLabel?: string;
 }
 
 export interface WorkBlock {
@@ -69,6 +71,25 @@ const byPayOn = (a: PayableList['items'][number], b: PayableList['items'][number
 
 /** Un bloque por tipo de pendiente, en el orden en que se muestran. Reusa los listados que ya existen. */
 export const WORK_BLOCKS: readonly WorkBlock[] = [
+  {
+    key: 'to-invoice',
+    title: 'Órdenes listas para factura',
+    permission: 'payables:write',
+    seeAll: '/ordenes?view=stageToInvoice',
+    load: async () => {
+      const list = await api.get('/purchase-orders?awaitingInvoice=true', PurchaseOrderList);
+      return list.items.map((o) => ({
+        id: o.id,
+        title: `${o.number} · ${o.supplier.name}`,
+        detail:
+          o.receiptStatus === 'received_with_differences'
+            ? `recibida con diferencias el ${formatDay(o.receivedOn ?? o.issuedOn)}`
+            : `recibida el ${formatDay(o.receivedOn ?? o.issuedOn)}`,
+        to: `/ordenes/${o.id}`,
+        actionLabel: 'Cargar factura',
+      }));
+    },
+  },
   {
     key: 'receipts',
     title: 'Órdenes por recibir',

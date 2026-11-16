@@ -94,7 +94,7 @@ afterEach(() => vi.unstubAllGlobals());
 const block = (name: string) => screen.getByRole('region', { name: new RegExp(`^${name}`) });
 
 describe('MyWorkPage', () => {
-  it('AC-017-10 cuentas por pagar ve sus cuatro bloques, no las órdenes por recibir', async () => {
+  it('AC-017-10 cuentas por pagar ve sus bloques de facturas, no las órdenes por recibir', async () => {
     const fetchMock = setup('payables');
     await screen.findAllByText('Nada pendiente');
     for (const name of [
@@ -106,8 +106,40 @@ describe('MyWorkPage', () => {
       expect(block(name)).toBeInTheDocument();
     }
     expect(screen.queryByRole('region', { name: /Órdenes por recibir/ })).toBeNull();
+    // Solo consulta las órdenes listas para factura, no las que faltan por recibir.
     const urls = fetchMock.mock.calls.map((c) => c[0]);
-    expect(urls.some((u) => u.startsWith('/api/purchase-orders'))).toBe(false);
+    expect(urls.filter((u) => u.startsWith('/api/purchase-orders'))).toEqual([
+      '/api/purchase-orders?awaitingInvoice=true',
+    ]);
+  });
+
+  it('AC-019-15 Cuentas por pagar empieza con «Órdenes listas para factura», cada fila con «Cargar factura»', async () => {
+    setup('payables', {
+      '/api/purchase-orders?awaitingInvoice=true': [
+        { ...po(4), receiptStatus: 'received_with_differences' },
+        po(5),
+      ],
+    });
+    const regions = await screen.findAllByRole('region');
+    expect(regions[0]).toHaveAccessibleName(/Órdenes listas para factura/);
+    const ready = block('Órdenes listas para factura');
+    expect(await within(ready).findByText('OC-4 · Prov 4')).toBeInTheDocument();
+    expect(ready).toHaveTextContent('2');
+    expect(within(ready).getAllByText('Cargar factura')).toHaveLength(2);
+    expect(within(ready).getByRole('link', { name: /OC-4 · Prov 4/ })).toHaveAttribute(
+      'href',
+      '/ordenes/o4',
+    );
+    expect(within(ready).getByRole('link', { name: /Ver todas/ })).toHaveAttribute(
+      'href',
+      '/ordenes?view=stageToInvoice',
+    );
+  });
+
+  it('AC-019-15 quien no puede cargar facturas no ve el bloque', async () => {
+    setup('purchasing');
+    await screen.findAllByRole('region');
+    expect(screen.queryByRole('region', { name: /listas para factura/ })).toBeNull();
   });
 
   it('AC-017-10 compras ve solo «Órdenes por recibir» y no consulta facturas', async () => {
@@ -193,6 +225,6 @@ describe('MyWorkPage', () => {
   it('AC-017-11 con todo vacío dice «Estás al día»', async () => {
     setup('payables');
     expect(await screen.findByText('Estás al día')).toBeInTheDocument();
-    expect(screen.getAllByText('Nada pendiente')).toHaveLength(4);
+    expect(screen.getAllByText('Nada pendiente')).toHaveLength(5);
   });
 });

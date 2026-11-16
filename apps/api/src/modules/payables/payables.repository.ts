@@ -6,7 +6,10 @@ import { Db, type Tx } from '../../common/db.js';
 import { addDays, toDbDate } from '../../common/dates.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
-const WITH_RELATIONS = { purchaseOrder: true, supplier: true } satisfies Prisma.PayableInclude;
+const WITH_RELATIONS = {
+  purchaseOrder: { include: { lines: true } },
+  supplier: true,
+} satisfies Prisma.PayableInclude;
 export type PayableRow = Prisma.PayableGetPayload<{ include: typeof WITH_RELATIONS }>;
 
 /** Expediente vivo: cualquier estado excepto out_of_scope, failed y discarded. */

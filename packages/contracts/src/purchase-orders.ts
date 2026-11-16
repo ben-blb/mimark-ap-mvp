@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Currency, Id, LocalDate, Money, listOf } from './common.js';
+import { PayableStatus } from './payable-status.js';
 
 export const PoNumber = z
   .string()
@@ -49,6 +50,35 @@ export const PoLineDto = z.object({
 });
 export type PoLineDto = z.infer<typeof PoLineDto>;
 
+/** Dónde va la orden en el proceso (spec 019). Se calcula, no se guarda. */
+export const PO_STAGES = [
+  'cancelled',
+  'to_receive',
+  'to_invoice',
+  'in_review',
+  'to_schedule',
+  'scheduled',
+  'paid',
+] as const;
+export const PoStage = z.enum(PO_STAGES);
+export type PoStage = z.infer<typeof PoStage>;
+
+/** Avance visible para Compras: sin importes ni archivo de la factura, para no exigir `payables:read`. */
+export const PoProgress = z.object({
+  stage: PoStage,
+  invoice: z
+    .object({
+      payableId: Id,
+      status: PayableStatus,
+      invoiceNumber: z.string().nullable(),
+      dueOn: LocalDate.nullable(),
+      scheduledPayOn: LocalDate.nullable(),
+      paidOn: LocalDate.nullable(),
+    })
+    .nullable(),
+});
+export type PoProgress = z.infer<typeof PoProgress>;
+
 const PoLines = z
   .array(PoLineInput)
   .min(1, 'Agrega al menos una partida')
@@ -65,6 +95,11 @@ export const PurchaseOrderDto = z.object({
   currency: Currency,
   parlevelRef: z.string().nullable(),
   lines: z.array(PoLineDto),
+  /** Suma de los importes pedidos (sin impuestos). */
+  linesSubtotal: Money,
+  /** Suma de cantidad recibida × precio; nulo con recepción pendiente o sin partidas. */
+  receivedSubtotal: Money.nullable(),
+  progress: PoProgress,
   status: z.enum(['open', 'cancelled']),
   receiptStatus: ReceiptStatusValue,
   receivedOn: LocalDate.nullable(),
@@ -115,6 +150,12 @@ export const PurchaseOrderListQuery = z.object({
   search: z.string().trim().max(100).optional(),
   supplierId: Id.optional(),
   receipt: ReceiptStatusValue.optional(),
+  /** Solo órdenes abiertas, recibidas y sin expediente vivo (`true`). */
+  awaitingInvoice: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  stage: PoStage.optional(),
   status: z.enum(['open', 'cancelled', 'all']).default('open'),
 });
 export type PurchaseOrderListQuery = z.infer<typeof PurchaseOrderListQuery>;

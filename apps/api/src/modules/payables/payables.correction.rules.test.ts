@@ -28,6 +28,7 @@ const po1002: NonNullable<PayableContext['purchaseOrder']> = {
   currency: 'MXN',
   receiptStatus: 'received',
   supplierTaxId: 'BFM980512KL3',
+  receivedSubtotalCents: 720000,
 };
 const noContext = { duplicateOf: null, otherPayableForPo: null };
 

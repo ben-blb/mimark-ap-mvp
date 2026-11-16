@@ -53,7 +53,9 @@ export class PurchaseOrdersService {
 
   async list(query: PurchaseOrderListQuery): Promise<PurchaseOrderList> {
     const rows = await this.orders.list(query);
-    return { items: rows.map(toPurchaseOrderDto) };
+    const items = rows.map(toPurchaseOrderDto);
+    // La etapa se deriva, así que se filtra aquí y no en la base.
+    return { items: query.stage ? items.filter((o) => o.progress.stage === query.stage) : items };
   }
 
   async get(id: string): Promise<PurchaseOrderDto> {

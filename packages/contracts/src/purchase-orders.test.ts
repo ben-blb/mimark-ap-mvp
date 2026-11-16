@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CreatePurchaseOrderInput, ReceiptInput, totalWithVat } from './purchase-orders.js';
+import {
+  CreatePurchaseOrderInput,
+  PoProgress,
+  PurchaseOrderListQuery,
+  ReceiptInput,
+  totalWithVat,
+} from './purchase-orders.js';
 
 const valid = {
   number: 'OC-1001',
@@ -77,5 +83,32 @@ describe('totalWithVat (spec 015)', () => {
     ['0.05', '0.06'],
   ])('AC-015-07 %s + IVA 16 %% → %s', (subtotal, total) => {
     expect(totalWithVat(subtotal)).toBe(total);
+  });
+});
+
+describe('PurchaseOrderListQuery (spec 019)', () => {
+  it('AC-019-03 awaitingInvoice llega como texto y sale booleano', () => {
+    expect(PurchaseOrderListQuery.parse({ awaitingInvoice: 'true' }).awaitingInvoice).toBe(true);
+    expect(PurchaseOrderListQuery.parse({}).awaitingInvoice).toBeUndefined();
+    expect(PurchaseOrderListQuery.safeParse({ awaitingInvoice: 'si' }).success).toBe(false);
+  });
+
+  it('AC-019-14 stage acepta solo etapas conocidas', () => {
+    expect(PurchaseOrderListQuery.parse({ stage: 'to_invoice' }).stage).toBe('to_invoice');
+    expect(PurchaseOrderListQuery.safeParse({ stage: 'otra' }).success).toBe(false);
+  });
+});
+
+describe('PoProgress (spec 019)', () => {
+  it('AC-019-02 la factura del avance no trae importes ni archivo', () => {
+    const keys = Object.keys(PoProgress.shape.invoice.unwrap().shape);
+    expect(keys).toEqual([
+      'payableId',
+      'status',
+      'invoiceNumber',
+      'dueOn',
+      'scheduledPayOn',
+      'paidOn',
+    ]);
   });
 });

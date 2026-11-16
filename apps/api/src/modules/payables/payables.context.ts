@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { moneyToCents } from '../../common/money.js';
+import { receivedSubtotalCents } from '../purchase-orders/purchase-orders.progress.rules.js';
 import { PurchaseOrdersRepository } from '../purchase-orders/purchase-orders.repository.js';
 import { SuppliersRepository } from '../suppliers/suppliers.repository.js';
 import { PayablesRepository } from './payables.repository.js';
@@ -38,6 +39,12 @@ export class PayableContextLoader {
         currency: po.currency,
         receiptStatus: po.receiptStatus,
         supplierTaxId: po.supplier.taxId,
+        receivedSubtotalCents: receivedSubtotalCents(
+          po.lines.map((l) => ({
+            receivedQuantity: l.receivedQuantity?.toString() ?? null,
+            unitPrice: l.unitPrice.toString(),
+          })),
+        ),
       },
       duplicateOf: await this.payables.findLiveDuplicate({
         ...facts,

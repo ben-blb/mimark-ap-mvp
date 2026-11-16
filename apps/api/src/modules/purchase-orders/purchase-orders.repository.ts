@@ -10,6 +10,20 @@ import type { Prisma } from '../../generated/prisma/client.js';
 const WITH_SUPPLIER = {
   supplier: true,
   lines: { orderBy: { position: 'asc' } },
+  /** Expediente vivo (no descartado) más antiguo, solo lectura, para calcular la etapa (spec 019). */
+  payables: {
+    where: { status: { not: 'discarded' } },
+    orderBy: { createdAt: 'asc' },
+    take: 1,
+    select: {
+      id: true,
+      status: true,
+      invoiceNumber: true,
+      dueOn: true,
+      scheduledPayOn: true,
+      paidOn: true,
+    },
+  },
 } satisfies Prisma.PurchaseOrderInclude;
 export type PurchaseOrderRow = Prisma.PurchaseOrderGetPayload<{ include: typeof WITH_SUPPLIER }>;
 
@@ -81,6 +95,11 @@ export class PurchaseOrdersRepository {
     const where: Prisma.PurchaseOrderWhereInput = {};
     if (query.status !== 'all') where.status = query.status;
     if (query.receipt) where.receiptStatus = query.receipt;
+    if (query.awaitingInvoice) {
+      where.status = 'open';
+      where.receiptStatus = { in: ['received', 'received_with_differences'] };
+      where.payables = { none: { status: { not: 'discarded' } } };
+    }
     if (query.supplierId) where.supplierId = query.supplierId;
     if (query.search) {
       where.OR = [

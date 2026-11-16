@@ -36,6 +36,8 @@ export interface PayableContext {
     currency: Currency;
     receiptStatus: 'pending' | 'received' | 'received_with_differences';
     supplierTaxId: string;
+    /** Cantidad recibida × precio, en centavos; nulo sin recepción o sin partidas (spec 019). */
+    receivedSubtotalCents: number | null;
   } | null;
   /** Id de otro expediente vivo con el mismo UUID o RFC + folio. */
   duplicateOf: string | null;
@@ -126,6 +128,12 @@ export function evaluatePayable(
     ['currency', facts.currency === null],
     ['purchaseOrderNumber', facts.poNumber === null && ctx.selectedPoNumber === null],
     ['taxUuid', facts.docType === 'factura' && facts.taxUuid === null],
+    // Con diferencias se concilia el subtotal, así que sin él no se puede conciliar (spec 019).
+    [
+      'subtotal',
+      ctx.purchaseOrder?.receiptStatus === 'received_with_differences' &&
+        facts.subtotalCents === null,
+    ],
   ];
   const missing = new Set(required.filter(([, isMissing]) => isMissing).map(([field]) => field));
   for (const field of missing) reasons.push(`MISSING_FIELD:${field}`);
@@ -151,7 +159,16 @@ export function evaluatePayable(
     if (facts.currency !== null && facts.currency !== po.currency) {
       reasons.push('CURRENCY_MISMATCH');
     }
-    if (facts.totalCents !== null && facts.totalCents !== po.totalCents) {
+    if (po.receiptStatus === 'received_with_differences') {
+      // El total esperado de una entrega parcial no es exacto (IVA/IEPS por producto): se concilia el subtotal.
+      if (
+        facts.subtotalCents !== null &&
+        po.receivedSubtotalCents !== null &&
+        facts.subtotalCents !== po.receivedSubtotalCents
+      ) {
+        reasons.push('RECEIVED_AMOUNT_MISMATCH');
+      }
+    } else if (facts.totalCents !== null && facts.totalCents !== po.totalCents) {
       reasons.push('TOTAL_MISMATCH');
     }
     if (po.receiptStatus === 'pending') reasons.push('RECEIPT_NOT_CONFIRMED');

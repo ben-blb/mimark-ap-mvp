@@ -3,6 +3,8 @@ import type { PayableDto, PayableSummaryDto } from '@mimark/contracts/payables';
 import type { LocalDate } from '@mimark/contracts/common';
 import { z } from 'zod';
 import { centsToMoney, moneyToCents } from '../../common/money.js';
+import { receivedSubtotalCents } from '../purchase-orders/purchase-orders.progress.rules.js';
+import { linesSubtotal } from '../purchase-orders/purchase-orders.rules.js';
 import { fromDbDate } from '../../common/dates.js';
 import type { ExtractionResult } from '../../integrations/extraction.client.js';
 import type { PayableEvaluation, PayableFieldValues, PayableRow } from './payables.repository.js';
@@ -24,6 +26,13 @@ export function toPayableDto(row: PayableRow, today: LocalDate): PayableDto {
   const stored = StoredExtraction.safeParse(row.extraction);
   const extraction = stored.success ? stored.data : null;
   const money = (value: { toFixed(digits: number): string } | null) => value?.toFixed(2) ?? null;
+  const poLines = row.purchaseOrder?.lines ?? [];
+  const received = receivedSubtotalCents(
+    poLines.map((l) => ({
+      receivedQuantity: l.receivedQuantity?.toString() ?? null,
+      unitPrice: l.unitPrice.toString(),
+    })),
+  );
   return {
     id: row.id,
     status: row.status,
@@ -57,6 +66,15 @@ export function toPayableDto(row: PayableRow, today: LocalDate): PayableDto {
       total: row.purchaseOrder.total.toFixed(2),
       currency: row.purchaseOrder.currency,
       receiptStatus: row.purchaseOrder.receiptStatus,
+      linesSubtotal: linesSubtotal(
+        poLines.map((l) => ({
+          quantity: l.quantity.toString(),
+          unitPrice: l.unitPrice.toString(),
+        })),
+      ),
+      receivedSubtotal: received === null ? null : centsToMoney(received),
+      receivedOn: row.purchaseOrder.receivedOn ? fromDbDate(row.purchaseOrder.receivedOn) : null,
+      receiptNotes: row.purchaseOrder.receiptNotes,
     },
     supplier: row.supplier && {
       id: row.supplier.id,

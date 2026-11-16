@@ -118,6 +118,7 @@ const po1001: NonNullable<PayableContext['purchaseOrder']> = {
   currency: 'MXN',
   receiptStatus: 'received',
   supplierTaxId: 'DAN010203AB1',
+  receivedSubtotalCents: 1000000,
 };
 const baseCtx: PayableContext = {
   selectedPoNumber: null,
@@ -208,6 +209,46 @@ describe('evaluatePayable', () => {
         ctx({ purchaseOrder: null, selectedPoNumber: 'OC-9999' }),
       ).reasons,
     ).toEqual(['PO_NOT_FOUND']);
+  });
+
+  describe('conciliación contra lo recibido (spec 019)', () => {
+    // Pedido 10,000.00; Almacén recibió por 9,000.00 de subtotal.
+    const partial = {
+      ...po1001,
+      receiptStatus: 'received_with_differences',
+      receivedSubtotalCents: 900000,
+    } as const;
+    const reasonsOf = (changes: Partial<Facts>) =>
+      evaluatePayable(facts(changes), ctx({ purchaseOrder: partial })).reasons;
+
+    it('AC-019-05 una OC recibida completa sigue comparando el total: un centavo da TOTAL_MISMATCH', () => {
+      expect(evaluatePayable(baseFacts, baseCtx).reasons).toEqual([]);
+      expect(evaluatePayable(facts({ totalCents: 1160001 }), baseCtx).reasons).toEqual([
+        'TOTAL_MISMATCH',
+      ]);
+    });
+
+    it('AC-019-06 con diferencias, el subtotal igual al recibido concilia aunque el total sea otro', () => {
+      const result = evaluatePayable(
+        facts({ subtotalCents: 900000, totalCents: 1044000 }),
+        ctx({ purchaseOrder: partial }),
+      );
+      expect(result).toEqual({ status: 'pending_confirmation', reasons: [] });
+    });
+
+    it('AC-019-07 con diferencias, un centavo de diferencia en el subtotal da RECEIVED_AMOUNT_MISMATCH', () => {
+      expect(reasonsOf({ subtotalCents: 900001 })).toEqual(['RECEIVED_AMOUNT_MISMATCH']);
+      // Facturaron todo lo pedido aunque se recibió menos.
+      expect(reasonsOf({ subtotalCents: 1000000 })).toEqual(['RECEIVED_AMOUNT_MISMATCH']);
+    });
+
+    it('AC-019-08 con diferencias y sin subtotal legible pide revisar el campo', () => {
+      expect(reasonsOf({ subtotalCents: null })).toEqual(['MISSING_FIELD:subtotal']);
+    });
+
+    it('AC-019-08 una OC recibida completa no exige subtotal', () => {
+      expect(evaluatePayable(facts({ subtotalCents: null }), baseCtx).reasons).toEqual([]);
+    });
   });
 
   it('AC-018-10 una OC recibida con diferencias cuenta como recibida', () => {

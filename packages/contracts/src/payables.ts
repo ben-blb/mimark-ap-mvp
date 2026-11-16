@@ -3,20 +3,8 @@ import { Currency, Id, LocalDate, Money, listOf } from './common.js';
 import { DOC_TYPES, ExtractedField } from './extraction.js';
 import { PoNumber, ReceiptStatusValue } from './purchase-orders.js';
 
-export const PAYABLE_STATUSES = [
-  'uploaded',
-  'processing',
-  'requires_review',
-  'pending_confirmation',
-  'confirmed',
-  'scheduled',
-  'paid',
-  'out_of_scope',
-  'failed',
-  'discarded',
-] as const;
-export const PayableStatus = z.enum(PAYABLE_STATUSES);
-export type PayableStatus = z.infer<typeof PayableStatus>;
+export { PAYABLE_STATUSES, PayableStatus } from './payable-status.js';
+import { PayableStatus } from './payable-status.js';
 
 export const REVIEW_REASON_CODES = [
   'NOT_AP_DOCUMENT',
@@ -29,6 +17,7 @@ export const REVIEW_REASON_CODES = [
   'TAX_ID_MISMATCH',
   'CURRENCY_MISMATCH',
   'TOTAL_MISMATCH',
+  'RECEIVED_AMOUNT_MISMATCH',
   'RECEIPT_NOT_CONFIRMED',
   'DUPLICATE',
 ] as const;
@@ -87,6 +76,11 @@ export const PayableDto = z.object({
       total: Money,
       currency: Currency,
       receiptStatus: ReceiptStatusValue,
+      /** Cuadro Pedido / Recibido (spec 019). `receivedSubtotal` es nulo si no hay recepción o partidas. */
+      linesSubtotal: Money,
+      receivedSubtotal: Money.nullable(),
+      receivedOn: LocalDate.nullable(),
+      receiptNotes: z.string().nullable(),
     })
     .nullable(),
   supplier: z

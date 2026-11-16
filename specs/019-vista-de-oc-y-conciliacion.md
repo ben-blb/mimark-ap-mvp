@@ -1,7 +1,7 @@
 ---
 id: '019'
 titulo: Vista de la orden y conciliación contra lo recibido
-estado: borrador # borrador | lista | en-progreso | hecha
+estado: en-progreso # borrador | lista | en-progreso | hecha
 depende_de: ['004', '005', '017', '018']
 requisitos: RF-09, RF-10, RF-11 (extensión; modifica 004)
 ---
@@ -159,10 +159,10 @@ Sin eventos nuevos: no hay escrituras nuevas.
 
 ## Tareas
 
-- [ ] 1. Contratos (etapa, subtotales, filtro, razón nueva) con pruebas.
-- [ ] 2. Reglas `poStage` y `receivedSubtotalCents` con sus tablas (AC-019-01, 04).
-- [ ] 3. Repositorio y service de órdenes: `progress`, subtotales y `awaitingInvoice`; integración (AC-019-01 a 04).
-- [ ] 4. `evaluatePayable` y su contexto; pruebas de la tabla e integración (AC-019-05 a 09).
+- [x] 1. Contratos (etapa, subtotales, filtro, razón nueva) con pruebas.
+- [x] 2. Reglas `poStage` y `receivedSubtotalCents` con sus tablas (AC-019-01, 04).
+- [x] 3. Repositorio y service de órdenes: `progress`, subtotales y `awaitingInvoice`; integración (AC-019-01 a 04).
+- [x] 4. `evaluatePayable` y su contexto; pruebas de la tabla e integración (AC-019-05 a 09).
 - [ ] 5. Web: `FlowSteps` y `/ordenes/:id` (AC-019-10 a 13).
 - [ ] 6. Web: etapa en `/ordenes` y bloque de «Mi trabajo» (AC-019-14, 15).
 - [ ] 7. Web: cuadro y texto de la razón en el expediente (AC-019-16, 17).
@@ -183,3 +183,8 @@ Sin eventos nuevos: no hay escrituras nuevas.
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+- 2026-11-15 · La persona aprobó la spec (`borrador` → `lista`) y pidió implementarla sin esperar a que la 018 pase a `hecha` (le falta solo AC-018-15 manual; ver `docs/pendientes-de-verificar.md`).
+- 2026-11-15 · `poStage` y `receivedSubtotalCents` viven en `purchase-orders.progress.rules.ts` (no en `purchase-orders.rules.ts`, que está en el límite de 300 líneas). «Expediente vivo» aquí es «no descartado», distinto del `NOT_LIVE` de duplicados (que excluye también `failed` y `out_of_scope`): así un expediente fallido sigue contando como «Factura en revisión».
+- 2026-11-15 · El filtro `stage` se aplica en el service sobre la etapa derivada (no en la base); `awaitingInvoice` sí es un filtro de relación en el repositorio.
+- 2026-11-15 · `PAYABLE_STATUSES`/`PayableStatus` se movieron a `contracts/payable-status.ts` (y `payables.ts` los reexporta) para que `purchase-orders.ts` los use sin un import circular.

@@ -10,7 +10,14 @@ import { useUploadPayable } from './payables.api';
 import { UploadForm, type UploadValues } from './UploadForm';
 
 /** Conecta el formulario con la API. Al terminar abre el detalle del expediente. */
-export function UploadDialog({ onClose }: { onClose: () => void }) {
+export function UploadDialog({
+  onClose,
+  fixedOrder,
+}: {
+  onClose: () => void;
+  /** Con una orden fija (desde su vista) la subida ya viene ligada a ella. */
+  fixedOrder?: { number: string; supplierName: string };
+}) {
   const orders = usePurchaseOrders({ status: 'open' });
   const upload = useUploadPayable();
   const navigate = useNavigate();
@@ -38,6 +45,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
             number: o.number,
             supplierName: o.supplier.name,
           }))}
+          fixedOrder={fixedOrder}
           today={localToday()}
           pending={upload.isPending}
           error={upload.error}

@@ -163,7 +163,7 @@ Sin eventos nuevos: no hay escrituras nuevas.
 - [x] 2. Reglas `poStage` y `receivedSubtotalCents` con sus tablas (AC-019-01, 04).
 - [x] 3. Repositorio y service de órdenes: `progress`, subtotales y `awaitingInvoice`; integración (AC-019-01 a 04).
 - [x] 4. `evaluatePayable` y su contexto; pruebas de la tabla e integración (AC-019-05 a 09).
-- [ ] 5. Web: `FlowSteps` y `/ordenes/:id` (AC-019-10 a 13).
+- [x] 5. Web: `FlowSteps` y `/ordenes/:id` (AC-019-10 a 13).
 - [ ] 6. Web: etapa en `/ordenes` y bloque de «Mi trabajo» (AC-019-14, 15).
 - [ ] 7. Web: cuadro y texto de la razón en el expediente (AC-019-16, 17).
 - [ ] 8. `pnpm check`, recorrido manual AC-019-18, mapa de `specs/README.md`; `hecha`.

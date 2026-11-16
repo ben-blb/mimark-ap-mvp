@@ -8,6 +8,7 @@ import { SetupPage } from '../features/session/SetupPage';
 import { UsersPage } from '../features/users/UsersPage';
 import { PayableDetailPage } from '../features/payables/PayableDetailPage';
 import { PayablesPage } from '../features/payables/PayablesPage';
+import { PurchaseOrderDetailPage } from '../features/purchase-orders/PurchaseOrderDetailPage';
 import { PurchaseOrdersPage } from '../features/purchase-orders/PurchaseOrdersPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
@@ -40,6 +41,14 @@ export const routes: RouteObject[] = [
         element: (
           <RequirePermission permission="orders:read">
             <PurchaseOrdersPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'ordenes/:id',
+        element: (
+          <RequirePermission permission="orders:read">
+            <PurchaseOrderDetailPage />
           </RequirePermission>
         ),
       },

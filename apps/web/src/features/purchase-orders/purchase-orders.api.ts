@@ -12,6 +12,7 @@ import { api, toQuery } from '../../lib/api-client';
 /** Query keys y llamadas de la feature en un solo archivo. Los componentes no hacen fetch. */
 export const purchaseOrderKeys = {
   all: ['purchase-orders'] as const,
+  detail: (id: string) => ['purchase-orders', 'detail', id] as const,
   list: (query: Partial<PurchaseOrderListQuery>) => ['purchase-orders', 'list', query] as const,
 };
 
@@ -19,6 +20,13 @@ export function usePurchaseOrders(query: Partial<PurchaseOrderListQuery>) {
   return useQuery({
     queryKey: purchaseOrderKeys.list(query),
     queryFn: () => api.get(`/purchase-orders${toQuery(query)}`, PurchaseOrderList),
+  });
+}
+
+export function usePurchaseOrder(id: string) {
+  return useQuery({
+    queryKey: purchaseOrderKeys.detail(id),
+    queryFn: () => api.get(`/purchase-orders/${id}`, PurchaseOrderDto),
   });
 }
 

@@ -2,7 +2,7 @@ import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
 import type { PayableDto, PayableStatus, REVIEW_REASON_CODES } from '@mimark/contracts/payables';
-import type { PurchaseOrderDto } from '@mimark/contracts/purchase-orders';
+import type { PoStage, PurchaseOrderDto } from '@mimark/contracts/purchase-orders';
 import type { Role } from '@mimark/contracts/session';
 
 /** Todas las etiquetas visibles de los valores de contracts. Cada spec agrega las suyas aquí. */
@@ -23,6 +23,16 @@ export const CURRENCY_LABELS: Record<Currency, string> = {
 export const PURCHASE_ORDER_STATUS_LABELS: Record<PurchaseOrderDto['status'], string> = {
   open: 'Abierta',
   cancelled: 'Cancelada',
+};
+
+export const PO_STAGE_LABELS: Record<PoStage, string> = {
+  cancelled: 'Cancelada',
+  to_receive: 'Por recibir',
+  to_invoice: 'Lista para factura',
+  in_review: 'Factura en revisión',
+  to_schedule: 'Por programar',
+  scheduled: 'Pago programado',
+  paid: 'Pagada',
 };
 
 export const RECEIPT_STATUS_LABELS: Record<PurchaseOrderDto['receiptStatus'], string> = {
@@ -55,6 +65,7 @@ export const REVIEW_REASON_LABELS: Record<(typeof REVIEW_REASON_CODES)[number], 
   TAX_ID_MISMATCH: 'El RFC no coincide con el de la OC',
   CURRENCY_MISMATCH: 'La moneda no coincide con la OC',
   TOTAL_MISMATCH: 'El total no coincide con la OC',
+  RECEIVED_AMOUNT_MISMATCH: 'El subtotal no coincide con lo que recibió Almacén',
   RECEIPT_NOT_CONFIRMED: 'La OC no tiene recepción confirmada',
   DUPLICATE: 'Posible duplicado de otro expediente',
 };

@@ -36,6 +36,8 @@ export interface UploadValues {
 /** Formulario puro (sin API) para poder probarlo. */
 export function UploadForm(props: {
   orders: { id: string; number: string; supplierName: string }[];
+  /** Orden ya elegida (desde la vista de la orden): no se puede cambiar. */
+  fixedOrder?: { number: string; supplierName: string } | undefined;
   today: string;
   pending: boolean;
   error: unknown;
@@ -47,7 +49,7 @@ export function UploadForm(props: {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
+  const [purchaseOrderNumber, setPurchaseOrderNumber] = useState(props.fixedOrder?.number ?? '');
   const [invoiceReceivedOn, setInvoiceReceivedOn] = useState(props.today);
   const fieldErrors = props.error instanceof ApiError ? props.error.fieldErrors : {};
   const generalError =
@@ -127,17 +129,19 @@ export function UploadForm(props: {
       </div>
       <TextField
         select
-        label="Orden de compra (opcional)"
+        disabled={!!props.fixedOrder}
+        label={props.fixedOrder ? 'Orden de compra' : 'Orden de compra (opcional)'}
         value={purchaseOrderNumber}
         onChange={(e) => setPurchaseOrderNumber(e.target.value)}
         error={!!fieldErrors.purchaseOrderNumber}
         helperText={
-          fieldErrors.purchaseOrderNumber ?? 'Si no eliges una, se usa la que diga el documento.'
+          fieldErrors.purchaseOrderNumber ??
+          (props.fixedOrder ? undefined : 'Si no eliges una, se usa la que diga el documento.')
         }
         slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
       >
-        <option value="">Que la lea del documento</option>
-        {props.orders.map((order) => (
+        {!props.fixedOrder && <option value="">Que la lea del documento</option>}
+        {(props.fixedOrder ? [{ id: 'fixed', ...props.fixedOrder }] : props.orders).map((order) => (
           <option key={order.id} value={order.number}>
             {order.number} · {order.supplierName}
           </option>

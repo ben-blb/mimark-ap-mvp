@@ -67,22 +67,24 @@ export const PO_EXTRACTED_FIELDS = [
 export const PoExtractedField = z.enum(PO_EXTRACTED_FIELDS);
 export type PoExtractedField = z.infer<typeof PoExtractedField>;
 
+// Anthropic limita a 16 los campos con unión/nullable en salida estructurada: los textos van como cadena vacía
+// cuando no aparecen (el service la trata como ausente) y solo los números y la moneda admiten null.
 export const PoExtractionSchema = z.object({
   isPurchaseOrder: z.boolean().describe('false si el documento no es una orden de compra'),
-  number: z.string().nullable().describe('Folio o número de la orden de compra'),
-  supplierName: z.string().nullable().describe('Proveedor al que se le compra'),
-  supplierTaxId: z.string().nullable().describe('RFC del proveedor'),
-  supplierCity: z.string().nullable().describe('Ciudad y estado del proveedor (bloque To:)'),
-  buyerName: z.string().nullable().describe('Comprador: quien emite la orden (bloque From:)'),
-  issuedOn: z.string().nullable().describe('Fecha de la orden tal como aparece, p. ej. 08-05-2026'),
+  number: z.string().describe('Folio o número de la orden de compra'),
+  supplierName: z.string().describe('Proveedor al que se le compra'),
+  supplierTaxId: z.string().describe('RFC del proveedor'),
+  supplierCity: z.string().describe('Ciudad y estado del proveedor (bloque To:)'),
+  buyerName: z.string().describe('Comprador: quien emite la orden (bloque From:)'),
+  issuedOn: z.string().describe('Fecha de la orden tal como aparece, p. ej. 08-05-2026'),
   currency: z.enum(CURRENCIES).nullable(),
-  parlevelRef: z.string().nullable().describe('Referencia o folio interno de ParLevel si existe'),
+  parlevelRef: z.string().describe('Referencia o folio interno de ParLevel si existe'),
   lines: z.array(
     z.object({
-      sku: z.string().nullable().describe('Código o SKU del producto'),
-      description: z.string().nullable(),
+      sku: z.string().describe('Código o SKU del producto'),
+      description: z.string(),
       quantity: z.number().nullable(),
-      unit: z.string().nullable().describe('Unidad: pza, caja, kg...'),
+      unit: z.string().describe('Unidad: pza, caja, kg...'),
       unitPrice: z.number().nullable().describe('Precio unitario sin impuestos'),
       amount: z.number().nullable().describe('Importe de la partida tal como aparece'),
       deposit: z.number().nullable().describe('Depósito de envase de la partida (columna Deposit)'),

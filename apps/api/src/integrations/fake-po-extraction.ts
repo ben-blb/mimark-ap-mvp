@@ -14,14 +14,14 @@ export function fakePoExtraction(fileName: string): PoExtraction {
 
   const empty: PoExtraction = {
     isPurchaseOrder: false,
-    number: null,
-    supplierName: null,
-    supplierTaxId: null,
-    supplierCity: null,
-    buyerName: null,
-    issuedOn: null,
+    number: '',
+    supplierName: '',
+    supplierTaxId: '',
+    supplierCity: '',
+    buyerName: '',
+    issuedOn: '',
     currency: null,
-    parlevelRef: null,
+    parlevelRef: '',
     lines: [],
     subtotal: null,
     taxes: null,
@@ -91,7 +91,7 @@ function parlevelWarehouse(name: string, empty: PoExtraction): PoExtraction {
     ['Bebida isotónica ponche 600 ml', 15, 106],
   ];
   const lines = rows.map(([description, quantity, unitPrice]) => ({
-    sku: null,
+    sku: '',
     description,
     quantity,
     unit: 'caja',

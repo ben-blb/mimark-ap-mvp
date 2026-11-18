@@ -239,6 +239,22 @@ describe('analyzeSheet', () => {
     );
   });
 
+  it('AC-021-04 banco: las filas de otro mes se rechazan una a una, no el archivo', () => {
+    const bankHeader = ['Fecha', 'Concepto', 'Retiro', 'Deposito'];
+    const rows = [
+      bankHeader,
+      ['31/08/2026', 'A', '10', ''],
+      ['01/09/2026', 'B', '', '25'],
+      ['02/09/2026', 'C', '5', ''],
+    ];
+    const a = analyzeSheet('bank_csv', rows, { month: '2026-09', kiosks });
+    expect(a.entries).toHaveLength(2);
+    expect(a.rejected).toEqual([{ row: 2, reason: 'Fecha de otro mes (2026-08-31)' }]);
+    expect(() => analyzeSheet('bank_csv', rows, { month: '2026-10', kiosks })).toThrowError(
+      expect.objectContaining({ code: 'SOURCE_WRONG_MONTH' }),
+    );
+  });
+
   it('AC-021-04 una sola fila fuera del mes basta para rechazar el archivo', () => {
     expect(() =>
       run([header, ['1C-FTLALNEPANTLA', '2026-09-01', 1], ['1C-FTLALNEPANTLA', '2026-10-01', 1]]),

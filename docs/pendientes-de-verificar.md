@@ -24,12 +24,10 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       cuenta real. Repetir «Probar» de las reglas con un concepto real cuando llegue el PDF (spec 022).
 
 - [ ] 2026-11-18 · 021 · AC-021-15 [manual], sigue abierto. Con el libro de la contadora solo el banco coincide
-      (−61,414.08, agosto). Faltan los **exports crudos** de Parlevel (ventas por día y por Asset, mermas), Cantaloupe
+      (−61,414.08, agosto; ya acepta meses mezclados). Faltan los **exports crudos** de Parlevel (ventas por día y por Asset, mermas), Cantaloupe
       (con Device ID) y los archivos de caja y nómina; o decidir que la 021 acepte los acumulados mensuales (Parlevel
       sin Date, Cantaloupe en tabla dinámica). Detalle en la Bitácora de la 021. Después: cargarlos en `/cierre/cargas`,
       comparar totales con el Excel y medir si 45 kioskos caben en 4 MB. Al terminar: borrar esta línea y pasar a `hecha`.
-- [ ] 2026-11-18 · 021 · El estado de cuenta real mezcla meses (ago + sep): ¿se parte a mano o la carga debe ofrecer
-      quedarse con las filas del mes? Hoy se rechaza completo (AC-021-04).
 
 ## Decisiones o texto por revisar
 

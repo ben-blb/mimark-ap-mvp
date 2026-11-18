@@ -242,8 +242,16 @@ export function analyzeSheet(
     else result.entries.push({ row: rowNumber, entry: parsed.entry });
   });
 
-  const outside = result.entries.some(({ entry }) => entry.date.slice(0, 7) !== opts.month);
-  if (outside) {
+  const inMonth = ({ entry }: { entry: ParsedEntry }) => entry.date.slice(0, 7) === opts.month;
+  if (source === 'bank_csv' && result.entries.some(inMonth)) {
+    // El estado de cuenta cruza meses: las filas ajenas se rechazan una a una, no el archivo.
+    for (const e of result.entries.filter((x) => !inMonth(x))) {
+      result.rejected.push({ row: e.row, reason: `Fecha de otro mes (${e.entry.date})` });
+    }
+    result.entries = result.entries.filter(inMonth);
+    result.rejected.sort((a, b) => a.row - b.row);
+  }
+  if (!result.entries.every(inMonth)) {
     // El mes ajeno más frecuente: en un archivo mezclado (ago + sep) el dominante podría ser el esperado.
     const detected = monthOf(
       result.entries.map(({ entry }) => entry.date).filter((d) => d.slice(0, 7) !== opts.month),

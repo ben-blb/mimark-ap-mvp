@@ -48,6 +48,8 @@ El orden y los nombres de columna de cada tipo viven en `source-formats.ts` (una
   lista de columnas que faltan; no guarda nada.
 - **AC-021-04** · Si las fechas del archivo caen fuera de `month` (más de 0 filas), responde 422
   `SOURCE_WRONG_MONTH` con el mes detectado. Ejemplo: se sube agosto al periodo de septiembre.
+  **Excepción `bank_csv`:** el estado de cuenta puede cruzar meses; ahí las filas de otro mes se rechazan una a una
+  («Fecha de otro mes») y solo se responde `SOURCE_WRONG_MONTH` si ninguna fila es del mes.
 - **AC-021-05** · Si un kiosko del archivo (por `Asset` o `Device ID`) no existe en el catálogo de su empresa, esas
   filas quedan en «sin kiosko» con `UNKNOWN_KIOSK:<id>` en la vista previa; no se descartan ni inventan kioskos.
 - **AC-021-06** · Un archivo con el mismo hash ya confirmado para ese (empresa, mes, fuente, cuenta) responde 409
@@ -188,3 +190,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   `Sales by POS` (Parlevel) es un acumulado mensual por Asset, sin columna Date y con Cash/Cashless/Wallet;
   `CANTALOUPE` es una tabla dinámica por fecha, sin Device ID; `WASTE REPORT` no trae Date/Type/Amount;
   `ACUM.NOMINAS` es una matriz por empleado y semana. Son hojas de trabajo, no los exports crudos. AC-021-15 sigue abierto.
+- 2026-11-18 · Decisión del usuario: el estado de cuenta puede mezclar meses y los exports crudos no se consiguen por
+  ahora. AC-021-04 tiene ahora una excepción para `bank_csv` (filas de otro mes rechazadas una a una). Con el libro real
+  y mes 2026-08 el archivo completo carga: 190 filas leídas, 96 rechazadas (septiembre y filas sin fecha), total
+  −61,414.08 = Excel. Parlevel, Cantaloupe, mermas y nómina quedan sin verificar contra datos reales (AC-021-15 abierto).

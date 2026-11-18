@@ -84,6 +84,10 @@ afterEach(() => vi.unstubAllGlobals());
 describe('CatalogPage (spec 020)', () => {
   it('AC-020-12 con reports:write ofrece «Agregar» y editar en cada pestaña', async () => {
     const user = setup('admin');
+    expect(screen.getByRole('link', { name: 'Cargas del mes' })).toHaveAttribute(
+      'href',
+      '/cierre/cargas',
+    );
     expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
       'Empresas',
       'Kioskos',
@@ -110,6 +114,7 @@ describe('CatalogPage (spec 020)', () => {
     expect(await screen.findByText('Quima Tlalnepantla')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Agregar/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Cargas del mes' })).toBeNull();
 
     for (const tab of ['Kioskos', 'Categorías', 'Reglas']) {
       await user.click(screen.getByRole('tab', { name: tab }));

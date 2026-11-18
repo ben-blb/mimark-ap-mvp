@@ -1,9 +1,11 @@
+import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { useCan } from '../session/session.api';
 import { CatalogTab } from './CatalogTab';
@@ -18,7 +20,16 @@ export function CatalogPage() {
 
   return (
     <>
-      <PageHeader title="Catálogo del cierre" />
+      <PageHeader
+        title="Catálogo del cierre"
+        actions={
+          canWrite && (
+            <Button component={Link} to="/cierre/cargas" variant="outlined">
+              Cargas del mes
+            </Button>
+          )
+        }
+      />
       <Stack
         direction="row"
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, alignItems: 'center' }}

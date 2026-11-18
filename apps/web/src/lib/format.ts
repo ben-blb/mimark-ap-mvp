@@ -13,14 +13,15 @@ const dateTimeFormat = new Intl.DateTimeFormat('es-MX', {
   timeZone: 'America/Monterrey',
 });
 
-/** "11600.00" → "$11,600.00"; sin centavos → "$11,600" (resúmenes). */
+/** "11600.00" → "$11,600.00"; sin centavos → "$11,600" (resúmenes); un egreso → "-$350.00". */
 export function formatAmount(amount: string, cents = true): string {
   const digits = cents ? 2 : 0;
-  const value = Number(amount).toLocaleString('es-MX', {
+  const number = Number(amount);
+  const value = Math.abs(number).toLocaleString('es-MX', {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
-  return `$${value}`;
+  return `${number < 0 ? '-' : ''}$${value}`;
 }
 
 /** "11600.00", "MXN" → "$11,600.00 MXN". */

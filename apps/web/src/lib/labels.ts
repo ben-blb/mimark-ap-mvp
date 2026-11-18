@@ -1,4 +1,5 @@
 import type { AccountType, CategoryKind } from '@mimark/contracts/closing';
+import type { Source } from '@mimark/contracts/closing-uploads';
 import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
@@ -157,4 +158,23 @@ export const CATEGORY_KIND_LABELS: Record<CategoryKind, string> = {
   income: 'Ingreso',
   cost: 'Costo',
   expense: 'Gasto',
+};
+
+export const SOURCE_LABELS: Record<Source, string> = {
+  parlevel_sales: 'Ventas Parlevel',
+  parlevel_waste: 'Mermas y robos Parlevel',
+  cantaloupe: 'Cantaloupe',
+  bank_csv: 'Banco',
+  cash: 'Caja',
+  payroll: 'Nómina',
+};
+
+/** Qué archivo espera cada tarjeta de carga (spec 021). */
+export const SOURCE_HINTS: Record<Source, string> = {
+  parlevel_sales: 'Reporte «Sales by POS» de Parlevel',
+  parlevel_waste: 'Reporte «Waste report» de Parlevel',
+  cantaloupe: 'Export diario de Cantaloupe',
+  bank_csv: 'Estado de cuenta del banco en CSV o Excel',
+  cash: 'Plantilla de caja: fecha, concepto, monto y entrada/salida',
+  payroll: 'Plantilla de nómina: fecha, nombre, monto e IMSS',
 };

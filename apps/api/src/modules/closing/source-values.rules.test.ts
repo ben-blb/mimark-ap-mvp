@@ -30,6 +30,11 @@ describe('parseAmountCents', () => {
     ['-1234.5', -123450],
     ['(1,234.50)', -123450],
     ['0', 0],
+    ['1.005', 101],
+    [1.005, 101],
+    ['1.004', 100],
+    ['-1.005', -101],
+    [0.285, 29],
   ])('AC-021-08 %s → %s centavos', (input, expected) => {
     expect(parseAmountCents(input)).toBe(expected);
   });

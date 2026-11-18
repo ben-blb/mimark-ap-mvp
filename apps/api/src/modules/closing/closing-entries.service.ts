@@ -13,6 +13,10 @@ import { ClosingRepository } from './closing.repository.js';
 import { ClosingUploadsRepository } from './closing-uploads.repository.js';
 import { toEntryDto } from './closing-uploads.dto.js';
 
+/** La nómina es siempre un egreso (como su archivo); en caja el signo lo decide quien captura. */
+const signedAmount = (input: CreateEntryInput) =>
+  input.source === 'payroll' ? `-${input.amount.replace(/^-/, '')}` : input.amount;
+
 /** Movimientos del cierre (spec 021): captura manual de caja y nómina, y el listado paginado. */
 @Injectable()
 export class ClosingEntriesService {
@@ -36,6 +40,7 @@ export class ClosingEntriesService {
       }
     }
     const month = input.date.slice(0, 7);
+    const amount = signedAmount(input);
 
     return this.db.$transaction(async (tx) => {
       const period = await this.uploads.lockPeriod(
@@ -53,7 +58,7 @@ export class ClosingEntriesService {
           uploadId: null,
           rowNumber: null,
           concept: input.concept,
-          amount: input.amount,
+          amount,
           needsReview: false,
           createdBy: ctx.actor,
         },
@@ -65,7 +70,7 @@ export class ClosingEntriesService {
           entity: 'entry',
           entityId: entry.id,
           action: 'entry.created',
-          data: { source: input.source, month, amount: input.amount },
+          data: { source: input.source, month, amount },
         },
         tx,
       );

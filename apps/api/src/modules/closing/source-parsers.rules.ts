@@ -244,7 +244,10 @@ export function analyzeSheet(
 
   const outside = result.entries.some(({ entry }) => entry.date.slice(0, 7) !== opts.month);
   if (outside) {
-    const detected = monthOf(result.entries.map(({ entry }) => entry.date));
+    // El mes ajeno más frecuente: en un archivo mezclado (ago + sep) el dominante podría ser el esperado.
+    const detected = monthOf(
+      result.entries.map(({ entry }) => entry.date).filter((d) => d.slice(0, 7) !== opts.month),
+    );
     throw new AppError(
       'SOURCE_WRONG_MONTH',
       `Las fechas del archivo son de ${detected ?? '?'}, no de ${opts.month}.`,
@@ -254,14 +257,19 @@ export function analyzeSheet(
   return result;
 }
 
+/** Una llave repetida es ambigua: queda en '' (falsa) y la fila va a «sin kiosko» en vez de sumarse a uno al azar. */
+function addKey(map: Map<string, string>, key: string, id: string) {
+  map.set(key, map.has(key) ? '' : id);
+}
+
 /** Kioskos activos de una empresa → búsqueda por `Asset` (Parlevel) y por `Device ID` (Cantaloupe). */
 export function buildKioskLookup(
   kiosks: { id: string; parlevelAsset: string | null; cantaloupeDeviceId: string | null }[],
 ): KioskLookup {
   const lookup: KioskLookup = { byAsset: new Map(), byDevice: new Map() };
   for (const k of kiosks) {
-    if (k.parlevelAsset) lookup.byAsset.set(normalizeKey(k.parlevelAsset), k.id);
-    if (k.cantaloupeDeviceId) lookup.byDevice.set(normalizeKey(k.cantaloupeDeviceId), k.id);
+    if (k.parlevelAsset) addKey(lookup.byAsset, normalizeKey(k.parlevelAsset), k.id);
+    if (k.cantaloupeDeviceId) addKey(lookup.byDevice, normalizeKey(k.cantaloupeDeviceId), k.id);
   }
   return lookup;
 }

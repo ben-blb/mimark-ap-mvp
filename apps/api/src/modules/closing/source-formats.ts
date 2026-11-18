@@ -46,8 +46,8 @@ export const SOURCE_FORMATS: Record<Source, Record<string, ColumnDef>> = {
   bank_csv: {
     date: col('Fecha', ['fecha', 'date']),
     concept: col('Concepto', ['concepto', 'descripcion', 'description']),
-    withdrawals: col('Retiros', ['retiros', 'cargos', 'withdrawals']),
-    deposits: col('Depósitos', ['depositos', 'abonos', 'deposits']),
+    withdrawals: col('Retiros', ['retiros', 'retiro', 'cargos', 'withdrawals']),
+    deposits: col('Depósitos', ['depositos', 'deposito', 'abonos', 'deposits']),
   },
   cash: {
     date: col('Fecha', ['fecha', 'date']),

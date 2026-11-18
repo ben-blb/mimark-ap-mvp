@@ -21,6 +21,10 @@ const ctx = (columns: Record<string, number>, extra = {}) => ({
 
 describe('detectColumns', () => {
   it('AC-021-03 reconoce las columnas sin importar orden, mayúsculas ni acentos', () => {
+    // Estado de cuenta real (2026-11-18): «Retiro» y «Deposito» en singular y sin acento.
+    expect(detectColumns('bank_csv', ['Fecha', 'Concepto', 'Retiro', 'Deposito']).missing).toEqual(
+      [],
+    );
     const found = detectColumns('bank_csv', ['Depósitos', 'FECHA', 'Concepto', 'Retiros', 'Saldo']);
     expect(found.missing).toEqual([]);
     expect(found.columns).toMatchObject({ deposits: 0, date: 1, concept: 2, withdrawals: 3 });
@@ -220,6 +224,21 @@ describe('analyzeSheet', () => {
     );
   });
 
+  it('AC-021-04 un archivo mezclado (mes esperado + otro) nombra el mes ajeno', () => {
+    expect(() =>
+      run([
+        header,
+        ['1C-FTLALNEPANTLA', '2026-09-01', 1],
+        ['1C-FTLALNEPANTLA', '2026-09-02', 1],
+        ['1C-FTLALNEPANTLA', '2026-10-01', 1],
+      ]),
+    ).toThrowError(
+      expect.objectContaining({
+        extra: { details: { detected: '2026-10', expected: '2026-09' } },
+      }),
+    );
+  });
+
   it('AC-021-04 una sola fila fuera del mes basta para rechazar el archivo', () => {
     expect(() =>
       run([header, ['1C-FTLALNEPANTLA', '2026-09-01', 1], ['1C-FTLALNEPANTLA', '2026-10-01', 1]]),
@@ -263,5 +282,14 @@ describe('buildKioskLookup', () => {
     expect(lookup.byAsset.get('1c-ftlalnepantla')).toBe('k1');
     expect(lookup.byDevice.get('plk003627')).toBe('k1');
     expect(lookup.byAsset.size).toBe(1);
+  });
+
+  it('AC-021-05 una llave repetida es ambigua: no se asigna a ningún kiosko', () => {
+    const lookup = buildKioskLookup([
+      { id: 'k1', parlevelAsset: '1', cantaloupeDeviceId: 'D1' },
+      { id: 'k2', parlevelAsset: '1', cantaloupeDeviceId: 'D2' },
+    ]);
+    expect(lookup.byAsset.get('1')).toBeFalsy();
+    expect(lookup.byDevice.get('d1')).toBe('k1');
   });
 });

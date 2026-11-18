@@ -23,12 +23,13 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-18 · 020 · AC-020-14 se probó con un concepto con el formato de la spec, no con uno de un estado de
       cuenta real. Repetir «Probar» de las reglas con un concepto real cuando llegue el PDF (spec 022).
 
-- [ ] 2026-11-18 · 021 · AC-021-15 [manual]: con los exports de un mes real de una empresa chica (Parlevel ventas y
-      mermas, Cantaloupe, banco en CSV/Excel, caja, nómina), cargar cada uno en `/cierre/cargas` en ese orden y comprobar
-      que los totales de la vista previa coinciden con los de cada pestaña del Excel de la contadora. Los nombres de
-      columna de `source-formats.ts` son una propuesta: ajustarlos a los exports reales (basta agregar alias en `names`).
-      Medir también si un mes de 45 kioskos cabe en 4 MB. Al terminar: borrar esta línea, anotarlo en la Bitácora de la 021
-      y pasarla a `hecha`.
+- [ ] 2026-11-18 · 021 · AC-021-15 [manual], sigue abierto. Con el libro de la contadora solo el banco coincide
+      (−61,414.08, agosto). Faltan los **exports crudos** de Parlevel (ventas por día y por Asset, mermas), Cantaloupe
+      (con Device ID) y los archivos de caja y nómina; o decidir que la 021 acepte los acumulados mensuales (Parlevel
+      sin Date, Cantaloupe en tabla dinámica). Detalle en la Bitácora de la 021. Después: cargarlos en `/cierre/cargas`,
+      comparar totales con el Excel y medir si 45 kioskos caben en 4 MB. Al terminar: borrar esta línea y pasar a `hecha`.
+- [ ] 2026-11-18 · 021 · El estado de cuenta real mezcla meses (ago + sep): ¿se parte a mano o la carga debe ofrecer
+      quedarse con las filas del mes? Hoy se rechaza completo (AC-021-04).
 
 ## Decisiones o texto por revisar
 

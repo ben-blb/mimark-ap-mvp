@@ -36,9 +36,22 @@ export function parseDate(value: unknown): string | null {
   return null;
 }
 
+/** Texto decimal «123.456» → centavos, sin pasar por coma flotante (medio centavo hacia arriba). */
+function decimalToCents(text: string): number | null {
+  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(text);
+  if (!m) return null;
+  const frac = (m[3] ?? '').padEnd(3, '0');
+  const cents = Number(m[2]) * 100 + Number(frac.slice(0, 2)) + (frac.charCodeAt(2) >= 53 ? 1 : 0);
+  return m[1] ? -cents : cents;
+}
+
 /** Un importe → centavos con signo. Acepta números y textos como «$ 1,234.50», «-10» o «(1,234.50)». */
 export function parseAmountCents(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value * 100) : null;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return null;
+    // String(1.005) es «1.005»; los exponentes («1e-7», «1e21») no son decimales: ahí sí vale el redondeo.
+    return decimalToCents(String(value)) ?? Math.round(value * 100);
+  }
   if (typeof value !== 'string') return null;
   let text = value.replace(/[\s$,]/g, '');
   let negative = false;
@@ -48,6 +61,7 @@ export function parseAmountCents(value: unknown): number | null {
     text = parens[1] ?? '';
   }
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
-  const cents = Math.round(Number(text) * 100);
+  const cents = decimalToCents(text);
+  if (cents === null) return null;
   return negative ? -Math.abs(cents) : cents;
 }

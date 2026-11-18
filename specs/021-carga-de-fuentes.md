@@ -52,7 +52,7 @@ El orden y los nombres de columna de cada tipo viven en `source-formats.ts` (una
   filas quedan en «sin kiosko» con `UNKNOWN_KIOSK:<id>` en la vista previa; no se descartan ni inventan kioskos.
 - **AC-021-06** · Un archivo con el mismo hash ya confirmado para ese (empresa, mes, fuente, cuenta) responde 409
   `DUPLICATE_UPLOAD` y avisa quién y cuándo lo cargó.
-- **AC-021-07** · `bank_csv` sin `accountId`, o con una cuenta de otra empresa, responde 422.
+- **AC-021-07** · `bank_csv` sin `accountId`, o con una cuenta de otra empresa, responde 400 `VALIDATION` con `fieldErrors.accountId`.
 
 ### Confirmación y movimientos
 
@@ -63,7 +63,8 @@ El orden y los nombres de columna de cada tipo viven en `source-formats.ts` (una
 - **AC-021-10** · Cada movimiento guarda su origen (`uploadId` + número de fila) para la trazabilidad de la 024.
 - **AC-021-11** · Un periodo `closed` rechaza cargas y confirmaciones con 409 `PERIOD_CLOSED`.
 - **AC-021-12** · Captura manual de `cash` y `payroll`: `POST /api/closing/entries` crea un movimiento con origen
-  `manual`; solo en periodo abierto y con `reports:write`.
+  `manual`; solo en periodo abierto y con `reports:write`. La nómina siempre se guarda como egreso (negativo),
+  igual que en su archivo; en caja el signo lo decide quien captura.
 - **AC-021-13** · `GET /api/closing/entries?companyId&month&source&kioskId` lista movimientos paginados para
   `reports:read` (admin y gerencia).
 
@@ -175,3 +176,15 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   fila de origen, la celda `=CMD()` guardada como texto y los egresos con signo (−150). **AC-021-15 sigue pendiente**: pide
   un mes completo real (Parlevel, Cantaloupe, banco, caja y nómina) comparado contra el Excel de la contadora, y no hay
   exports reales ni de qué comparar; está en `docs/pendientes-de-verificar.md`. Los datos de prueba se borraron.
+- 2026-11-18 · Revisión (`/spec-revisar`) y correcciones: AC-021-07 y AC-021-12 ajustados en el texto (400 `VALIDATION`;
+  la nómina manual se guarda siempre negativa). Una llave `Asset`/`Device ID` repetida entre kioskos ya no sobrescribe: la
+  fila queda en «sin kiosko». `parseAmountCents` redondea desde el texto decimal (`1.005` → 101). SOURCE_WRONG_MONTH nombra
+  el mes ajeno, no el dominante. Se acepta que un original ya subido a Blob quede huérfano si la base falla o se
+  descarta la vista previa (limpieza fuera de alcance del MVP).
+- 2026-11-18 · AC-021-15 con `docs/datos_example.xlsx` (libro de la contadora, ignorado por git; se corrió cada hoja por
+  los analizadores, no por la web). **Banco** (`EDO. CTA. ORIGINAL`): con alias `Retiro`/`Deposito` lee 94 filas de
+  agosto, 0 rechazos, total −61,414.08 = Excel. El estado de cuenta real trae **dos meses** (94 filas de agosto y 93 de
+  septiembre) y se rechaza completo por AC-021-04: hay que partirlo antes de subirlo. **No coinciden con el formato**:
+  `Sales by POS` (Parlevel) es un acumulado mensual por Asset, sin columna Date y con Cash/Cashless/Wallet;
+  `CANTALOUPE` es una tabla dinámica por fecha, sin Device ID; `WASTE REPORT` no trae Date/Type/Amount;
+  `ACUM.NOMINAS` es una matriz por empleado y semana. Son hojas de trabajo, no los exports crudos. AC-021-15 sigue abierto.

@@ -214,8 +214,9 @@ describe('confirmación y movimientos (spec 021)', () => {
     expect(event).toMatchObject({ entity: 'entry', entityId: res.body.id });
     await admin
       .post('/api/closing/entries')
-      .send({ ...manual, source: 'payroll', concept: 'Ana', companyId })
-      .expect(201);
+      .send({ ...manual, source: 'payroll', concept: 'Ana', amount: '500.00', companyId })
+      .expect(201)
+      .expect((r) => expect(r.body.amount).toBe('-500.00'));
   });
 
   it('AC-021-12 solo caja o nómina, con kiosko de la empresa y con permiso de escritura', async () => {

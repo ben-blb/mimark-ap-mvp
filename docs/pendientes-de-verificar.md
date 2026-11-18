@@ -25,3 +25,7 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-15 · 015 · `pnpm spec:check` la muestra `en-progreso` con tareas 7/8: revisar qué falta y cerrarla.
 - [ ] 2026-11-15 · 019 · Validar con la contadora que el subtotal de sus facturas sea comparable con cantidad × precio
       unitario de la OC (por ejemplo, que el IEPS no venga dentro del precio).
+- [ ] 2026-11-18 · 020–024 · Cierre mensual (Mini SRS de kioskos): las specs están en `borrador`. Antes de pasarlas
+      a `lista`, resolver con la contadora y el jefe: catálogo de categorías y renglón de EDO RES, ID de kiosko por
+      fuente, prorrateo de gastos generales, si el banco da CSV/Excel, comisión Cantaloupe 3.4 % / IVA / tolerancia,
+      y si el EDO RES queda idéntico o se separa Ventas. Pedir un mes completo de cada export (sintetizarlo para el repo).

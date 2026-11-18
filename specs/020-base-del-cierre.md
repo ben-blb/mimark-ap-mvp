@@ -167,3 +167,9 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
   corrigió el texto de los criterios.
 - 2026-11-18 · «Ordenado por `edoResLine` y `sortOrder`» (AC-020-07) se entiende como la posición del renglón en
   `EDO_RES_LINES` (orden del Estado de resultados), no alfabético, y luego `sortOrder`.
+- 2026-11-18 · Tareas 1–5 hechas. `pnpm check:fast` y `pnpm test:int` (197) en verde. `pnpm check` solo falla por el
+  lint de `infra/probador/src/paquete-manual.ts` (anterior a esta spec). Falta AC-020-14 [manual] (necesita IDs de un
+  export real): quedó en `docs/pendientes-de-verificar.md`; la spec sigue `en-progreso` hasta hacerlo.
+- 2026-11-18 · Campos opcionales de formulario (`parlevelAsset`, `cantaloupeDeviceId`, `last4`) aceptan texto vacío como
+  «sin valor». Por eso en una edición no se puede borrar un valor ya guardado (vaciar el campo = sin cambio).
+- 2026-11-18 · `POST /api/closing/rules/test` responde 200 (es una consulta, no crea nada).

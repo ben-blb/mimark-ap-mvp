@@ -16,6 +16,13 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       se derivaron de las reglas, no se ejecutaron contra la IA real. Recorrerlos y corregir la guía donde difieran
       (en especial `X07`/`X08`, `E11`, `E12` y `PO_MISMATCH`). PNG/JPG no se generan: exportar una factura a mano.
 
+- [ ] 2026-11-18 · 020 · AC-020-14 [manual]: con `pnpm dev`, como `admin` crear la empresa, tres kioskos con Asset
+      (Parlevel) y Device ID (Cantaloupe) de un export real, y la regla «ADT SECURITY → Seguridad y vigilancia»;
+      probarla con un concepto real de estado de cuenta y entrar como `manager` para comprobar que solo lee.
+      Al terminar: borrar esta línea, anotarlo en la Bitácora de la 020 y pasarla a `hecha`.
+- [ ] 2026-11-18 · lint · `pnpm lint` falla en `infra/probador/src/paquete-manual.ts` (422 líneas, máximo 300), anterior
+      a la spec 020; mientras exista, `pnpm check` no puede quedar en verde. Dividir el archivo.
+
 ## Decisiones o texto por revisar
 
 - [ ] 2026-11-15 · 018 · `apps/api/src/integrations/prompts/assistant.v3.ts` aún dice «el checklist completo»;

@@ -62,6 +62,9 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'post', path: '/api/closing/rules', permission: 'reports:write' },
   { verb: 'patch', path: '/api/closing/rules/x', permission: 'reports:write' },
   { verb: 'post', path: '/api/closing/rules/test', permission: 'reports:read' },
+  { verb: 'get', path: '/api/closing/uploads', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/uploads', permission: 'reports:write' },
+  { verb: 'post', path: '/api/closing/uploads/x/discard', permission: 'reports:write' },
 ];
 
 /** Rutas protegidas que a propósito solo piden sesión (la sesión misma). */

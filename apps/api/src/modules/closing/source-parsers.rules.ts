@@ -253,3 +253,41 @@ export function analyzeSheet(
   }
   return result;
 }
+
+/** Kioskos activos de una empresa → búsqueda por `Asset` (Parlevel) y por `Device ID` (Cantaloupe). */
+export function buildKioskLookup(
+  kiosks: { id: string; parlevelAsset: string | null; cantaloupeDeviceId: string | null }[],
+): KioskLookup {
+  const lookup: KioskLookup = { byAsset: new Map(), byDevice: new Map() };
+  for (const k of kiosks) {
+    if (k.parlevelAsset) lookup.byAsset.set(normalizeKey(k.parlevelAsset), k.id);
+    if (k.cantaloupeDeviceId) lookup.byDevice.set(normalizeKey(k.cantaloupeDeviceId), k.id);
+  }
+  return lookup;
+}
+
+const PREVIEW_ROWS = 20;
+const REJECTED_SHOWN = 50;
+
+/** Lo que ve la persona antes de confirmar: contadores, total con signo, filas rechazadas y las primeras 20. */
+export function summarizeSheet(analysis: SheetAnalysis) {
+  const cents = analysis.entries.reduce(
+    (sum, { entry }) => sum + (parseAmountCents(entry.amount) ?? 0),
+    0,
+  );
+  return {
+    rowsRead: analysis.rowsRead,
+    rowsRejected: analysis.rejected.length,
+    rowsUnknownKiosk: analysis.entries.filter(({ entry }) => entry.flags.length > 0).length,
+    total: centsToMoney(cents),
+    rejected: analysis.rejected.slice(0, REJECTED_SHOWN),
+    sample: analysis.entries.slice(0, PREVIEW_ROWS).map(({ row, entry }) => ({
+      row,
+      date: entry.date,
+      kioskId: entry.kioskId,
+      concept: entry.concept,
+      amount: entry.amount,
+      flags: entry.flags,
+    })),
+  };
+}

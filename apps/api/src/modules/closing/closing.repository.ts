@@ -68,6 +68,10 @@ export class ClosingRepository {
   listKiosks(includeInactive: boolean): Promise<Kiosk[]> {
     return this.db.kiosk.findMany({ where: activeOnly(includeInactive), orderBy: { name: 'asc' } });
   }
+  /** Kioskos activos de una empresa, para reconocer los de un archivo (spec 021). */
+  listActiveKiosksOf(companyId: string, tx: Tx = this.db): Promise<Kiosk[]> {
+    return tx.kiosk.findMany({ where: { companyId, active: true } });
+  }
   findKiosk(id: string, tx: Tx = this.db): Promise<Kiosk | null> {
     return tx.kiosk.findUnique({ where: { id } });
   }

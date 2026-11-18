@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   analyzeSheet,
+  buildKioskLookup,
   detectColumns,
   monthOf,
   normalizeRow,
+  summarizeSheet,
   type KioskLookup,
 } from './source-parsers.rules.js';
 
@@ -226,5 +228,40 @@ describe('analyzeSheet', () => {
 
   it('AC-021-03 un archivo vacío no tiene cabecera: faltan todas las obligatorias', () => {
     expect(() => run([])).toThrowError(expect.objectContaining({ code: 'SOURCE_MISSING_COLUMNS' }));
+  });
+});
+
+describe('summarizeSheet', () => {
+  it('AC-021-01 resume: contadores, total con signo, rechazadas y las primeras 20 filas', () => {
+    const rows: unknown[][] = [
+      ['Asset', 'Date', 'Sales'],
+      ...Array.from({ length: 25 }, (_, i) => ['1C-FTLALNEPANTLA', '2026-09-01', i + 1]),
+      ['ZZ-1', '2026-09-02', 100],
+      ['1C-FTLALNEPANTLA', 'mala', 1],
+    ];
+    const summary = summarizeSheet(
+      analyzeSheet('parlevel_sales', rows, { month: '2026-09', kiosks }),
+    );
+    expect(summary).toMatchObject({
+      rowsRead: 27,
+      rowsRejected: 1,
+      rowsUnknownKiosk: 1,
+      total: '425.00', // 1+…+25 = 325, más 100
+      rejected: [{ row: 28, reason: 'Fecha inválida' }],
+    });
+    expect(summary.sample).toHaveLength(20);
+    expect(summary.sample[0]).toMatchObject({ row: 2, kioskId: 'k1', amount: '1.00', flags: [] });
+  });
+});
+
+describe('buildKioskLookup', () => {
+  it('AC-021-05 indexa por Asset y por Device ID sin distinguir mayúsculas', () => {
+    const lookup = buildKioskLookup([
+      { id: 'k1', parlevelAsset: '1C-FTLALNEPANTLA', cantaloupeDeviceId: 'PLK003627' },
+      { id: 'k2', parlevelAsset: null, cantaloupeDeviceId: null },
+    ]);
+    expect(lookup.byAsset.get('1c-ftlalnepantla')).toBe('k1');
+    expect(lookup.byDevice.get('plk003627')).toBe('k1');
+    expect(lookup.byAsset.size).toBe(1);
   });
 });

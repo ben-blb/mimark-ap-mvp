@@ -10,6 +10,8 @@ const EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
   'image/png': 'png',
   'image/jpeg': 'jpg',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'text/csv': 'csv',
 };
 const MISSING = () => new AppError('NOT_FOUND', 'No encontramos el archivo original.');
 const LOCAL_DIR = resolve(process.cwd(), '.storage');
@@ -18,11 +20,11 @@ const LOCAL_DIR = resolve(process.cwd(), '.storage');
 @Injectable()
 export class StorageClient {
   /** Guarda los bytes y devuelve la llave. Esta no incluye el nombre original (puede traer datos personales). */
-  async put(bytes: Buffer, mimeType: string): Promise<string> {
+  async put(bytes: Buffer, mimeType: string, folder = 'payables'): Promise<string> {
     const now = new Date();
     const key = [
       env.VERCEL_ENV ?? 'local',
-      'payables',
+      folder,
       now.getUTCFullYear(),
       String(now.getUTCMonth() + 1).padStart(2, '0'),
       `${randomUUID()}.${EXTENSIONS[mimeType] ?? 'bin'}`,

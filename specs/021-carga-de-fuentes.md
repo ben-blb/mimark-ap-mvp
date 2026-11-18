@@ -1,7 +1,7 @@
 ---
 id: '021'
 titulo: Carga de fuentes del mes y movimientos
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['020']
 requisitos: Mini SRS cierre mensual · RF-01, RF-04, RF-05, RF-06, RF-10
 ---
@@ -129,7 +129,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 - [x] 5. Service/controller de uploads y vista previa; integración (AC-021-01, 02, 06, 07).
 - [x] 6. Confirmación, reemplazo, periodo cerrado y captura manual (AC-021-08 a 13).
 - [x] 7. Web: `/cierre/cargas` y vista previa.
-- [ ] 8. `pnpm check`, AC-021-15, fila en `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check` en verde, fila en `specs/README.md`; `hecha` (AC-021-15 queda pendiente, ver Bitácora).
 
 ## Fuera de alcance y decisiones
 
@@ -194,3 +194,6 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   ahora. AC-021-04 tiene ahora una excepción para `bank_csv` (filas de otro mes rechazadas una a una). Con el libro real
   y mes 2026-08 el archivo completo carga: 190 filas leídas, 96 rechazadas (septiembre y filas sin fecha), total
   −61,414.08 = Excel. Parlevel, Cantaloupe, mermas y nómina quedan sin verificar contra datos reales (AC-021-15 abierto).
+- 2026-11-18 · Cerrada como `hecha` por decisión del usuario, **con AC-021-15 sin verificar** (solo el banco se comparó con
+  datos reales). Falta cargar Parlevel, Cantaloupe, mermas y nómina con exports crudos y comparar totales; sigue en
+  `docs/pendientes-de-verificar.md`. Si los formatos reales difieren, bastan alias en `source-formats.ts` o una spec nueva.

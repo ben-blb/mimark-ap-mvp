@@ -1,7 +1,7 @@
 ---
 id: '020'
 titulo: Base del cierre mensual (empresas, kioskos, cuentas, categorías y reglas)
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['001', '013', '017']
 requisitos: Mini SRS cierre mensual · RF-02, RF-10, RF-11 (modelo)
 ---
@@ -144,7 +144,7 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - [x] 3. Esquema Prisma, migración `020-base-del-cierre` y semilla de categorías.
 - [x] 4. Módulo `closing`: repositorio, service, controller y permisos; integración (AC-020-02 a 09, 11).
 - [x] 5. Web: `CatalogPage`, ruta y menú (AC-020-12, 13).
-- [ ] 6. `pnpm check`, recorrido manual AC-020-14, fila en `specs/README.md`; `hecha`.
+- [x] 6. `pnpm check`, recorrido manual AC-020-14, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -173,3 +173,13 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - 2026-11-18 · Campos opcionales de formulario (`parlevelAsset`, `cantaloupeDeviceId`, `last4`) aceptan texto vacío como
   «sin valor». Por eso en una edición no se puede borrar un valor ya guardado (vaciar el campo = sin cambio).
 - 2026-11-18 · `POST /api/closing/rules/test` responde 200 (es una consulta, no crea nada).
+- 2026-11-18 · AC-020-14 verificado a mano (`pnpm dev`, Chrome, IA y API locales): como `admin` (usuario de prueba
+  `verif-admin`) se creó una empresa, tres kioskos con Asset y Device ID tomados de una tabla real de Parlevel/Cantaloupe
+  (transcritos de una imagen; no se guardan en el repo) y la regla «ADT SECURITY → Seguridad y vigilancia»; los kioskos
+  salieron en la lista con sus IDs. «Probar» con `adt  security CR MU RFC:XXX 7455` (concepto con el formato de la
+  spec, no de un estado de cuenta real) devolvió «Gana la regla ADT SECURITY → Seguridad y vigilancia». Como `manager`
+  (`verif-gerencia`): «Cierre» es su única entrada nueva, ve las listas sin «Agregar» ni «Editar» y un `POST` directo
+  responde 403 `FORBIDDEN`. Después se borraron esos datos de la base local.
+- 2026-11-18 · Los usuarios `verif-admin` y `verif-gerencia` se agregaron a `db:verification-users` y a
+  `docs/verificacion-manual.md`. Se dividió `infra/probador/src/paquete-manual.ts` (límite de 300 líneas del lint).
+- 2026-11-18 · Hallazgo para la 021: el Asset del export parece repetirse entre filas; ver `docs/pendientes-de-verificar.md`.

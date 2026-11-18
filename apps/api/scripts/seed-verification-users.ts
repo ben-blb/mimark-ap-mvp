@@ -22,6 +22,8 @@ const users = [
   ['verif-compras@pruebas.mx', 'Compras Prueba', 'purchasing', 'Verif-Compras-2026'],
   ['verif-almacen@pruebas.mx', 'Almacén Prueba', 'warehouse', 'Verif-Almacen-2026'],
   ['verif-cxp@pruebas.mx', 'Cuentas por pagar Prueba', 'payables', 'Verif-CxP-2026'],
+  ['verif-admin@pruebas.mx', 'Administración Prueba', 'admin', 'Verif-Admin-2026'],
+  ['verif-gerencia@pruebas.mx', 'Gerencia Prueba', 'manager', 'Verif-Gerencia-2026'],
 ] as const;
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });

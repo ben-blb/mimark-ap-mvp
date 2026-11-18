@@ -11,7 +11,7 @@ correr contra una base que no sea `localhost`.
 
 ```bash
 pnpm bootstrap                  # si es la primera vez (Postgres, migraciones, semilla)
-pnpm --filter @mimark/api db:verification-users   # crea los 3 usuarios de abajo (idempotente)
+pnpm --filter @mimark/api db:verification-users   # crea los 5 usuarios de abajo (idempotente)
 AI_PROVIDER=fake pnpm dev       # API :3000 y web :5173 con la IA simulada
 ```
 
@@ -21,11 +21,13 @@ La IA simulada es necesaria para esta prueba: lee los documentos **por el nombre
 
 ## Usuarios de prueba (rol · correo · contraseña)
 
-| Rol               | Correo                     | Contraseña           |
-| ----------------- | -------------------------- | -------------------- |
-| Compras           | `verif-compras@pruebas.mx` | `Verif-Compras-2026` |
-| Almacén           | `verif-almacen@pruebas.mx` | `Verif-Almacen-2026` |
-| Cuentas por pagar | `verif-cxp@pruebas.mx`     | `Verif-CxP-2026`     |
+| Rol               | Correo                      | Contraseña            |
+| ----------------- | --------------------------- | --------------------- |
+| Compras           | `verif-compras@pruebas.mx`  | `Verif-Compras-2026`  |
+| Almacén           | `verif-almacen@pruebas.mx`  | `Verif-Almacen-2026`  |
+| Cuentas por pagar | `verif-cxp@pruebas.mx`      | `Verif-CxP-2026`      |
+| Administración    | `verif-admin@pruebas.mx`    | `Verif-Admin-2026`    |
+| Gerencia          | `verif-gerencia@pruebas.mx` | `Verif-Gerencia-2026` |
 
 Entra en `http://localhost:5173`. Usa una ventana de incógnito por rol (o sal con «Cuenta → Salir» entre pasos).
 El primer inicio muestra un tutorial: «Saltar».

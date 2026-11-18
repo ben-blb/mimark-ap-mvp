@@ -143,7 +143,7 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - [x] 2. `closing.rules.ts`: `normalizeKey` y `matchRule` con su tabla (AC-020-10).
 - [x] 3. Esquema Prisma, migración `020-base-del-cierre` y semilla de categorías.
 - [x] 4. Módulo `closing`: repositorio, service, controller y permisos; integración (AC-020-02 a 09, 11).
-- [ ] 5. Web: `CatalogPage`, ruta y menú (AC-020-12, 13).
+- [x] 5. Web: `CatalogPage`, ruta y menú (AC-020-12, 13).
 - [ ] 6. `pnpm check`, recorrido manual AC-020-14, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones

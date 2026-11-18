@@ -25,24 +25,13 @@ import type {
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { Db, type Tx } from '../../common/db.js';
-import type {
-  BankAccount,
-  Category,
-  ClassificationRule,
-  Company,
-  Kiosk,
-} from '../../generated/prisma/client.js';
 import { AuditRepository } from '../audit/audit.repository.js';
 import { diffFields } from '../audit/audit.rules.js';
 import { ClosingRepository } from './closing.repository.js';
+import { toAccount, toCategory, toCompany, toKiosk, toRule } from './closing.dto.js';
 import { matchRule, normalizeKey, sortCategories } from './closing.rules.js';
 
 type Entity = 'company' | 'kiosk' | 'account' | 'category' | 'rule';
-
-const iso = (r: { createdAt: Date; updatedAt: Date }) => ({
-  createdAt: r.createdAt.toISOString(),
-  updatedAt: r.updatedAt.toISOString(),
-});
 
 /**
  * Catálogo del cierre mensual (spec 020). Cada escritura va con su evento de auditoría en la misma
@@ -304,50 +293,3 @@ export class ClosingService {
     }
   }
 }
-
-const toCompany = (c: Company): CompanyDto => ({
-  id: c.id,
-  name: c.name,
-  active: c.active,
-  ...iso(c),
-});
-
-const toKiosk = (k: Kiosk): KioskDto => ({
-  id: k.id,
-  companyId: k.companyId,
-  name: k.name,
-  parlevelAsset: k.parlevelAsset,
-  cantaloupeDeviceId: k.cantaloupeDeviceId,
-  active: k.active,
-  ...iso(k),
-});
-
-const toAccount = (a: BankAccount): BankAccountDto => ({
-  id: a.id,
-  companyId: a.companyId,
-  name: a.name,
-  type: a.type,
-  last4: a.last4,
-  active: a.active,
-  ...iso(a),
-});
-
-const toCategory = (c: Category): CategoryDto => ({
-  id: c.id,
-  code: c.code,
-  name: c.name,
-  edoResLine: c.edoResLine as CategoryDto['edoResLine'],
-  kind: c.kind,
-  sortOrder: c.sortOrder,
-  active: c.active,
-  ...iso(c),
-});
-
-const toRule = (r: ClassificationRule): RuleDto => ({
-  id: r.id,
-  pattern: r.pattern,
-  categoryId: r.categoryId,
-  priority: r.priority,
-  active: r.active,
-  ...iso(r),
-});

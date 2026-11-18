@@ -169,7 +169,10 @@ describe('AppShell', () => {
     ['warehouse', ['Recepciones']],
     ['purchasing', ['Mi trabajo', 'Órdenes de compra', 'Proveedores', 'Asistente']],
     ['payables', SECTIONS],
-    ['manager', ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Asistente']],
+    [
+      'manager',
+      ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Cierre', 'Asistente'],
+    ],
     [
       'admin',
       [
@@ -179,19 +182,23 @@ describe('AppShell', () => {
         'Facturas y pagos',
         'Proveedores',
         'Tablero',
+        'Cierre',
         'Asistente',
         'Usuarios',
       ],
     ],
-  ] as const)('AC-013-25 AC-017-07 %s ve en la navegación solo sus secciones', (role, expected) => {
-    setup(1440, true, 'Ana López', role);
-    const nav = screen.getByRole('navigation', { name: 'Principal' });
-    expect(
-      within(nav)
-        .getAllByRole('link')
-        .map((l) => l.textContent),
-    ).toEqual(expected);
-  });
+  ] as const)(
+    'AC-013-25 AC-017-07 AC-020-13 %s ve en la navegación solo sus secciones',
+    (role, expected) => {
+      setup(1440, true, 'Ana López', role);
+      const nav = screen.getByRole('navigation', { name: 'Principal' });
+      expect(
+        within(nav)
+          .getAllByRole('link')
+          .map((l) => l.textContent),
+      ).toEqual(expected);
+    },
+  );
 
   it('AC-017-14 con más de 5 secciones el teléfono muestra 4 y «Más» abre el resto', async () => {
     const user = setup(375, true, 'Ana López', 'admin');
@@ -206,13 +213,13 @@ describe('AppShell', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Proveedores', 'Tablero', 'Asistente', 'Usuarios']);
+    ).toEqual(['Proveedores', 'Tablero', 'Cierre', 'Asistente', 'Usuarios']);
   });
 
   it('AC-017-14 con 5 secciones o menos se muestran todas y no hay «Más»', () => {
-    setup(375, true, 'Ana López', 'manager');
+    setup(375, true, 'Ana López', 'purchasing');
     const nav = screen.getByRole('navigation', { name: 'Principal' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(5);
+    expect(within(nav).getAllByRole('link')).toHaveLength(4);
     expect(within(nav).queryByRole('button', { name: 'Más' })).not.toBeInTheDocument();
   });
 

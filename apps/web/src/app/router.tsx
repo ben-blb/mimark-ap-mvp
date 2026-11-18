@@ -10,6 +10,7 @@ import { PayableDetailPage } from '../features/payables/PayableDetailPage';
 import { PayablesPage } from '../features/payables/PayablesPage';
 import { PurchaseOrderDetailPage } from '../features/purchase-orders/PurchaseOrderDetailPage';
 import { PurchaseOrdersPage } from '../features/purchase-orders/PurchaseOrdersPage';
+import { CatalogPage } from '../features/closing/CatalogPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
 import { HomeRedirect } from './HomeRedirect';
@@ -89,6 +90,14 @@ export const routes: RouteObject[] = [
         element: (
           <RequirePermission permission="assistant:use">
             <AssistantRoute />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'cierre/catalogo',
+        element: (
+          <RequirePermission permission="reports:read">
+            <CatalogPage />
           </RequirePermission>
         ),
       },

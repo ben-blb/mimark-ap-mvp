@@ -1,5 +1,6 @@
 import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
+import EventNoteOutlined from '@mui/icons-material/EventNoteOutlined';
 import InboxOutlined from '@mui/icons-material/InboxOutlined';
 import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
 import PeopleOutlineOutlined from '@mui/icons-material/PeopleOutlineOutlined';
@@ -67,6 +68,14 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Tablero',
     short: 'Tablero',
     icon: <SpaceDashboardOutlined />,
+  },
+  {
+    to: '/cierre/catalogo',
+    tour: 'cierre',
+    permission: 'reports:read',
+    label: 'Cierre',
+    short: 'Cierre',
+    icon: <EventNoteOutlined />,
   },
   {
     to: '/asistente',

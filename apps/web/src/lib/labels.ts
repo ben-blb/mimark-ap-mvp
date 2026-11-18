@@ -1,3 +1,4 @@
+import type { AccountType, CategoryKind } from '@mimark/contracts/closing';
 import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
@@ -144,4 +145,16 @@ export const ASSISTANT_TOOL_LABELS: Record<AssistantToolName, string> = {
   recordPayment: 'Registrar un pago ya hecho',
   updateDocuments: 'Actualizar documentos de un expediente',
   discardPayable: 'Descartar un expediente',
+};
+
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  checking: 'Cheques',
+  credit: 'Crédito',
+  master: 'Maestra',
+};
+
+export const CATEGORY_KIND_LABELS: Record<CategoryKind, string> = {
+  income: 'Ingreso',
+  cost: 'Costo',
+  expense: 'Gasto',
 };

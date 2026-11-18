@@ -45,8 +45,13 @@ export type AccountType = z.infer<typeof AccountType>;
 
 const name = (label: string) =>
   z.string().trim().min(2, `Escribe ${label}`).max(200, 'Máximo 200 caracteres');
+/** Los formularios mandan texto: un campo opcional vacío es «sin valor», no un error. */
+const blankToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
+const optionalText = (schema: z.ZodType<string>) =>
+  z.preprocess(blankToUndefined, schema.optional());
 const optionalId = (max = 100) =>
-  z.string().trim().min(1).max(max, `Máximo ${max} caracteres`).optional();
+  optionalText(z.string().trim().min(1).max(max, `Máximo ${max} caracteres`));
 
 const timestamps = { createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() };
 
@@ -116,11 +121,12 @@ export const CreateAccountInput = z.object({
   companyId: Id,
   name: name('el nombre de la cuenta'),
   type: AccountType,
-  last4: z
-    .string()
-    .trim()
-    .regex(/^\d{4}$/, 'Escribe solo los últimos 4 dígitos')
-    .optional(),
+  last4: optionalText(
+    z
+      .string()
+      .trim()
+      .regex(/^\d{4}$/, 'Escribe solo los últimos 4 dígitos'),
+  ),
 });
 export type CreateAccountInput = z.infer<typeof CreateAccountInput>;
 export const UpdateAccountInput = CreateAccountInput.extend({ active: z.boolean() }).partial();

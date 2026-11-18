@@ -122,7 +122,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 - [x] 1. Contratos y códigos de error con pruebas.
 - [x] 2. `source-formats.ts` y `source-parsers.rules.ts` con tablas de ejemplos sintéticos (AC-021-03 a 05, 14).
 - [x] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
-- [ ] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
+- [x] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
 - [ ] 5. Service/controller de uploads y vista previa; integración (AC-021-01, 02, 06, 07).
 - [ ] 6. Confirmación, reemplazo, periodo cerrado y captura manual (AC-021-08 a 13).
 - [ ] 7. Web: `/cierre/cargas` y vista previa.
@@ -154,3 +154,9 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   nómina y «Salida» son negativos. Un kiosko que no está en el catálogo queda `kioskId=null`, `needsReview=true` y la
   bandera `UNKNOWN_KIOSK:<id>`. Las columnas de `source-formats.ts` son una propuesta (SRS §9.1–9.2), con alias en español
   e inglés. Fechas aceptadas: `AAAA-MM-DD`, `DD/MM/AAAA`, `Date` y serial de Excel.
+- 2026-11-18 · **Dependencias nuevas:** `read-excel-file` 9.3 (lector de `.xlsx`, 3.2 MB instalado, solo lee valores y nunca
+  evalúa fórmulas) en vez de `exceljs` 4.4 (21.8 MB y mucho más de lo que hace falta para leer); alternativa descartada:
+  pedir solo CSV (la contadora trabaja en Excel). El CSV se lee con un parser propio (~40 líneas, comillas, `,`/`;`/tab,
+  UTF-8 o Latin-1). `write-excel-file` 4.1 queda como **devDependency** solo para fabricar `.xlsx` de prueba.
+- 2026-11-18 · No hay un «doble» del lector: las pruebas de integración usan el cliente real con archivos pequeños
+  generados al vuelo (más fiel y igual de rápido). Solo se lee la **primera hoja** del libro.

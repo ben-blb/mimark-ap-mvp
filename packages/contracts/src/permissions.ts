@@ -1,6 +1,6 @@
 import type { Role } from './session.js';
 
-/** Permisos de las specs 013 y 017. La API los exige y la web los usa para mostrar u ocultar acciones. */
+/** Permisos de las specs 013, 017 y 020. La API los exige y la web los usa para mostrar u ocultar acciones. */
 export const PERMISSIONS = [
   'suppliers:read',
   'suppliers:write',
@@ -14,6 +14,8 @@ export const PERMISSIONS = [
   'assistant:use',
   'inbox:read',
   'users:manage',
+  'reports:read',
+  'reports:write',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -45,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'payables:pay',
     'dashboard:read',
     'assistant:use',
+    'reports:read',
   ],
   admin: PERMISSIONS,
 };

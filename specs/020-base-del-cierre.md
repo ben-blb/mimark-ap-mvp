@@ -1,7 +1,7 @@
 ---
 id: '020'
 titulo: Base del cierre mensual (empresas, kioskos, cuentas, categorías y reglas)
-estado: borrador # borrador | lista | en-progreso | hecha
+estado: en-progreso # borrador | lista | en-progreso | hecha
 depende_de: ['001', '013', '017']
 requisitos: Mini SRS cierre mensual · RF-02, RF-10, RF-11 (modelo)
 ---
@@ -39,12 +39,12 @@ nuevos; borrar catálogo (solo se desactiva, como en 013); prorrateo de gastos g
 
 - **AC-020-03** · `POST /api/closing/companies` con `{ name: "Quima Tlalnepantla" }` crea la empresa activa y
   escribe `company.created` en la misma transacción. Un nombre repetido (sin distinguir mayúsculas ni acentos)
-  responde 409 `DUPLICATE`.
+  responde 409 `CONFLICT`.
 - **AC-020-04** · `POST /api/closing/kiosks` con `companyId`, `name`, `parlevelAsset` y `cantaloupeDeviceId`
   opcionales crea el kiosko. `parlevelAsset` y `cantaloupeDeviceId` son únicos entre kioskos; repetirlos responde
-  409 `DUPLICATE` con el campo en `fieldErrors`.
+  409 `CONFLICT` con el campo en `fieldErrors`.
 - **AC-020-05** · `POST /api/closing/accounts` crea una cuenta con `companyId`, `name`, `type`
-  (`checking | credit | master`) y `last4` opcional (cuatro dígitos; cualquier otro formato responde 422).
+  (`checking | credit | master`) y `last4` opcional (cuatro dígitos; cualquier otro formato responde 400 `VALIDATION`).
   Nunca se guarda el número completo de cuenta.
 - **AC-020-06** · `PATCH` de empresa, kiosko o cuenta con `active=false` los desactiva; siguen en los listados con
   `?includeInactive=true` y desaparecen del resto. No existe `DELETE`.
@@ -54,9 +54,9 @@ nuevos; borrar catálogo (solo se desactiva, como en 013); prorrateo de gastos g
 - **AC-020-07** · `GET /api/closing/categories` devuelve el catálogo sembrado (ver «Semilla») ordenado por
   `edoResLine` y `sortOrder`; cada categoría trae `code`, `name`, `edoResLine` y `kind` (`income | cost | expense`).
 - **AC-020-08** · `POST /api/closing/categories` crea una categoría con `code` único (mayúsculas y guiones bajos)
-  y un `edoResLine` del conjunto permitido; un `edoResLine` desconocido responde 422.
+  y un `edoResLine` del conjunto permitido; un `edoResLine` desconocido responde 400 `VALIDATION`.
 - **AC-020-09** · `POST /api/closing/rules` con `{ pattern: "ADT SECURITY", categoryId, priority: 10 }` crea la
-  regla; un `pattern` vacío o de menos de 3 caracteres responde 422.
+  regla; un `pattern` vacío o de menos de 3 caracteres responde 400 `VALIDATION`.
 - **AC-020-10** · `matchRule(concept, rules)`: gana la regla activa de mayor `priority` cuyo patrón aparece en el
   concepto sin distinguir mayúsculas ni acentos; con igual prioridad gana la de patrón más largo; sin coincidencia
   devuelve `null`. Ver tabla en «Reglas».
@@ -103,7 +103,7 @@ código.
 
 `packages/contracts/src/closing.ts`: `CompanyDto`, `KioskDto`, `BankAccountDto`, `CategoryDto`, `RuleDto` y sus
 `Create*`/`Update*`; `EDO_RES_LINES` (conjunto permitido). `permissions.ts`: `reports:read`, `reports:write`.
-`errors.ts`: reutiliza `DUPLICATE`, `VALIDATION_FAILED`, `FORBIDDEN`.
+`errors.ts`: reutiliza `CONFLICT`, `VALIDATION`, `FORBIDDEN`.
 
 ### API
 
@@ -111,9 +111,9 @@ código.
 | -------------------------------------------------------- | --------------- | ------------------ | ---------------------- | ------------- |
 | `GET /api/closing/{companies,kiosks,accounts,rules}`     | `reports:read`  | `includeInactive?` | lista                  | 401, 403      |
 | `GET /api/closing/categories`                            | `reports:read`  | —                  | lista                  | 401, 403      |
-| `POST /api/closing/{companies,kiosks,accounts,...}`      | `reports:write` | cuerpo `Create*`   | recurso                | 403, 409, 422 |
+| `POST /api/closing/{companies,kiosks,accounts,...}`      | `reports:write` | cuerpo `Create*`   | recurso                | 403, 409, 400 |
 | `PATCH /api/closing/{companies,kiosks,accounts,...}/:id` | `reports:write` | campos a cambiar   | recurso                | 403, 404, 409 |
-| `POST /api/closing/rules/test`                           | `reports:read`  | `{ concept }`      | `{ rule?, category? }` | 403, 422      |
+| `POST /api/closing/rules/test`                           | `reports:read`  | `{ concept }`      | `{ rule?, category? }` | 403, 400      |
 
 ### Reglas
 
@@ -139,8 +139,8 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 
 ## Tareas
 
-- [ ] 1. Contratos y permisos (`closing.ts`, `permissions.ts`) con pruebas (AC-020-01).
-- [ ] 2. `closing.rules.ts`: `normalizeKey` y `matchRule` con su tabla (AC-020-10).
+- [x] 1. Contratos y permisos (`closing.ts`, `permissions.ts`) con pruebas (AC-020-01).
+- [x] 2. `closing.rules.ts`: `normalizeKey` y `matchRule` con su tabla (AC-020-10).
 - [ ] 3. Esquema Prisma, migración `020-base-del-cierre` y semilla de categorías.
 - [ ] 4. Módulo `closing`: repositorio, service, controller y permisos; integración (AC-020-02 a 09, 11).
 - [ ] 5. Web: `CatalogPage`, ruta y menú (AC-020-12, 13).
@@ -161,3 +161,7 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+- 2026-11-18 · Aprobada por el usuario; estado `en-progreso`. El catálogo de errores no tiene `DUPLICATE` ni
+  `VALIDATION_FAILED` y la validación responde 400, no 422: se usan `CONFLICT` (409) y `VALIDATION` (400) y se
+  corrigió el texto de los criterios.

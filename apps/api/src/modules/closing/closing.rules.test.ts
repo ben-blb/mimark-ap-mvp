@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchRule, normalizeKey, type MatchableRule } from './closing.rules.js';
+import { matchRule, normalizeKey, sortCategories, type MatchableRule } from './closing.rules.js';
 
 const rule = (id: string, pattern: string, priority = 0, active = true): MatchableRule => ({
   id,
@@ -43,5 +43,20 @@ describe('matchRule', () => {
 
   it('AC-020-10 ignora las reglas inactivas', () => {
     expect(matchRule('ADT SECURITY', [rule('adt', 'ADT SECURITY', 0, false)])).toBeNull();
+  });
+});
+
+describe('sortCategories', () => {
+  it('AC-020-07 ordena por la posición del renglón en el EDO RES y luego por sortOrder', () => {
+    const rows = [
+      { edoResLine: 'Rentas', sortOrder: 10 },
+      { edoResLine: 'Ventas', sortOrder: 50 },
+      { edoResLine: 'Ventas', sortOrder: 20 },
+    ] as const;
+    expect(sortCategories(rows).map((c) => `${c.edoResLine}:${c.sortOrder}`)).toEqual([
+      'Ventas:20',
+      'Ventas:50',
+      'Rentas:10',
+    ]);
   });
 });

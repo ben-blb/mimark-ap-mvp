@@ -5,6 +5,7 @@ import { ErrorFilter } from './common/error.filter.js';
 import { validationPipe } from './common/validation.js';
 import { AssistantModule } from './modules/assistant/assistant.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
+import { ClosingModule } from './modules/closing/closing.module.js';
 import { ConversationsModule } from './modules/conversations/conversations.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -24,6 +25,7 @@ import { UsersModule } from './modules/users/users.module.js';
     SessionModule,
     UsersModule,
     SuppliersModule,
+    ClosingModule,
     PurchaseOrdersModule,
     PayablesModule,
     DashboardModule,

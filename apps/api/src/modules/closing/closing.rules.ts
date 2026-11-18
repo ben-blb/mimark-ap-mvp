@@ -1,3 +1,5 @@
+import { EDO_RES_LINES, type EdoResLine } from '@mimark/contracts/closing';
+
 /** Decisiones puras del cierre mensual (spec 020): sin I/O, sin reloj. */
 
 /** Minúsculas, sin acentos y con espacios colapsados: la forma en que se comparan conceptos y patrones. */
@@ -36,4 +38,14 @@ export function matchRule<R extends MatchableRule>(concept: string, rules: reado
     }
   }
   return best;
+}
+
+/** Categorías en el orden del Estado de resultados: por renglón (como en `EDO_RES_LINES`) y luego `sortOrder`. */
+export function sortCategories<C extends { edoResLine: EdoResLine; sortOrder: number }>(
+  categories: readonly C[],
+): C[] {
+  const position = (line: EdoResLine) => EDO_RES_LINES.indexOf(line);
+  return [...categories].sort(
+    (a, b) => position(a.edoResLine) - position(b.edoResLine) || a.sortOrder - b.sortOrder,
+  );
 }

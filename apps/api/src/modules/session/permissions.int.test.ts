@@ -46,6 +46,22 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'patch', path: '/api/users/x', permission: 'users:manage' },
   { verb: 'post', path: '/api/users/x/reset-password', permission: 'users:manage' },
   { verb: 'delete', path: '/api/users/x', permission: 'users:manage' },
+  { verb: 'get', path: '/api/closing/companies', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/companies', permission: 'reports:write' },
+  { verb: 'patch', path: '/api/closing/companies/x', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/kiosks', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/kiosks', permission: 'reports:write' },
+  { verb: 'patch', path: '/api/closing/kiosks/x', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/accounts', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/accounts', permission: 'reports:write' },
+  { verb: 'patch', path: '/api/closing/accounts/x', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/categories', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/categories', permission: 'reports:write' },
+  { verb: 'patch', path: '/api/closing/categories/x', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/rules', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/rules', permission: 'reports:write' },
+  { verb: 'patch', path: '/api/closing/rules/x', permission: 'reports:write' },
+  { verb: 'post', path: '/api/closing/rules/test', permission: 'reports:read' },
 ];
 
 /** Rutas protegidas que a propósito solo piden sesión (la sesión misma). */

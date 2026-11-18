@@ -142,7 +142,7 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - [x] 1. Contratos y permisos (`closing.ts`, `permissions.ts`) con pruebas (AC-020-01).
 - [x] 2. `closing.rules.ts`: `normalizeKey` y `matchRule` con su tabla (AC-020-10).
 - [x] 3. Esquema Prisma, migración `020-base-del-cierre` y semilla de categorías.
-- [ ] 4. Módulo `closing`: repositorio, service, controller y permisos; integración (AC-020-02 a 09, 11).
+- [x] 4. Módulo `closing`: repositorio, service, controller y permisos; integración (AC-020-02 a 09, 11).
 - [ ] 5. Web: `CatalogPage`, ruta y menú (AC-020-12, 13).
 - [ ] 6. `pnpm check`, recorrido manual AC-020-14, fila en `specs/README.md`; `hecha`.
 
@@ -165,3 +165,5 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - 2026-11-18 · Aprobada por el usuario; estado `en-progreso`. El catálogo de errores no tiene `DUPLICATE` ni
   `VALIDATION_FAILED` y la validación responde 400, no 422: se usan `CONFLICT` (409) y `VALIDATION` (400) y se
   corrigió el texto de los criterios.
+- 2026-11-18 · «Ordenado por `edoResLine` y `sortOrder`» (AC-020-07) se entiende como la posición del renglón en
+  `EDO_RES_LINES` (orden del Estado de resultados), no alfabético, y luego `sortOrder`.

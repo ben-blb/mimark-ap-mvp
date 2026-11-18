@@ -68,6 +68,7 @@ export const CompanyDto = z.object({
 });
 export type CompanyDto = z.infer<typeof CompanyDto>;
 export const CompanyList = listOf(CompanyDto);
+export type CompanyList = z.infer<typeof CompanyList>;
 export const CreateCompanyInput = z.object({ name: name('el nombre de la empresa') });
 export type CreateCompanyInput = z.infer<typeof CreateCompanyInput>;
 export const UpdateCompanyInput = CreateCompanyInput.extend({ active: z.boolean() }).partial();
@@ -85,6 +86,7 @@ export const KioskDto = z.object({
 });
 export type KioskDto = z.infer<typeof KioskDto>;
 export const KioskList = listOf(KioskDto);
+export type KioskList = z.infer<typeof KioskList>;
 export const CreateKioskInput = z.object({
   companyId: Id,
   name: name('el nombre del kiosko'),
@@ -109,6 +111,7 @@ export const BankAccountDto = z.object({
 });
 export type BankAccountDto = z.infer<typeof BankAccountDto>;
 export const BankAccountList = listOf(BankAccountDto);
+export type BankAccountList = z.infer<typeof BankAccountList>;
 export const CreateAccountInput = z.object({
   companyId: Id,
   name: name('el nombre de la cuenta'),
@@ -136,6 +139,7 @@ export const CategoryDto = z.object({
 });
 export type CategoryDto = z.infer<typeof CategoryDto>;
 export const CategoryList = listOf(CategoryDto);
+export type CategoryList = z.infer<typeof CategoryList>;
 export const CreateCategoryInput = z.object({
   code: z
     .string()
@@ -164,6 +168,7 @@ export const RuleDto = z.object({
 });
 export type RuleDto = z.infer<typeof RuleDto>;
 export const RuleList = listOf(RuleDto);
+export type RuleList = z.infer<typeof RuleList>;
 export const CreateRuleInput = z.object({
   pattern: z
     .string()

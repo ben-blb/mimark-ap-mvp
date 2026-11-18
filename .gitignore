@@ -29,3 +29,4 @@ docs/*.pdf
 
 # Paquete de pruebas manuales generado (pnpm paquete-manual)
 infra/probador/paquete-manual/
+docs/*.xlsx

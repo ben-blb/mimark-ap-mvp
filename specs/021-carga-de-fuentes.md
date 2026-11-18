@@ -1,7 +1,7 @@
 ---
 id: '021'
 titulo: Carga de fuentes del mes y movimientos
-estado: borrador # borrador | lista | en-progreso | hecha
+estado: en-progreso # borrador | lista | en-progreso | hecha
 depende_de: ['020']
 requisitos: Mini SRS cierre mensual · RF-01, RF-04, RF-05, RF-06, RF-10
 ---
@@ -119,7 +119,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 
 ## Tareas
 
-- [ ] 1. Contratos y códigos de error con pruebas.
+- [x] 1. Contratos y códigos de error con pruebas.
 - [ ] 2. `source-formats.ts` y `source-parsers.rules.ts` con tablas de ejemplos sintéticos (AC-021-03 a 05, 14).
 - [ ] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
 - [ ] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
@@ -143,3 +143,9 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+- 2026-11-18 · Aprobada por el usuario (opción 1: tal como está); estado `en-progreso`.
+- 2026-11-18 · Los contratos nuevos viven en `contracts/closing-uploads.ts` (no en `closing.ts`) por el límite de
+  300 líneas por archivo. AC-021-07 (`accountId` faltante o de otra empresa) responde 400 `VALIDATION` con
+  `fieldErrors.accountId`, igual que en la 020 (el catálogo no usa 422 para validación). Los cuatro códigos nuevos
+  (`SOURCE_MISSING_COLUMNS`, `SOURCE_WRONG_MONTH`, `DUPLICATE_UPLOAD`, `PERIOD_CLOSED`) sí usan los estados de la spec.

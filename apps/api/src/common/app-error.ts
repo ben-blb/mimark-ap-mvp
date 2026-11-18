@@ -23,6 +23,10 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   SETUP_DONE: 409,
   LAST_ADMIN: 409,
   SELF_PROTECTED: 409,
+  SOURCE_MISSING_COLUMNS: 422,
+  SOURCE_WRONG_MONTH: 422,
+  DUPLICATE_UPLOAD: 409,
+  PERIOD_CLOSED: 409,
   INTERNAL: 500,
 };
 
@@ -48,6 +52,10 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   SETUP_DONE: 'La configuración inicial ya se hizo.',
   LAST_ADMIN: 'Debe quedar al menos un administrador activo.',
   SELF_PROTECTED: 'No puedes quitarte el rol de administrador ni desactivarte a ti mismo.',
+  SOURCE_MISSING_COLUMNS: 'Al archivo le faltan columnas obligatorias.',
+  SOURCE_WRONG_MONTH: 'Las fechas del archivo no son del mes elegido.',
+  DUPLICATE_UPLOAD: 'Este archivo ya se cargó y confirmó para este mes.',
+  PERIOD_CLOSED: 'El periodo está cerrado: ya no admite cargas ni movimientos.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

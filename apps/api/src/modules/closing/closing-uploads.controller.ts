@@ -22,12 +22,16 @@ import { MAX_FILE_BYTES } from '@mimark/contracts/payables';
 import { AppError } from '../../common/app-error.js';
 import { Ctx } from '../../common/ctx.js';
 import { Requires } from '../session/session.guard.js';
+import { ClosingConfirmService } from './closing-confirm.service.js';
 import { ClosingUploadsService } from './closing-uploads.service.js';
 
 /** Solo traduce HTTP: valida con el esquema de contracts y llama un método del service. */
 @Controller('closing/uploads')
 export class ClosingUploadsController {
-  constructor(private readonly uploads: ClosingUploadsService) {}
+  constructor(
+    private readonly uploads: ClosingUploadsService,
+    private readonly confirmation: ClosingConfirmService,
+  ) {}
 
   @Requires('reports:write')
   @Post()
@@ -47,6 +51,13 @@ export class ClosingUploadsController {
   @Get()
   list(@Query({ schema: UploadListQuery }) query: UploadListQuery): Promise<UploadList> {
     return this.uploads.list(query);
+  }
+
+  @Requires('reports:write')
+  @HttpCode(200)
+  @Post(':id/confirm')
+  confirm(@Param('id', { schema: Id }) id: string, @Ctx() ctx: Ctx): Promise<UploadDto> {
+    return this.confirmation.confirm(id, ctx);
   }
 
   @Requires('reports:write')

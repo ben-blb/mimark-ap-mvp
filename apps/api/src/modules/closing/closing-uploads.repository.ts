@@ -44,6 +44,12 @@ export class ClosingUploadsRepository {
     });
   }
 
+  /** Bloquea el periodo hasta el fin de la transacción: confirmar dos cargas del mismo hueco no se cruza. */
+  async lockPeriod(periodId: string, tx: Tx): Promise<ReportPeriod> {
+    await tx.$queryRaw`SELECT id FROM "ReportPeriod" WHERE id = ${periodId} FOR UPDATE`;
+    return tx.reportPeriod.findUniqueOrThrow({ where: { id: periodId } });
+  }
+
   // Cargas
   findUpload(id: string, tx: Tx = this.db): Promise<UploadRow | null> {
     return tx.sourceUpload.findUnique({ where: { id }, include: { period: true } });

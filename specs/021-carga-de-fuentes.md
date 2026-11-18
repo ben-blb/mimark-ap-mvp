@@ -124,7 +124,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 - [x] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
 - [x] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
 - [x] 5. Service/controller de uploads y vista previa; integración (AC-021-01, 02, 06, 07).
-- [ ] 6. Confirmación, reemplazo, periodo cerrado y captura manual (AC-021-08 a 13).
+- [x] 6. Confirmación, reemplazo, periodo cerrado y captura manual (AC-021-08 a 13).
 - [ ] 7. Web: `/cierre/cargas` y vista previa.
 - [ ] 8. `pnpm check`, AC-021-15, fila en `specs/README.md`; `hecha`.
 
@@ -160,3 +160,8 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   UTF-8 o Latin-1). `write-excel-file` 4.1 queda como **devDependency** solo para fabricar `.xlsx` de prueba.
 - 2026-11-18 · No hay un «doble» del lector: las pruebas de integración usan el cliente real con archivos pequeños
   generados al vuelo (más fiel y igual de rápido). Solo se lee la **primera hoja** del libro.
+- 2026-11-18 · Confirmar vuelve a leer el original guardado (no se guardan filas intermedias): si el catálogo de kioskos
+  cambió entre la vista previa y la confirmación, se usa el catálogo vigente. La confirmación bloquea la fila del periodo
+  (`SELECT … FOR UPDATE`) para que dos confirmaciones del mismo hueco (empresa, mes, fuente, cuenta) no se crucen, y
+  rechaza con `DUPLICATE_UPLOAD` si el archivo ya está confirmado. Reemplazar borra los movimientos de la carga anterior
+  (queda `superseded` y su evento `upload.superseded`). `GET /entries` pagina con `page`/`pageSize` (máx. 500).

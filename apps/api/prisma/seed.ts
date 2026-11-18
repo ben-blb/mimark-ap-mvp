@@ -1,5 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { CLOSING_CATEGORIES } from '../src/modules/closing/closing.catalog.js';
 import { lineAmount } from '../src/modules/purchase-orders/purchase-orders.rules.js';
 
 /**
@@ -158,8 +159,12 @@ async function main(): Promise<void> {
       })),
     });
   }
+  for (const category of CLOSING_CATEGORIES) {
+    // El nombre y el orden se pueden editar desde la pantalla: la semilla solo crea las que faltan.
+    await db.category.upsert({ where: { code: category.code }, create: category, update: {} });
+  }
   console.log(
-    `Semilla lista: ${suppliers.length} proveedores y ${purchaseOrders.length} órdenes de compra.`,
+    `Semilla lista: ${suppliers.length} proveedores y ${purchaseOrders.length} órdenes de compra y ${CLOSING_CATEGORIES.length} categorías del cierre.`,
   );
 }
 

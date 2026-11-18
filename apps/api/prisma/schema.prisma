@@ -254,3 +254,93 @@ model ConversationMessage {
   @@id([conversationId, seq])
   @@map("conversation_messages")
 }
+
+enum BankAccountType {
+  checking
+  credit
+  master
+}
+
+enum CategoryKind {
+  income
+  cost
+  expense
+}
+
+/// Empresa o plaza del cierre mensual (spec 020). Se desactiva, nunca se borra.
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  /// Nombre normalizado (sin mayúsculas ni acentos): evita duplicados.
+  nameKey   String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  kiosks   Kiosk[]
+  accounts BankAccount[]
+}
+
+/// Kiosko y su identificador en cada fuente de ventas (spec 020).
+model Kiosk {
+  id                 String   @id @default(cuid())
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id])
+  name               String
+  /// Columna «Asset» del export de Parlevel.
+  parlevelAsset      String?  @unique
+  /// Columna «Device ID» del export de Cantaloupe.
+  cantaloupeDeviceId String?  @unique
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+/// Cuenta bancaria del cierre (spec 020). Nunca se guarda el número completo.
+model BankAccount {
+  id        String          @id @default(cuid())
+  companyId String
+  company   Company         @relation(fields: [companyId], references: [id])
+  name      String
+  type      BankAccountType
+  last4     String?
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([companyId])
+}
+
+/// Categoría de egreso o ingreso y su renglón del Estado de resultados (spec 020).
+model Category {
+  id         String       @id @default(cuid())
+  code       String       @unique
+  name       String
+  /// Uno de EDO_RES_LINES (contracts/closing.ts).
+  edoResLine String
+  kind       CategoryKind
+  sortOrder  Int          @default(0)
+  active     Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  rules ClassificationRule[]
+}
+
+/// Regla «patrón → categoría» que clasifica movimientos sola (spec 020).
+model ClassificationRule {
+  id         String   @id @default(cuid())
+  pattern    String
+  /// Patrón normalizado con normalizeKey; contra él se compara el concepto.
+  patternKey String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  priority   Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([categoryId])
+}

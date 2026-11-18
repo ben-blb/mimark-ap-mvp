@@ -121,7 +121,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 
 - [x] 1. Contratos y códigos de error con pruebas.
 - [x] 2. `source-formats.ts` y `source-parsers.rules.ts` con tablas de ejemplos sintéticos (AC-021-03 a 05, 14).
-- [ ] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
+- [x] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
 - [ ] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
 - [ ] 5. Service/controller de uploads y vista previa; integración (AC-021-01, 02, 06, 07).
 - [ ] 6. Confirmación, reemplazo, periodo cerrado y captura manual (AC-021-08 a 13).

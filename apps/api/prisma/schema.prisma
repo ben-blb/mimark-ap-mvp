@@ -279,6 +279,7 @@ model Company {
 
   kiosks   Kiosk[]
   accounts BankAccount[]
+  periods  ReportPeriod[]
 }
 
 /// Kiosko y su identificador en cada fuente de ventas (spec 020).
@@ -295,6 +296,8 @@ model Kiosk {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  entries LedgerEntry[]
+
   @@index([companyId])
 }
 
@@ -309,6 +312,9 @@ model BankAccount {
   active    Boolean         @default(true)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+
+  uploads SourceUpload[]
+  entries LedgerEntry[]
 
   @@index([companyId])
 }
@@ -326,7 +332,8 @@ model Category {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
-  rules ClassificationRule[]
+  rules   ClassificationRule[]
+  entries LedgerEntry[]
 }
 
 /// Regla «patrón → categoría» que clasifica movimientos sola (spec 020).
@@ -343,4 +350,98 @@ model ClassificationRule {
   updatedAt  DateTime @updatedAt
 
   @@index([categoryId])
+}
+
+enum LedgerSource {
+  parlevel_sales
+  parlevel_waste
+  cantaloupe
+  bank_csv
+  cash
+  payroll
+}
+
+enum UploadStatus {
+  previewed
+  confirmed
+  superseded
+  discarded
+}
+
+enum PeriodStatus {
+  open
+  closed
+}
+
+/// Mes de una empresa en el cierre (spec 021). Se crea con la primera carga; `closed` ya no admite cambios.
+model ReportPeriod {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id])
+  /// 'AAAA-MM'.
+  month     String
+  status    PeriodStatus @default(open)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  uploads SourceUpload[]
+  entries LedgerEntry[]
+
+  @@unique([companyId, month])
+}
+
+/// Archivo de una fuente cargado a un periodo (spec 021). El original va en Blob (`fileKey`).
+model SourceUpload {
+  id           String       @id @default(cuid())
+  periodId     String
+  period       ReportPeriod @relation(fields: [periodId], references: [id])
+  source       LedgerSource
+  /// Solo para `bank_csv`.
+  accountId    String?
+  account      BankAccount? @relation(fields: [accountId], references: [id])
+  fileKey      String
+  fileName     String
+  sha256       String
+  status       UploadStatus @default(previewed)
+  uploadedBy   String
+  rowsRead     Int
+  rowsRejected Int
+  entriesCount Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  entries LedgerEntry[]
+
+  @@index([periodId, source])
+}
+
+/// Movimiento del cierre: una fila de un archivo o una captura manual (spec 021). Importe con signo: ingreso +, egreso −.
+/// Las columnas de clasificación y traspaso (`categoryId`, `needsReview`, `transferGroupId`) se llenan en la spec 023.
+model LedgerEntry {
+  id              String        @id @default(cuid())
+  periodId        String
+  period          ReportPeriod  @relation(fields: [periodId], references: [id])
+  date            DateTime      @db.Date
+  kioskId         String?
+  kiosk           Kiosk?        @relation(fields: [kioskId], references: [id])
+  accountId       String?
+  account         BankAccount?  @relation(fields: [accountId], references: [id])
+  source          LedgerSource
+  /// Origen: el archivo y la fila (trazabilidad de la 024). Sin `uploadId` es una captura manual.
+  uploadId        String?
+  upload          SourceUpload? @relation(fields: [uploadId], references: [id])
+  rowNumber       Int?
+  concept         String
+  amount          Decimal       @db.Decimal(14, 2)
+  categoryId      String?
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  needsReview     Boolean       @default(false)
+  transferGroupId String?
+  meta            Json?
+  createdBy       String
+  createdAt       DateTime      @default(now())
+
+  @@index([periodId, source])
+  @@index([kioskId])
+  @@index([uploadId])
 }

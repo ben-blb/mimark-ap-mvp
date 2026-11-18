@@ -42,6 +42,7 @@ describe('cargas de fuentes (spec 021)', () => {
     for (const [key, value] of Object.entries(all)) req.field(key, value);
     return req.attach('file', file, { filename: name, contentType: XLSX_MIME });
   };
+  // Un .xlsx lleva su fecha de creación: para probar «el mismo archivo» hay que reutilizar los mismos bytes.
   const goodSales = () => xlsx(salesRows(['A-1', 'A-2']));
 
   it('AC-021-01 guarda el original, crea la carga en vista previa y no crea movimientos', async () => {
@@ -145,13 +146,14 @@ describe('cargas de fuentes (spec 021)', () => {
   });
 
   it('AC-021-06 el mismo archivo ya confirmado responde 409 con quién y cuándo lo cargó', async () => {
-    const first = await send(await goodSales(), 'v.xlsx').expect(201);
+    const file = await goodSales();
+    const first = await send(file, 'v.xlsx').expect(201);
     await t.db.sourceUpload.update({
       where: { id: first.body.upload.id },
       data: { status: 'confirmed' },
     });
 
-    const res = await send(await goodSales(), 'otra copia.xlsx').expect(409);
+    const res = await send(file, 'otra copia.xlsx').expect(409);
     expect(res.body.code).toBe('DUPLICATE_UPLOAD');
     expect(res.body.details).toMatchObject({ uploadedBy: 'Ana Pruebas' });
     expect(res.body.details.at).toBeDefined();
@@ -159,10 +161,11 @@ describe('cargas de fuentes (spec 021)', () => {
     expect(await t.db.sourceUpload.count()).toBe(1);
   });
 
-  it('AC-021-06 el mismo archivo en otro mes, otra fuente o sin confirmar no es duplicado', async () => {
+  it('AC-021-06 el mismo archivo sin confirmar todavía no es duplicado', async () => {
     // Mismo contenido, aún sin confirmar: se puede volver a subir.
-    await send(await goodSales(), 'v.xlsx').expect(201);
-    await send(await goodSales(), 'v.xlsx').expect(201);
+    const file = await goodSales();
+    await send(file, 'v.xlsx').expect(201);
+    await send(file, 'v.xlsx').expect(201);
   });
 
   it('AC-021-07 bank_csv sin cuenta, o con una cuenta de otra empresa, responde 400', async () => {

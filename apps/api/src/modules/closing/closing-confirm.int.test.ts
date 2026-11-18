@@ -25,16 +25,16 @@ describe('confirmación y movimientos (spec 021)', () => {
     await t.db.kiosk.create({ data: { companyId, name: 'K2', parlevelAsset: 'A-2' } });
   });
 
-  const preview = async (rows: Cell[][], source = 'parlevel_sales', name = 'v.xlsx') => {
+  // Un .xlsx lleva su fecha de creación: para probar «el mismo archivo» hay que reutilizar los mismos bytes.
+  const previewFile = async (file: Buffer, source = 'parlevel_sales', name = 'v.xlsx') => {
     const req = admin.post('/api/closing/uploads');
     for (const [k, v] of Object.entries({ companyId, month: '2026-09', source })) req.field(k, v);
-    const res = await req.attach('file', await xlsx(rows), {
-      filename: name,
-      contentType: XLSX_MIME,
-    });
+    const res = await req.attach('file', file, { filename: name, contentType: XLSX_MIME });
     expect(res.status).toBe(201);
     return res.body.upload.id as string;
   };
+  const preview = async (rows: Cell[][], source = 'parlevel_sales') =>
+    previewFile(await xlsx(rows), source);
   const confirm = (id: string) => admin.post(`/api/closing/uploads/${id}/confirm`);
   const entries = () =>
     t.db.ledgerEntry.findMany({ orderBy: [{ rowNumber: 'asc' }], include: { period: true } });
@@ -141,7 +141,8 @@ describe('confirmación y movimientos (spec 021)', () => {
   });
 
   it('AC-021-06 el mismo archivo ya confirmado no se puede volver a cargar', async () => {
-    const id = await preview(salesRows(['A-1']));
+    const file = await xlsx(salesRows(['A-1']));
+    const id = await previewFile(file);
     await confirm(id).expect(200);
     const req = admin.post('/api/closing/uploads');
     for (const [k, v] of Object.entries({
@@ -161,8 +162,9 @@ describe('confirmación y movimientos (spec 021)', () => {
   });
 
   it('AC-021-06 dos vistas previas del mismo archivo: confirmar la segunda responde 409', async () => {
-    const a = await preview(salesRows(['A-1']));
-    const b = await preview(salesRows(['A-1']));
+    const file = await xlsx(salesRows(['A-1']));
+    const a = await previewFile(file);
+    const b = await previewFile(file);
     await confirm(a).expect(200);
     const res = await confirm(b).expect(409);
     expect(res.body.code).toBe('DUPLICATE_UPLOAD');

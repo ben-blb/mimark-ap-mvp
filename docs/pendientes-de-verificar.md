@@ -23,6 +23,13 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-18 · 020 · AC-020-14 se probó con un concepto con el formato de la spec, no con uno de un estado de
       cuenta real. Repetir «Probar» de las reglas con un concepto real cuando llegue el PDF (spec 022).
 
+- [ ] 2026-11-18 · 021 · AC-021-15 [manual]: con los exports de un mes real de una empresa chica (Parlevel ventas y
+      mermas, Cantaloupe, banco en CSV/Excel, caja, nómina), cargar cada uno en `/cierre/cargas` en ese orden y comprobar
+      que los totales de la vista previa coinciden con los de cada pestaña del Excel de la contadora. Los nombres de
+      columna de `source-formats.ts` son una propuesta: ajustarlos a los exports reales (basta agregar alias en `names`).
+      Medir también si un mes de 45 kioskos cabe en 4 MB. Al terminar: borrar esta línea, anotarlo en la Bitácora de la 021
+      y pasarla a `hecha`.
+
 ## Decisiones o texto por revisar
 
 - [ ] 2026-11-15 · 018 · `apps/api/src/integrations/prompts/assistant.v3.ts` aún dice «el checklist completo»;

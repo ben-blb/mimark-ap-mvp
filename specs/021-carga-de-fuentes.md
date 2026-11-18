@@ -169,3 +169,9 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   fuente. Un estado de cuenta pide elegir la cuenta. La vista previa vive en el estado de la tarjeta: si se recarga la
   página queda el estado «Vista previa pendiente» y hay que volver a subir el archivo (no se guardan filas intermedias).
   `formatAmount` ahora muestra los egresos como `-$350.00`. El catálogo enlaza a «Cargas del mes» solo a quien escribe.
+- 2026-11-18 · **Prueba de humo en el navegador** (`pnpm dev`, Chrome, usuario `verif-admin`, archivos sintéticos): se subió
+  un `.xlsx` de ventas y un `.csv` de caja por `/cierre/cargas`. La vista previa dio 4 filas leídas, 1 rechazada (fecha
+  inválida), 1 sin kiosko (`SMK-ZZ`) y total $2,600.50 (= 1,500.50 + 980 + 120); tras confirmar quedaron 5 movimientos con su
+  fila de origen, la celda `=CMD()` guardada como texto y los egresos con signo (−150). **AC-021-15 sigue pendiente**: pide
+  un mes completo real (Parlevel, Cantaloupe, banco, caja y nómina) comparado contra el Excel de la contadora, y no hay
+  exports reales ni de qué comparar; está en `docs/pendientes-de-verificar.md`. Los datos de prueba se borraron.

@@ -120,7 +120,7 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
 ## Tareas
 
 - [x] 1. Contratos y códigos de error con pruebas.
-- [ ] 2. `source-formats.ts` y `source-parsers.rules.ts` con tablas de ejemplos sintéticos (AC-021-03 a 05, 14).
+- [x] 2. `source-formats.ts` y `source-parsers.rules.ts` con tablas de ejemplos sintéticos (AC-021-03 a 05, 14).
 - [ ] 3. Esquema Prisma y migración `021-carga-de-fuentes`.
 - [ ] 4. `spreadsheet.client.ts` (lector `.xlsx`/CSV) y su doble para pruebas; dependencia justificada en Bitácora.
 - [ ] 5. Service/controller de uploads y vista previa; integración (AC-021-01, 02, 06, 07).
@@ -149,3 +149,8 @@ confirmada), subida con arrastrar y soltar, vista previa con filas rechazadas ma
   300 líneas por archivo. AC-021-07 (`accountId` faltante o de otra empresa) responde 400 `VALIDATION` con
   `fieldErrors.accountId`, igual que en la 020 (el catálogo no usa 422 para validación). Los cuatro códigos nuevos
   (`SOURCE_MISSING_COLUMNS`, `SOURCE_WRONG_MONTH`, `DUPLICATE_UPLOAD`, `PERIOD_CLOSED`) sí usan los estados de la spec.
+- 2026-11-18 · Cada fila genera **un** movimiento (`{ entry } | { reject }`): la comisión y el costo de Parlevel, y
+  transacciones, tasa de descuento e IVA de Cantaloupe, van en `meta` (la 023/024 los interpreta). Merma, robo, retiro,
+  nómina y «Salida» son negativos. Un kiosko que no está en el catálogo queda `kioskId=null`, `needsReview=true` y la
+  bandera `UNKNOWN_KIOSK:<id>`. Las columnas de `source-formats.ts` son una propuesta (SRS §9.1–9.2), con alias en español
+  e inglés. Fechas aceptadas: `AAAA-MM-DD`, `DD/MM/AAAA`, `Date` y serial de Excel.

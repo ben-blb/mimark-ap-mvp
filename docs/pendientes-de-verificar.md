@@ -20,6 +20,9 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       con «1»). Si es así, `parlevelAsset` único (AC-020-04) rechazaría kioskos y la 021 deberá mapear por otro
       campo (p. ej. Device ID). Confirmar con el export completo antes de aprobar la 021.
 
+- [ ] 2026-11-18 · 020 · AC-020-14 se probó con un concepto con el formato de la spec, no con uno de un estado de
+      cuenta real. Repetir «Probar» de las reglas con un concepto real cuando llegue el PDF (spec 022).
+
 ## Decisiones o texto por revisar
 
 - [ ] 2026-11-15 · 018 · `apps/api/src/integrations/prompts/assistant.v3.ts` aún dice «el checklist completo»;

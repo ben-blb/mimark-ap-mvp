@@ -268,7 +268,7 @@ export class ClosingService {
   private log(
     entity: Entity,
     entityId: string,
-    verb: 'created' | 'updated',
+    verb: 'created' | 'updated' | 'deactivated',
     data: Record<string, unknown>,
     ctx: Ctx,
     tx: Tx,
@@ -289,7 +289,9 @@ export class ClosingService {
   ): Promise<void> {
     const changes = diffFields(before, after, fields);
     if (Object.keys(changes).length > 0) {
-      await this.log(entity, (after as { id: string }).id, 'updated', { changes }, ctx, tx);
+      // Desactivar tiene su propio evento (spec 020, «Auditoría»); reactivar y editar son `updated`.
+      const verb = changes.active?.to === false ? 'deactivated' : 'updated';
+      await this.log(entity, (after as { id: string }).id, verb, { changes }, ctx, tx);
     }
   }
 }

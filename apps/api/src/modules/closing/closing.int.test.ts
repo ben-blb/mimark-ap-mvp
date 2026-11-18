@@ -155,7 +155,9 @@ describe('base del cierre (spec 020)', () => {
       const all = await admin.get(`/api/closing/${path}?includeInactive=true`).expect(200);
       expect(all.body.items).toHaveLength(1);
     }
-    const event = await t.db.auditEvent.findFirstOrThrow({ where: { action: 'company.updated' } });
+    const event = await t.db.auditEvent.findFirstOrThrow({
+      where: { action: 'company.deactivated' },
+    });
     expect(event.data).toEqual({ changes: { active: { from: true, to: false } } });
     await admin.delete(`/api/closing/companies/${company.id}`).expect(404);
   });

@@ -183,3 +183,4 @@ formularios con `useZodForm`. Ruta `/cierre/catalogo` con `RequirePermission`; e
 - 2026-11-18 · Los usuarios `verif-admin` y `verif-gerencia` se agregaron a `db:verification-users` y a
   `docs/verificacion-manual.md`. Se dividió `infra/probador/src/paquete-manual.ts` (límite de 300 líneas del lint).
 - 2026-11-18 · Hallazgo para la 021: el Asset del export parece repetirse entre filas; ver `docs/pendientes-de-verificar.md`.
+- 2026-11-18 · Revisión independiente: desactivar ahora se audita como `*.deactivated` (antes `*.updated`), como pide «Auditoría».

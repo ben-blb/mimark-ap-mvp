@@ -49,3 +49,31 @@ export function sortCategories<C extends { edoResLine: EdoResLine; sortOrder: nu
     (a, b) => position(a.edoResLine) - position(b.edoResLine) || a.sortOrder - b.sortOrder,
   );
 }
+
+/** Palabras de al menos 3 letras de un texto normalizado. */
+const words = (key: string) => key.split(' ').filter((w) => w.length >= 3);
+
+/**
+ * La regla que más se parece a un concepto que ninguna regla reconoce: la que comparte más palabras (de 3+ letras)
+ * con él; a igual cantidad, la de mayor prioridad. Solo una sugerencia que una persona confirma (AC-023-02).
+ */
+export function suggestRule<R extends MatchableRule>(
+  concept: string,
+  rules: readonly R[],
+): R | null {
+  const conceptWords = new Set(words(normalizeKey(concept)));
+  let best: R | null = null;
+  let bestShared = 0;
+  for (const rule of rules) {
+    if (!rule.active) continue;
+    const shared = words(rule.patternKey).filter((w) => conceptWords.has(w)).length;
+    if (
+      shared > bestShared ||
+      (shared === bestShared && shared > 0 && best && rule.priority > best.priority)
+    ) {
+      best = rule;
+      bestShared = shared;
+    }
+  }
+  return best;
+}

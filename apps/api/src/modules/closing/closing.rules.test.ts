@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { matchRule, normalizeKey, sortCategories, type MatchableRule } from './closing.rules.js';
+import {
+  matchRule,
+  normalizeKey,
+  sortCategories,
+  suggestRule,
+  type MatchableRule,
+} from './closing.rules.js';
 
 const rule = (id: string, pattern: string, priority = 0, active = true): MatchableRule => ({
   id,
@@ -58,5 +64,24 @@ describe('sortCategories', () => {
       'Ventas:50',
       'Rentas:10',
     ]);
+  });
+});
+
+describe('suggestRule', () => {
+  const rules = [rule('adt', 'ADT SECURITY'), rule('tel', 'TELMEX INTERNET', 5)];
+
+  it('AC-023-02 sugiere la regla que comparte palabras con el concepto', () => {
+    expect(suggestRule('PAGO ADT MONITOREO', rules)?.id).toBe('adt');
+    expect(suggestRule('Telmex servicio', rules)?.id).toBe('tel');
+  });
+
+  it('AC-023-02 sin palabras en común no sugiere nada, y las inactivas se ignoran', () => {
+    expect(suggestRule('GASOLINERA', rules)).toBeNull();
+    expect(suggestRule('ADT', [rule('adt', 'ADT SECURITY', 0, false)])).toBeNull();
+  });
+
+  it('AC-023-02 a igual coincidencia gana la de mayor prioridad', () => {
+    const tied = [rule('a', 'OXXO SUC', 1), rule('b', 'OXXO CENTRO', 9)];
+    expect(suggestRule('OXXO 123', tied)?.id).toBe('b');
   });
 });

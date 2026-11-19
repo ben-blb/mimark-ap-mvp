@@ -81,7 +81,7 @@ comisión`, donde «ventas» es la suma de `amount` de los movimientos `cantalou
 ### Cuadres y cierre
 
 - **AC-023-12** · `GET /api/closing/periods/:id/checks` devuelve semáforos (`ok | warning | error`) para:
-  (a) ventas de Parlevel = ingresos del reporte (categorías `VENTAS` y `VENTA_DIRECTA`); (b) por cuenta de banco,
+  (a) ventas de Parlevel = ventas del reporte (categoría `VENTAS`; la venta directa de caja es otro renglón); (b) por cuenta de banco,
   saldo inicial + suma de movimientos = saldo final, con los saldos del estado de cuenta confirmado (PDF, spec
   022; sin PDF el cuadre queda `warning` «sin saldos», nunca `ok`); (c) movimiento neto de bancos por dos
   caminos: suma de todos los movimientos de banco = suma por categoría + traspasos (que suman 0); (d) nómina
@@ -162,7 +162,7 @@ color).
 
 - [x] 1. Contratos, errores y migración `023-clasificacion-y-cuadres`.
 - [x] 2. `cantaloupe.rules.ts` con la tabla de ejemplos (AC-023-09 a 11).
-- [ ] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
+- [x] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
 - [ ] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
 - [ ] 5. Traspasos (AC-023-06 a 08).
 - [ ] 6. Conciliación, cuadres, cierre y permisos (AC-023-09 a 16).

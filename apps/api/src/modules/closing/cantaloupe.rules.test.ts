@@ -21,9 +21,12 @@ describe('cantaloupeExpected', () => {
     [0, 0, 0, 0],
     [1470, 50, 8, 1412], // 49.98 → 50; 8.0 → 8
     [-10000, -340, -54, -9606], // una devolución neta resta con el mismo redondeo
-  ])('AC-023-09 ventas %i → comisión %i, IVA %i, esperado %i', (sales, commission, vat, expected) => {
-    expect(cantaloupeExpected(sales, 340, 1600)).toEqual({ commission, vat, expected });
-  });
+  ])(
+    'AC-023-09 ventas %i → comisión %i, IVA %i, esperado %i',
+    (sales, commission, vat, expected) => {
+      expect(cantaloupeExpected(sales, 340, 1600)).toEqual({ commission, vat, expected });
+    },
+  );
 
   it('AC-023-09 redondea mitad hacia arriba cada paso antes de restar', () => {
     // 1,000.00 × 3.4 % = 34.00; 250 × 3.4 % = 8.5 → 9 (mitad hacia arriba)
@@ -42,11 +45,7 @@ describe('reconcileDays', () => {
   const sale = (date: string, cents: number) => ({ date, cents });
 
   it('AC-023-10 compara el esperado con el depósito del día y da la diferencia', () => {
-    const [row] = reconcileDays(
-      [sale('2026-09-01', 833650)],
-      [sale('2026-09-01', 800771)],
-      opts,
-    );
+    const [row] = reconcileDays([sale('2026-09-01', 833650)], [sale('2026-09-01', 800771)], opts);
     expect(row).toMatchObject({
       date: '2026-09-01',
       groupedDays: [],
@@ -70,11 +69,7 @@ describe('reconcileDays', () => {
   });
 
   it('AC-023-11 ventas sin depósito: missing; depósito sin ventas: orphan', () => {
-    const rows = reconcileDays(
-      [sale('2026-09-01', 10000)],
-      [sale('2026-09-02', 5000)],
-      opts,
-    );
+    const rows = reconcileDays([sale('2026-09-01', 10000)], [sale('2026-09-02', 5000)], opts);
     expect(rows.map((r) => [r.date, r.status])).toEqual([
       ['2026-09-01', 'missing'],
       ['2026-09-02', 'orphan'],

@@ -1,7 +1,7 @@
 ---
 id: '024'
 titulo: Reportes del cierre (EDO RES, kioskos, proveedores) con drill-down
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['020', '021', '023']
 requisitos: Mini SRS cierre mensual · RF-03, RF-07, RF-08, RF-13, RF-14
 ---
@@ -148,7 +148,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
 - [x] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
 - [x] 5. Permiso `reports:view`, ajuste de `manager` y ruta de descarga de origen (AC-024-07, 15, 16 en API).
 - [x] 6. Web: menú «Reportes» y enlace desde el Tablero (AC-024-16), EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
-- [ ] 7. `pnpm check`, AC-024-20, fila en `specs/README.md`; `hecha`.
+- [x] 7. `pnpm check`, AC-024-20, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -188,3 +188,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
   (`?companyId&month`) y las tres pantallas comparten el periodo; el mes por defecto es el anterior (el que se revisa el día 1–2).
   «Comparar» pide siempre el mes inmediato anterior. Las tablas no se vuelven tarjetas a 375 px: se desplazan dentro de su contenedor.
   El enlace a Reportes en el Tablero y la entrada «Reportes» del menú salen de `reports:view`.
+- 2026-11-19 · Cierre: `pnpm check` en verde (lint, formato, 262 pruebas web, 300 de integración). AC-024-20 [manual] queda pendiente: no hay
+  un mes real conciliado y cerrado ni el EDO RES de la contadora en el repo (ver `docs/pendientes-de-verificar.md`). Tampoco se recorrieron las
+  pantallas con `pnpm dev` (teclado, 375 px, tema oscuro): las cubren solo las pruebas de Testing Library y las de integración de la API.
+  Se arregló de paso una prueba intermitente de 021 (AC-021-06): generaba el mismo `.xlsx` dos veces y el hash podía diferir.

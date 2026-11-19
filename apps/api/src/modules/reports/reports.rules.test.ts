@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { kioskRows } from './reports-kiosks.rules.js';
+import { supplierRows, type SupplierRule } from './reports-suppliers.rules.js';
 import {
   buildEdoRes,
   drillLine,
-  kioskRows,
   percent,
   reportStatus,
-  supplierRows,
   withComparison,
   type ReportCategory,
   type ReportEntry,
-  type SupplierRule,
 } from './reports.rules.js';
 
 const cat = (

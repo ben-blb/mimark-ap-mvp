@@ -59,3 +59,5 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-18 · 023 · Recorrer `/cierre/por-revisar` y `/cierre/conciliacion` con `pnpm dev` (teclado y 375 px): no se hizo.
       Correr `pnpm db:seed` en las bases ya sembradas para que exista la categoría `COBRANZA_CANTALOUPE`.
 - [ ] 2026-11-19 · 024 · Confirmar con la contadora la composición del EDO RES: si «Inversiones» y «No deducibles» restan de la utilidad neta, y que Costo de lo vendido incluya Mermas y Robos. Al resolverlo, borrar esta línea y anotarlo en la Bitácora de la 024.
+- [ ] 2026-11-19 · 024 · AC-024-20 [manual]. Con un mes real ya conciliado y cerrado (023), comparar `/reportes/edo-res` renglón por renglón con la pestaña EDO RES de la contadora: diferencias en 0.00 o explicadas; la gerencia confirma que llega a cada partida con clics y sin Excel. Al terminar, borrar esta línea y anotarlo en la Bitácora de la 024.
+- [ ] 2026-11-19 · 024 · Recorrer `/reportes/edo-res`, `/reportes/kioskos` y `/reportes/proveedores` con `pnpm dev` como `manager` (teclado, 375 px, tema claro y oscuro, descarga del Excel y del archivo de origen): no se hizo.

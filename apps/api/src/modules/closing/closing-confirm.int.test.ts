@@ -153,7 +153,7 @@ describe('confirmación y movimientos (spec 021)', () => {
       req.field(k, v);
     }
     const res = await req
-      .attach('file', await xlsx(salesRows(['A-1'])), {
+      .attach('file', file, {
         filename: 'copia.xlsx',
         contentType: XLSX_MIME,
       })

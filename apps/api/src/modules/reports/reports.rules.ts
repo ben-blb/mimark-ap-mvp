@@ -3,15 +3,11 @@ import {
   UNCLASSIFIED_LINE,
   type DrillCategoryDto,
   type EdoResRowDto,
-  type KioskReportDto,
-  type KioskRowDto,
   type ReportLine,
   type ReportStatus,
-  type SupplierRowDto,
 } from '@mimark/contracts/reports';
 import { centsToMoney } from '../../common/money.js';
 import { signedMoneyToCents } from '../closing/closing-checks.rules.js';
-import { matchRule } from '../closing/closing.rules.js';
 
 /** Decisiones puras de los reportes del cierre (spec 024): sin I/O, sin reloj. Todo se suma en centavos. */
 
@@ -35,13 +31,17 @@ export const OPERATING_LINES = [
   'Comisión bancaria',
   'Intereses',
 ] as const satisfies readonly EdoResLine[];
-const COMMISSION_LINES: readonly EdoResLine[] = ['Fee Cantaloupe', 'Fee Nayax', 'Fee software'];
+export const COMMISSION_LINES: readonly EdoResLine[] = [
+  'Fee Cantaloupe',
+  'Fee Nayax',
+  'Fee software',
+];
 /** Renglones que no son de operación y que, por ahora, restan de la utilidad neta. */
 const BELOW_LINES = ['Impuestos', 'Inversiones', 'No deducibles'] as const;
 
 /** El depósito de Cantaloupe cobra ventas ya contadas (spec 023): nunca es ingreso. */
 const EXCLUDED_CATEGORY = 'COBRANZA_CANTALOUPE';
-const SUPPLIER_CATEGORY = 'COSTO_VENDIDO';
+export const SUPPLIER_CATEGORY = 'COSTO_VENDIDO';
 
 export interface ReportCategory {
   id: string;
@@ -83,7 +83,8 @@ export function lineOf(entry: ReportEntry, categories: CategoryIndex): ReportLin
   return category.code === EXCLUDED_CATEGORY ? null : category.edoResLine;
 }
 
-const isIncomeLine = (line: ReportLine) => (NET_SALES_LINES as readonly string[]).includes(line);
+export const isIncomeLine = (line: ReportLine) =>
+  (NET_SALES_LINES as readonly string[]).includes(line);
 
 /** Ingresos con su signo; costos y gastos como magnitud positiva; «Por clasificar» con el signo crudo. */
 export function reportAmount(line: ReportLine, cents: number): number {
@@ -234,321 +235,4 @@ export function drillLine<E extends ReportEntry>(
     .map(({ code, name, amount, count }) => ({ code, name, amount, count }));
   const amount = mine.reduce((acc, e) => acc + e.amountCents, 0);
   return { amount: centsToMoney(amount), categories: categoriesOut, entries: mine };
-}
-
-export interface ReportKiosk {
-  id: string;
-  name: string;
-}
-
-const NO_KIOSK = 'Sin kiosko';
-
-/** Ventas y rentabilidad por kiosko; los gastos generales no se prorratean (AC-024-09 a 11). */
-export function kioskRows(
-  entries: readonly ReportEntry[],
-  categories: readonly ReportCategory[],
-  kiosks: readonly ReportKiosk[],
-): Pick<KioskReportDto, 'rows' | 'overhead' | 'unclassified' | 'totals'> {
-  const index = indexCategories(categories);
-  type Acc = {
-    sales: number;
-    cost: number;
-    waste: number;
-    theft: number;
-    commissions: number;
-    seen: boolean;
-  };
-  const blank = (): Acc => ({ sales: 0, cost: 0, waste: 0, theft: 0, commissions: 0, seen: false });
-  const byKiosk = new Map<string | null, Acc>();
-  let overhead = 0;
-  let unclassified = 0;
-
-  for (const entry of entries) {
-    const line = lineOf(entry, index);
-    if (line === null) continue;
-    const amount = reportAmount(line, entry.cents);
-    if (line === UNCLASSIFIED_LINE) {
-      unclassified += amount;
-      continue;
-    }
-    const attributable =
-      isIncomeLine(line) ||
-      line === 'Costo de lo vendido' ||
-      line === 'Mermas' ||
-      line === 'Robos' ||
-      COMMISSION_LINES.includes(line);
-    if (!attributable) {
-      overhead += amount;
-      continue;
-    }
-    const acc = byKiosk.get(entry.kioskId) ?? blank();
-    acc.seen = true;
-    if (isIncomeLine(line)) acc.sales += amount;
-    else if (line === 'Costo de lo vendido') acc.cost += amount;
-    else if (line === 'Mermas') acc.waste += amount;
-    else if (line === 'Robos') acc.theft += amount;
-    else acc.commissions += amount;
-    byKiosk.set(entry.kioskId, acc);
-  }
-
-  const names = new Map(kiosks.map((k) => [k.id, k.name]));
-  const toRow = (kioskId: string | null, name: string, a: Acc): KioskRowDto => {
-    const margin = a.sales - a.cost;
-    return {
-      kioskId,
-      name,
-      sales: centsToMoney(a.sales),
-      cost: centsToMoney(a.cost),
-      margin: centsToMoney(margin),
-      marginPercent: percent(margin, a.sales),
-      waste: centsToMoney(a.waste),
-      theft: centsToMoney(a.theft),
-      commissions: centsToMoney(a.commissions),
-      profitBeforeOverhead: centsToMoney(margin - a.waste - a.theft - a.commissions),
-      negativeMargin: margin < 0,
-    };
-  };
-
-  const named = [...byKiosk.entries()]
-    .filter(([id]) => id !== null)
-    .map(([id, acc]) => ({ id: id as string, acc }))
-    .sort((a, b) => (names.get(a.id) ?? a.id).localeCompare(names.get(b.id) ?? b.id, 'es'))
-    .map(({ id, acc }) => toRow(id, names.get(id) ?? 'Kiosko desconocido', acc));
-  const none = byKiosk.get(null);
-  const rows = [...named, ...(none ? [toRow(null, NO_KIOSK, none)] : [])];
-
-  const sum = (pick: (a: Acc) => number) =>
-    [...byKiosk.values()].reduce((acc, a) => acc + pick(a), 0);
-  const sales = sum((a) => a.sales);
-  const cost = sum((a) => a.cost);
-  const waste = sum((a) => a.waste);
-  const theft = sum((a) => a.theft);
-  const commissions = sum((a) => a.commissions);
-  const margin = sales - cost;
-  return {
-    rows,
-    overhead: centsToMoney(overhead),
-    unclassified: centsToMoney(unclassified),
-    totals: {
-      sales: centsToMoney(sales),
-      cost: centsToMoney(cost),
-      margin: centsToMoney(margin),
-      waste: centsToMoney(waste),
-      theft: centsToMoney(theft),
-      commissions: centsToMoney(commissions),
-      profitBeforeOverhead: centsToMoney(margin - waste - theft - commissions),
-    },
-  };
-}
-
-export interface SupplierRule {
-  id: string;
-  pattern: string;
-  patternKey: string;
-  priority: number;
-  active: boolean;
-  categoryId: string;
-}
-
-/**
- * Pagos por proveedor (AC-024-12 y 13): el proveedor es el patrón de la regla de «Costo de lo vendido» que
- * coincide con el concepto; los egresos que ninguna regla cubre no aparecen.
- */
-export function supplierRows(
-  entries: readonly ReportEntry[],
-  categories: readonly ReportCategory[],
-  rules: readonly SupplierRule[],
-): { rows: SupplierRowDto[]; totalSpend: string } {
-  const index = indexCategories(categories);
-  const groups = new Map<
-    string,
-    { name: string; total: number; count: number; first: string; last: string }
-  >();
-  for (const entry of entries) {
-    if (lineOf(entry, index) === null || entry.cents >= 0 || !entry.categoryId) continue;
-    const category = index.get(entry.categoryId);
-    if (category?.code !== SUPPLIER_CATEGORY) continue;
-    const rule = matchRule(
-      entry.concept,
-      rules.filter((r) => r.categoryId === entry.categoryId),
-    );
-    if (!rule) continue;
-    const g = groups.get(rule.id) ?? {
-      name: rule.pattern,
-      total: 0,
-      count: 0,
-      first: entry.date,
-      last: entry.date,
-    };
-    g.total += -entry.cents;
-    g.count += 1;
-    if (entry.date < g.first) g.first = entry.date;
-    if (entry.date > g.last) g.last = entry.date;
-    groups.set(rule.id, g);
-  }
-  const all = [...groups.values()];
-  const totalSpend = all.reduce((acc, g) => acc + g.total, 0);
-  const rows = all
-    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'es'))
-    .map((g) => ({
-      name: g.name,
-      total: centsToMoney(g.total),
-      count: g.count,
-      average: centsToMoney(Math.round(g.total / g.count)),
-      percentOfSpend: percent(g.total, totalSpend) ?? '0.00',
-      firstPaymentOn: g.first,
-      lastPaymentOn: g.last,
-    }));
-  return { rows, totalSpend: centsToMoney(totalSpend) };
-}
-
-/** Una hoja del libro de exportación; coincide con lo que escribe `SpreadsheetClient.write`. */
-export interface ExportSheet {
-  name: string;
-  rows: (string | number | null)[][];
-}
-
-export interface ExportInput {
-  edo: readonly EdoResRowDto[];
-  kiosks: Pick<KioskReportDto, 'rows' | 'overhead' | 'unclassified' | 'totals'>;
-  suppliers: readonly SupplierRowDto[];
-  entries: readonly (ReportEntry & {
-    kioskName: string | null;
-    accountName: string | null;
-    fileName: string | null;
-  })[];
-  categories: readonly ReportCategory[];
-}
-
-const num = (money: string) => signedMoneyToCents(money) / 100;
-
-/** Las hojas del libro de exportación: EDO RES, Kioskos, Proveedores y Movimientos (AC-024-14). */
-export function exportSheets(input: ExportInput): ExportSheet[] {
-  const compare = input.edo.some((r) => r.previousAmount !== undefined);
-  const index = indexCategories(input.categories);
-  const { totals } = input.kiosks;
-  return [
-    {
-      name: 'EDO RES',
-      rows: [
-        ['Renglón', 'Importe', '% de ventas', ...(compare ? ['Mes anterior', 'Diferencia'] : [])],
-        ...input.edo.map((r) => [
-          r.label,
-          num(r.amount),
-          r.percentOfSales === null ? null : Number(r.percentOfSales),
-          ...(compare ? [num(r.previousAmount ?? '0.00'), num(r.delta ?? '0.00')] : []),
-        ]),
-      ],
-    },
-    {
-      name: 'Kioskos',
-      rows: [
-        [
-          'Kiosko',
-          'Ventas',
-          'Costo',
-          'Margen',
-          '% margen',
-          'Mermas',
-          'Robos',
-          'Comisiones',
-          'Utilidad antes de gastos generales',
-        ],
-        ...input.kiosks.rows.map((r) => [
-          r.name,
-          num(r.sales),
-          num(r.cost),
-          num(r.margin),
-          r.marginPercent === null ? null : Number(r.marginPercent),
-          num(r.waste),
-          num(r.theft),
-          num(r.commissions),
-          num(r.profitBeforeOverhead),
-        ]),
-        [
-          'Total',
-          num(totals.sales),
-          num(totals.cost),
-          num(totals.margin),
-          null,
-          num(totals.waste),
-          num(totals.theft),
-          num(totals.commissions),
-          num(totals.profitBeforeOverhead),
-        ],
-        [
-          'Gastos generales (sin asignar)',
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          num(input.kiosks.overhead),
-        ],
-        [
-          UNCLASSIFIED_LINE,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          num(input.kiosks.unclassified),
-        ],
-      ],
-    },
-    {
-      name: 'Proveedores',
-      rows: [
-        [
-          'Proveedor',
-          'Pago total',
-          'Pagos',
-          'Ticket promedio',
-          '% del gasto',
-          'Primer pago',
-          'Último pago',
-        ],
-        ...input.suppliers.map((r) => [
-          r.name,
-          num(r.total),
-          r.count,
-          num(r.average),
-          Number(r.percentOfSpend),
-          r.firstPaymentOn,
-          r.lastPaymentOn,
-        ]),
-      ],
-    },
-    {
-      name: 'Movimientos',
-      rows: [
-        [
-          'Fecha',
-          'Concepto',
-          'Kiosko',
-          'Cuenta',
-          'Categoría',
-          'Renglón',
-          'Importe',
-          'Origen',
-          'Fila',
-        ],
-        ...input.entries.map((e) => [
-          e.date,
-          e.concept,
-          e.kioskName,
-          e.accountName,
-          (e.categoryId && index.get(e.categoryId)?.name) || null,
-          lineOf(e, index) ?? 'Fuera de los reportes',
-          e.cents / 100,
-          e.fileName,
-          e.rowNumber,
-        ]),
-      ],
-    },
-  ];
 }

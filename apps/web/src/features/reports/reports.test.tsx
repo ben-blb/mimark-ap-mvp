@@ -289,7 +289,7 @@ describe('Proveedores (spec 024)', () => {
 });
 
 describe('acceso desde el Tablero (spec 024)', () => {
-  it('AC-024-16 gerencia ve el enlace a Reportes en el Tablero; otros roles no', async () => {
+  it('AC-024-16 gerencia ve el enlace a Reportes en el Tablero; otros roles no', () => {
     const dash = (role: string) => {
       vi.stubGlobal(
         'fetch',

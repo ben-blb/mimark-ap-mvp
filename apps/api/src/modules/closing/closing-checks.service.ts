@@ -149,7 +149,7 @@ export class ClosingChecksService {
   private async runChecksFor(period: ReportPeriod, tx?: Tx) {
     const [entries, allAccounts] = await Promise.all([
       this.ledger.listPeriodEntries(period.id, {}, tx),
-      this.closing.listAccounts(true),
+      this.closing.listAccounts(true, tx),
     ]);
     const accounts = allAccounts.filter((a) => a.companyId === period.companyId);
     const statements: BankStatement[] = [];
@@ -158,6 +158,7 @@ export class ClosingChecksService {
         period.companyId,
         period.month,
         account.id,
+        tx,
       );
       const parsed = draft ? BankDraftData.safeParse(draft) : null;
       if (parsed?.success) {

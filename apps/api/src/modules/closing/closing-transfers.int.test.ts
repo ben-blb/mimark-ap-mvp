@@ -61,6 +61,21 @@ describe('traspasos entre cuentas propias (spec 023)', () => {
     expect((await get(out.id)).needsReview).toBe(true);
   });
 
+  it('AC-023-17 un filtro no parte el traspaso propuesto: el otro lado se queda en la lista', async () => {
+    const { out, inflow } = await pair();
+    await entry({ amount: '-70.00', concept: 'OTRA', accountId: accountB });
+
+    const res = await admin
+      .get('/api/closing/review')
+      .query({ periodId, accountId: accountA })
+      .expect(200);
+
+    expect(res.body.items.map((i: { id: string }) => i.id).sort()).toEqual(
+      [out.id, inflow.id].sort(),
+    );
+    expect(res.body.transfers).toEqual([{ entryIds: [out.id, inflow.id] }]);
+  });
+
   it('AC-023-06 no propone con la misma cuenta, otro monto o fuera de los 2 días hábiles', async () => {
     await entry({ amount: '-100.00' });
     await entry({ amount: '100.00' }); // misma cuenta

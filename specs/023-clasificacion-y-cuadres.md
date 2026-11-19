@@ -115,7 +115,7 @@ Migración `023-clasificacion-y-cuadres`: `LedgerEntry` usa `categoryId`, `needs
 creados en 021) y gana `kind` (`normal | internal_transfer`). Tabla `TransferGroup` (`id`, `confirmedBy`,
 `confirmedAt`); solo existen grupos confirmados. `ReportPeriod` gana `closedBy`, `closedAt`, `reopenReason`
 (`PeriodStatus` ya es `open | closed`). `Company.cantaloupeRate` Decimal(5,4), por omisión 0.0340: la tasa es de
-la empresa, no del periodo. La semilla y la migración agregan la categoría `COBRANZA_CANTALOUPE`.
+la empresa, no del periodo. La semilla agrega la categoría `COBRANZA_CANTALOUPE` (en una base ya sembrada, correr `pnpm db:seed`: la migración no inserta datos).
 
 **Supuestos de la conciliación, en un solo archivo.** `apps/api/src/modules/closing/cantaloupe.assumptions.ts`
 exporta las únicas constantes sin validar: `CANTALOUPE_VAT_RATE = 0.16` (IVA de la comisión),
@@ -210,3 +210,9 @@ color).
   traspasos); la tasa 3.4 % es `Company.cantaloupeRate` (por omisión 0.0340, sin pantalla para editarla: se cambia en la base).
   `COBRANZA_CANTALOUPE` se agrega al catálogo y a la semilla (`pnpm db:seed`); en una base ya sembrada hay que volver a correrla
   (el `upsert` no pisa nada) porque la migración no inserta datos.
+- 2026-11-18 · Revisión (`/spec-revisar 023`): (c) ahora compara todo el movimiento de bancos contra lo que explican las
+  categorías y los traspasos, así que un movimiento de banco sin categoría (también un depósito) lo pone en error; antes los
+  dos caminos eran iguales por construcción. El cierre lee cuentas y estado de cuenta dentro de su transacción. Un filtro de la
+  cola ya no parte un traspaso propuesto. `classify` no escribe auditoría si no cambió nada. La migración sigue sin insertar la
+  categoría (se corrigió el texto de la spec). Anotado sin cambiar: `classify-and-rule` audita un `period.classified` agregado
+  y no uno por movimiento; (a) cuenta cualquier movimiento con categoría `VENTAS`, venga de donde venga.

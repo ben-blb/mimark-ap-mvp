@@ -228,12 +228,11 @@ export function runChecks(input: ChecksInput): CheckDto[] {
 
   // (c) Movimiento neto de bancos por dos caminos; los traspasos deben sumar cero.
   const transfers = bank.filter((e) => e.kind === 'internal_transfer');
-  const regular = bank.filter((e) => e.kind === 'normal');
+  const categorized = bank.filter((e) => e.kind === 'normal' && e.categoryCode !== null);
+  const loose = bank.filter((e) => e.kind === 'normal' && e.categoryCode === null);
+  // Camino A: todo lo que movió el banco. Camino B: lo que el reporte alcanza a explicar (categorías y traspasos).
   const pathA = sum(bank);
-  const pathB =
-    sum(regular.filter((e) => e.amountCents > 0)) +
-    sum(regular.filter((e) => e.amountCents < 0)) +
-    sum(transfers);
+  const pathB = sum(categorized) + sum(transfers);
   const netTransfers = sum(transfers);
   const netOk = pathA === pathB && netTransfers === 0;
   checks.push(
@@ -242,11 +241,13 @@ export function runChecks(input: ChecksInput): CheckDto[] {
       'Movimiento neto de los bancos',
       netOk ? 'ok' : 'error',
       pathA,
-      pathB + netTransfers,
+      pathB,
       netOk
-        ? 'El movimiento neto de los bancos es el mismo sumando de las dos formas, y los traspasos suman cero.'
-        : 'El movimiento neto de los bancos no coincide, o los traspasos no suman cero.',
-      netOk ? [] : ids(transfers),
+        ? 'Todo el movimiento de los bancos está en alguna categoría o traspaso, y los traspasos suman cero.'
+        : netTransfers !== 0
+          ? 'Los traspasos no suman cero: falta o sobra uno de los lados.'
+          : 'Hay movimientos de banco sin categoría que no entran en el reporte.',
+      netOk ? [] : ids(netTransfers !== 0 ? transfers : loose),
     ),
   );
 

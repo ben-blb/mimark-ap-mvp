@@ -154,6 +154,7 @@ describe('clasificación y cola de revisión (spec 023)', () => {
     const first = await snapshot();
     const second = await classify().expect(200);
 
+    expect(await t.db.auditEvent.count({ where: { action: 'period.classified' } })).toBe(1);
     expect(await snapshot()).toEqual(first);
     expect(second.body).toEqual({ classified: 0, needsReview: 1 });
     expect(

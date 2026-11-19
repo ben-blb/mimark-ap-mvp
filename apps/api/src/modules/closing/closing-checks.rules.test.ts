@@ -191,6 +191,18 @@ describe('runChecks', () => {
     ).toBe('error');
   });
 
+  it('AC-023-12 (c) un movimiento de banco sin categoría hace que los dos caminos no coincidan', () => {
+    const loose = entry({ id: 'l1', source: 'bank_csv', accountId: 'A', amountCents: 2500 });
+    const list = runChecks({ entries: [...clean, loose], accounts, statements: [] });
+    expect(byId(list, 'bank_net')).toMatchObject({
+      status: 'error',
+      valueA: '-175.00',
+      valueB: '-200.00',
+      difference: '25.00',
+      entryIds: ['l1'],
+    });
+  });
+
   it('AC-023-12 (d) la nómina del reporte debe ser la capturada', () => {
     const checks = runChecks({
       entries: [entry({ id: 'p2', source: 'payroll', amountCents: -1000 }), ...clean],

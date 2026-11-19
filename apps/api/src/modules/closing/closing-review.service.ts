@@ -91,16 +91,18 @@ export class ClosingReviewService {
       await this.ledger.markNeedsReview(toReview, tx);
 
       const needsReview = await this.ledger.countNeedsReview(period.id, tx);
-      await this.audit.log(
-        {
-          ...ctx,
-          entity: 'period',
-          entityId: period.id,
-          action: 'period.classified',
-          data: { classified, needsReview },
-        },
-        tx,
-      );
+      if (classified > 0 || toReview.length > 0) {
+        await this.audit.log(
+          {
+            ...ctx,
+            entity: 'period',
+            entityId: period.id,
+            action: 'period.classified',
+            data: { classified, needsReview },
+          },
+          tx,
+        );
+      }
       return { classified, needsReview };
     });
   }
@@ -126,9 +128,19 @@ export class ClosingReviewService {
       },
     );
 
+    // Un filtro no parte un traspaso propuesto: el otro lado se queda aunque no cumpla el filtro (AC-023-17).
+    const matches = new Set(
+      queue
+        .filter(
+          (e) =>
+            (!query.source || e.source === query.source) &&
+            (!query.accountId || e.accountId === query.accountId),
+        )
+        .map((e) => e.id),
+    );
+    const visible = new Set([...matches, ...[...matches].map((id) => partner.get(id) ?? id)]);
     const items = queue
-      .filter((e) => (query.source ? e.source === query.source : true))
-      .filter((e) => (query.accountId ? e.accountId === query.accountId : true))
+      .filter((e) => visible.has(e.id))
       .map((e) => ({
         ...toEntryDto(e),
         reason: reasonOf(e),

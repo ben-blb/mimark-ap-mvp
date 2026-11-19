@@ -89,8 +89,8 @@ export class ClosingRepository {
   }
 
   // Cuentas
-  listAccounts(includeInactive: boolean): Promise<BankAccount[]> {
-    return this.db.bankAccount.findMany({
+  listAccounts(includeInactive: boolean, tx: Tx = this.db): Promise<BankAccount[]> {
+    return tx.bankAccount.findMany({
       where: activeOnly(includeInactive),
       orderBy: { name: 'asc' },
     });

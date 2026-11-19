@@ -132,8 +132,9 @@ export class ClosingUploadsRepository {
     companyId: string,
     month: string,
     accountId: string,
+    tx: Tx = this.db,
   ): Promise<Prisma.JsonValue | null> {
-    const row = await this.db.sourceUpload.findFirst({
+    const row = await tx.sourceUpload.findFirst({
       where: { source: 'bank_pdf', accountId, status: 'confirmed', period: { companyId, month } },
       select: { draft: true },
     });

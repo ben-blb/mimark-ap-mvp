@@ -161,7 +161,7 @@ color).
 ## Tareas
 
 - [x] 1. Contratos, errores y migración `023-clasificacion-y-cuadres`.
-- [ ] 2. `cantaloupe.rules.ts` con la tabla de ejemplos (AC-023-09 a 11).
+- [x] 2. `cantaloupe.rules.ts` con la tabla de ejemplos (AC-023-09 a 11).
 - [ ] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
 - [ ] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
 - [ ] 5. Traspasos (AC-023-06 a 08).

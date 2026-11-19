@@ -78,3 +78,20 @@ function toUtcMs(date: LocalDate): number {
 function fromUtcMs(ms: number): LocalDate {
   return new Date(ms).toISOString().slice(0, 10);
 }
+
+/** La fecha misma si cae en uno de `weekdays` (0 = domingo … 6 = sábado); si no, el siguiente día que sí. */
+export function onOrNextWeekday(date: LocalDate, weekdays: readonly number[]): LocalDate {
+  let current = date;
+  while (!weekdays.includes(dayOfWeek(current))) current = addDays(current, 1);
+  return current;
+}
+
+/** Cuántos días de `weekdays` hay entre dos fechas, sin contar la más temprana y contando la más tardía. */
+export function weekdaysBetween(a: LocalDate, b: LocalDate, weekdays: readonly number[]): number {
+  const [from, to] = a <= b ? [a, b] : [b, a];
+  let count = 0;
+  for (let day = addDays(from, 1); day <= to; day = addDays(day, 1)) {
+    if (weekdays.includes(dayOfWeek(day))) count += 1;
+  }
+  return count;
+}

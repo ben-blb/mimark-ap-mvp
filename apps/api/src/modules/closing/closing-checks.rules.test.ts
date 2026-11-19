@@ -1,18 +1,17 @@
 import type { CheckDto } from '@mimark/contracts/closing-review';
 import { describe, expect, it } from 'vitest';
-import { BANK_BUSINESS_DAYS } from './cantaloupe.assumptions.js';
+import { BANK_BUSINESS_DAYS, TRANSFER_WINDOW_BUSINESS_DAYS } from './cantaloupe.assumptions.js';
 import {
   canClose,
   canPair,
   categoryForSource,
-  MAX_TRANSFER_BUSINESS_DAYS,
   proposeTransfers,
   runChecks,
   type CheckEntry,
   type TransferEntry,
 } from './closing-checks.rules.js';
 
-const opts = { businessDays: BANK_BUSINESS_DAYS, maxBusinessDays: MAX_TRANSFER_BUSINESS_DAYS };
+const opts = { businessDays: BANK_BUSINESS_DAYS, maxBusinessDays: TRANSFER_WINDOW_BUSINESS_DAYS };
 
 const tx = (
   id: string,

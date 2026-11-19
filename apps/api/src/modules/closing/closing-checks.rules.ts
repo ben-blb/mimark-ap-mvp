@@ -53,7 +53,6 @@ export interface TransferOptions {
   /** Diferencia máxima entre las fechas, en días hábiles (AC-023-06). */
   maxBusinessDays: number;
 }
-export const MAX_TRANSFER_BUSINESS_DAYS = 2;
 
 /** ¿Estos dos movimientos pueden ser los dos lados de un traspaso? */
 export function canPair(a: TransferEntry, b: TransferEntry, opts: TransferOptions): boolean {

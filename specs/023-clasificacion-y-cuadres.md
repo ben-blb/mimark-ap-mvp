@@ -45,14 +45,15 @@ pagos del sistema (nunca se ejecutan); IA para clasificar (solo reglas determini
   `needsReview` y escribe `entry.classified` con la categoría anterior y la nueva.
 - **AC-023-04** · `POST /api/closing/entries/:id/classify-and-rule` con `{ categoryId, pattern }` clasifica el
   movimiento **y** crea la regla (020) en la misma transacción, y reclasifica los demás movimientos del periodo en
-  revisión que coincidan; devuelve cuántos cambió.
+  revisión que coincidan; devuelve cuántos cambió. El patrón debe aparecer en el concepto del movimiento (si no,
+  400 y no se crea nada); la regla nace con prioridad 0.
 - **AC-023-05** · Un periodo `closed` rechaza clasificar o cambiar categorías con 409 `PERIOD_CLOSED`.
 
 ### Traspasos
 
 - **AC-023-06** · Dos movimientos **de banco** (`bank_csv`/`bank_pdf`) de cuentas distintas del mismo periodo, de
   igual monto absoluto, signos opuestos y fechas con diferencia de hasta 2 días hábiles (lunes a viernes; no hay
-  calendario de festivos) se **proponen** como traspaso (solo entre movimientos que siguen sin categoría) y **no se aceptan solos**: la propuesta se calcula al
+  calendario de festivos) se **proponen** como traspaso (solo entre movimientos de la cola «Por revisar» que siguen sin categoría) y **no se aceptan solos**: la propuesta se calcula al
   consultar la cola (no se guarda) y se muestra como «Posible traspaso». Si un movimiento tiene varios
   candidatos, `proposeTransfers` elige de forma determinista (fecha más cercana, luego `rowNumber`) y cada
   movimiento aparece en una sola propuesta.
@@ -163,7 +164,7 @@ color).
 - [x] 1. Contratos, errores y migración `023-clasificacion-y-cuadres`.
 - [x] 2. `cantaloupe.rules.ts` con la tabla de ejemplos (AC-023-09 a 11).
 - [x] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
-- [ ] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
+- [x] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
 - [ ] 5. Traspasos (AC-023-06 a 08).
 - [ ] 6. Conciliación, cuadres, cierre y permisos (AC-023-09 a 16).
 - [ ] 7. Web: Por revisar y Conciliación (AC-023-17, 18).

@@ -70,6 +70,11 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'post', path: '/api/closing/uploads/x/discard', permission: 'reports:write' },
   { verb: 'get', path: '/api/closing/entries', permission: 'reports:read' },
   { verb: 'post', path: '/api/closing/entries', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/periods', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/periods/x/classify', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/review', permission: 'reports:read' },
+  { verb: 'patch', path: '/api/closing/entries/x', permission: 'reports:write' },
+  { verb: 'post', path: '/api/closing/entries/x/classify-and-rule', permission: 'reports:write' },
 ];
 
 /** Rutas protegidas que a propósito solo piden sesión (la sesión misma). */

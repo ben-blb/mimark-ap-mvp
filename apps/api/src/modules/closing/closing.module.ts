@@ -3,6 +3,8 @@ import { ClosingBankPdfService } from './closing-bank-pdf.service.js';
 import { ClosingConfirmService } from './closing-confirm.service.js';
 import { ClosingEntriesController } from './closing-entries.controller.js';
 import { ClosingEntriesService } from './closing-entries.service.js';
+import { ClosingReviewController } from './closing-review.controller.js';
+import { ClosingReviewService } from './closing-review.service.js';
 import { ClosingUploadsController } from './closing-uploads.controller.js';
 import { ClosingUploadsRepository } from './closing-uploads.repository.js';
 import { ClosingUploadsService } from './closing-uploads.service.js';
@@ -14,7 +16,12 @@ import { ClosingRepository } from './closing.repository.js';
 import { ClosingService } from './closing.service.js';
 
 @Module({
-  controllers: [ClosingController, ClosingUploadsController, ClosingEntriesController],
+  controllers: [
+    ClosingController,
+    ClosingUploadsController,
+    ClosingEntriesController,
+    ClosingReviewController,
+  ],
   providers: [
     ClosingService,
     ClosingRepository,
@@ -22,6 +29,7 @@ import { ClosingService } from './closing.service.js';
     ClosingBankPdfService,
     ClosingConfirmService,
     ClosingEntriesService,
+    ClosingReviewService,
     ClosingUploadsRepository,
     SpreadsheetClient,
     BankExtractionClient,

@@ -8,6 +8,11 @@ const BANK_SOURCES: Source[] = ['bank_csv', 'bank_pdf'];
 
 export type UploadRow = Prisma.SourceUploadGetPayload<{ include: { period: true } }>;
 export type EntryRow = Prisma.LedgerEntryGetPayload<{ include: { period: true } }>;
+/** Un movimiento con el código de su categoría, para clasificar y cuadrar (spec 023). */
+export type EntryWithCategory = Prisma.LedgerEntryGetPayload<{
+  include: { period: true; category: { select: { code: true } } };
+}>;
+const WITH_CATEGORY = { period: true, category: { select: { code: true } } } as const;
 
 export interface NewEntry {
   periodId: string;
@@ -44,6 +49,10 @@ export class ClosingUploadsRepository {
       create: { companyId, month },
       update: {},
     });
+  }
+
+  findPeriodById(id: string, tx: Tx = this.db): Promise<ReportPeriod | null> {
+    return tx.reportPeriod.findUnique({ where: { id } });
   }
 
   /** Bloquea el periodo hasta el fin de la transacción: confirmar dos cargas del mismo hueco no se cruza. */
@@ -204,5 +213,45 @@ export class ClosingUploadsRepository {
       this.db.ledgerEntry.count({ where }),
     ]);
     return { items, total };
+  }
+
+  // Clasificación (spec 023)
+  findEntry(id: string, tx: Tx = this.db): Promise<EntryWithCategory | null> {
+    return tx.ledgerEntry.findUnique({ where: { id }, include: WITH_CATEGORY });
+  }
+
+  listPeriodEntries(
+    periodId: string,
+    where: Prisma.LedgerEntryWhereInput = {},
+    tx: Tx = this.db,
+  ): Promise<EntryWithCategory[]> {
+    return tx.ledgerEntry.findMany({
+      where: { periodId, ...where },
+      include: WITH_CATEGORY,
+      orderBy: [{ date: 'asc' }, { source: 'asc' }, { rowNumber: 'asc' }, { id: 'asc' }],
+    });
+  }
+
+  countNeedsReview(periodId: string, tx: Tx = this.db): Promise<number> {
+    return tx.ledgerEntry.count({ where: { periodId, needsReview: true } });
+  }
+
+  /** Pone categoría a esos movimientos; `needsReview` solo cambia si se indica. */
+  async setCategory(
+    ids: string[],
+    categoryId: string,
+    needsReview: boolean | undefined,
+    tx: Tx,
+  ): Promise<void> {
+    if (ids.length === 0) return;
+    await tx.ledgerEntry.updateMany({
+      where: { id: { in: ids } },
+      data: { categoryId, ...(needsReview === undefined ? {} : { needsReview }) },
+    });
+  }
+
+  async markNeedsReview(ids: string[], tx: Tx): Promise<void> {
+    if (ids.length === 0) return;
+    await tx.ledgerEntry.updateMany({ where: { id: { in: ids } }, data: { needsReview: true } });
   }
 }

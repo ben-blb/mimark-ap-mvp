@@ -12,3 +12,12 @@ export const CANTALOUPE_TOLERANCE_CENTS = 50;
 
 /** Días en que el banco abona (0 = domingo … 6 = sábado): lunes a viernes, sin festivos. */
 export const BANK_BUSINESS_DAYS: readonly number[] = [1, 2, 3, 4, 5];
+
+/** Diferencia máxima entre las fechas de los dos lados de un traspaso, en días hábiles. */
+export const TRANSFER_WINDOW_BUSINESS_DAYS = 2;
+
+/** Lo que `closing-checks.rules.ts` necesita para emparejar traspasos. */
+export const TRANSFER_OPTIONS = {
+  businessDays: BANK_BUSINESS_DAYS,
+  maxBusinessDays: TRANSFER_WINDOW_BUSINESS_DAYS,
+};

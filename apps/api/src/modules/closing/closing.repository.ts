@@ -123,8 +123,8 @@ export class ClosingRepository {
   }
 
   // Reglas
-  listRules(includeInactive: boolean): Promise<ClassificationRule[]> {
-    return this.db.classificationRule.findMany({
+  listRules(includeInactive: boolean, tx: Tx = this.db): Promise<ClassificationRule[]> {
+    return tx.classificationRule.findMany({
       where: activeOnly(includeInactive),
       orderBy: [{ priority: 'desc' }, { pattern: 'asc' }],
     });

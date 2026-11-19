@@ -1,7 +1,7 @@
 ---
 id: '023'
 titulo: Clasificación, conciliación y cuadres del cierre
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['020', '021']
 requisitos: Mini SRS cierre mensual · RF-02, RF-09, RF-11, RF-12
 ---
@@ -168,7 +168,7 @@ color).
 - [x] 5. Traspasos (AC-023-06 a 08).
 - [x] 6. Conciliación, cuadres, cierre y permisos (AC-023-09 a 16).
 - [x] 7. Web: Por revisar y Conciliación (AC-023-17, 18).
-- [ ] 8. `pnpm check`, AC-023-19, fila en `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check`, AC-023-19, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
 
@@ -192,3 +192,21 @@ color).
 ## Bitácora
 
 <!-- El agente anota aquí decisiones y hallazgos: AAAA-MM-DD · nota -->
+
+- 2026-11-18 · Implementada con `pnpm check` en verde. AC-023-19 [manual] queda pendiente (no hay un mes real cargado ni el Excel de
+  la contadora en el repo): ver `docs/pendientes-de-verificar.md`. Tampoco se recorrieron a mano las dos pantallas nuevas con
+  `pnpm dev`; solo las cubren las pruebas de Testing Library y la API de integración.
+- 2026-11-18 · Decisiones que la spec no cubría (ya escritas en los criterios): (1) la venta del reporte sale solo de Parlevel;
+  `cantaloupe` no lleva categoría ni entra a la cola, solo concilia; el depósito del banco es `COBRANZA_CANTALOUPE`, que 024
+  debe excluir de ingresos junto con los traspasos. (2) La clasificación por fuente (`categoryForSource`) no toca `needsReview`:
+  un kiosko desconocido de 021 sigue en la cola hasta que una persona lo confirma con `PATCH`. (3) Los traspasos propuestos no se
+  guardan: se calculan al abrir la cola entre movimientos de banco en revisión; solo existen `TransferGroup` confirmados.
+  (4) Sábado y domingo se concilian con el lunes (días hábiles = lunes a viernes, sin festivos); el último fin de semana del
+  mes quedará `missing`/`orphan` hasta cargar el mes siguiente. (5) `classify-and-rule` exige que el patrón aparezca en el
+  concepto y crea la regla con prioridad 0. (6) Errores de validación de esta spec son 400 `VALIDATION` (no 422). (7) Se
+  agregó `GET /api/closing/periods?companyId&month` para que la web obtenga el `periodId`. (8) La cola no pagina (devuelve todo
+  el periodo en revisión).
+- 2026-11-18 · Supuestos sin validar aislados en `cantaloupe.assumptions.ts` (IVA 16 %, tolerancia 0.50, días hábiles, ventana de
+  traspasos); la tasa 3.4 % es `Company.cantaloupeRate` (por omisión 0.0340, sin pantalla para editarla: se cambia en la base).
+  `COBRANZA_CANTALOUPE` se agrega al catálogo y a la semilla (`pnpm db:seed`); en una base ya sembrada hay que volver a correrla
+  (el `upsert` no pisa nada) porque la migración no inserta datos.

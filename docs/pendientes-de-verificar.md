@@ -52,3 +52,9 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
 - [ ] 2026-11-18 · 023 · Validar con la contadora los supuestos de la conciliación Cantaloupe: comisión 3.4 %, IVA 16 %,
       tolerancia 0.50, depósito en fin de semana, y si Nayax (2.9 %) tiene su propia conciliación. Se cambian en
       `apps/api/src/modules/closing/cantaloupe.assumptions.ts` (y la tasa en `Company.cantaloupeRate`).
+
+- [ ] 2026-11-18 · 023 · AC-023-19 [manual]. Cargar un mes completo (021/022), correr «Clasificar con reglas», resolver la cola
+      y comparar el panel de cuadres con la pestaña «Validación» y la conciliación Cantaloupe del Excel de la contadora: las
+      diferencias deben ser 0.00 o estar explicadas. Al terminar, borrar esta línea y anotarlo en la Bitácora de la 023.
+- [ ] 2026-11-18 · 023 · Recorrer `/cierre/por-revisar` y `/cierre/conciliacion` con `pnpm dev` (teclado y 375 px): no se hizo.
+      Correr `pnpm db:seed` en las bases ya sembradas para que exista la categoría `COBRANZA_CANTALOUPE`.

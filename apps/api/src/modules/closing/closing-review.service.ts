@@ -8,6 +8,7 @@ import type {
   PeriodQuery,
   ReviewList,
   ReviewQuery,
+  ReviewReason,
 } from '@mimark/contracts/closing-review';
 import type { LedgerEntryDto } from '@mimark/contracts/closing-uploads';
 import { AppError } from '../../common/app-error.js';
@@ -23,6 +24,9 @@ import { ClosingRepository } from './closing.repository.js';
 import { matchRule, normalizeKey, suggestRule } from './closing.rules.js';
 
 const KIOSK_SOURCES = ['parlevel_sales', 'parlevel_waste'];
+
+const reasonOf = (e: EntryWithCategory): ReviewReason =>
+  KIOSK_SOURCES.includes(e.source) && e.kioskId === null ? 'unknown_kiosk' : 'no_rule';
 
 /** Clasificación de los movimientos del periodo y la cola «Por revisar» (spec 023). */
 @Injectable()
@@ -127,9 +131,7 @@ export class ClosingReviewService {
       .filter((e) => (query.accountId ? e.accountId === query.accountId : true))
       .map((e) => ({
         ...toEntryDto(e),
-        reason: (KIOSK_SOURCES.includes(e.source) && e.kioskId === null
-          ? 'unknown_kiosk'
-          : 'no_rule') as 'unknown_kiosk' | 'no_rule',
+        reason: reasonOf(e),
         suggestedCategoryId:
           e.categoryId === null ? (suggestRule(e.concept, rules)?.categoryId ?? null) : null,
         possibleTransferWith: partner.get(e.id) ?? null,

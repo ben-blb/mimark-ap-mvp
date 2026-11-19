@@ -77,6 +77,10 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'post', path: '/api/closing/entries/x/classify-and-rule', permission: 'reports:write' },
   { verb: 'post', path: '/api/closing/transfers', permission: 'reports:write' },
   { verb: 'delete', path: '/api/closing/transfers/x', permission: 'reports:write' },
+  { verb: 'get', path: '/api/closing/periods/x/checks', permission: 'reports:read' },
+  { verb: 'get', path: '/api/closing/periods/x/cantaloupe', permission: 'reports:read' },
+  { verb: 'post', path: '/api/closing/periods/x/close', permission: 'reports:write' },
+  { verb: 'post', path: '/api/closing/periods/x/reopen', permission: 'reports:write' },
 ];
 
 /** Rutas protegidas que a propósito solo piden sesión (la sesión misma). */

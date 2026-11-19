@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ClosingBankPdfService } from './closing-bank-pdf.service.js';
 import { ClosingConfirmService } from './closing-confirm.service.js';
+import { ClosingChecksController } from './closing-checks.controller.js';
+import { ClosingChecksService } from './closing-checks.service.js';
 import { ClosingEntriesController } from './closing-entries.controller.js';
 import { ClosingEntriesService } from './closing-entries.service.js';
 import { ClosingReviewController } from './closing-review.controller.js';
@@ -24,6 +26,7 @@ import { ClosingService } from './closing.service.js';
     ClosingEntriesController,
     ClosingReviewController,
     ClosingTransfersController,
+    ClosingChecksController,
   ],
   providers: [
     ClosingService,
@@ -34,6 +37,7 @@ import { ClosingService } from './closing.service.js';
     ClosingEntriesService,
     ClosingReviewService,
     ClosingTransfersService,
+    ClosingChecksService,
     ClosingUploadsRepository,
     SpreadsheetClient,
     BankExtractionClient,

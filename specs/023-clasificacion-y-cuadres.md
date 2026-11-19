@@ -166,7 +166,7 @@ color).
 - [x] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
 - [x] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
 - [x] 5. Traspasos (AC-023-06 a 08).
-- [ ] 6. Conciliación, cuadres, cierre y permisos (AC-023-09 a 16).
+- [x] 6. Conciliación, cuadres, cierre y permisos (AC-023-09 a 16).
 - [ ] 7. Web: Por revisar y Conciliación (AC-023-17, 18).
 - [ ] 8. `pnpm check`, AC-023-19, fila en `specs/README.md`; `hecha`.
 

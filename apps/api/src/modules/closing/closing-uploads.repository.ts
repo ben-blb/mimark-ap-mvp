@@ -297,4 +297,23 @@ export class ClosingUploadsRepository {
     });
     await tx.transferGroup.delete({ where: { id } });
   }
+
+  // Cierre del periodo (spec 023)
+  async closePeriod(id: string, closedBy: string, closedAt: Date, tx: Tx): Promise<ReportPeriod> {
+    const { count } = await tx.reportPeriod.updateMany({
+      where: { id, status: 'open' },
+      data: { status: 'closed', closedBy, closedAt, reopenReason: null },
+    });
+    if (count !== 1) throw new AppError('INVALID_TRANSITION', 'Este periodo ya está cerrado.');
+    return tx.reportPeriod.findUniqueOrThrow({ where: { id } });
+  }
+
+  async reopenPeriod(id: string, reason: string, tx: Tx): Promise<ReportPeriod> {
+    const { count } = await tx.reportPeriod.updateMany({
+      where: { id, status: 'closed' },
+      data: { status: 'open', closedBy: null, closedAt: null, reopenReason: reason },
+    });
+    if (count !== 1) throw new AppError('INVALID_TRANSITION', 'Este periodo no está cerrado.');
+    return tx.reportPeriod.findUniqueOrThrow({ where: { id } });
+  }
 }

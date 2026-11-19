@@ -357,6 +357,7 @@ enum LedgerSource {
   parlevel_waste
   cantaloupe
   bank_csv
+  bank_pdf
   cash
   payroll
 }
@@ -366,6 +367,7 @@ enum UploadStatus {
   confirmed
   superseded
   discarded
+  failed
 }
 
 enum PeriodStatus {
@@ -396,7 +398,7 @@ model SourceUpload {
   periodId     String
   period       ReportPeriod @relation(fields: [periodId], references: [id])
   source       LedgerSource
-  /// Solo para `bank_csv`.
+  /// Para `bank_csv` y `bank_pdf`.
   accountId    String?
   account      BankAccount? @relation(fields: [accountId], references: [id])
   fileKey      String
@@ -407,6 +409,10 @@ model SourceUpload {
   rowsRead     Int
   rowsRejected Int
   entriesCount Int          @default(0)
+  /// Solo `bank_pdf` (spec 022): filas editables hasta confirmar.
+  draft        Json?
+  /// Solo `bank_pdf`: `{ model, promptVersion, ms, extraction }`; `extraction` es la salida de la IA sin editar.
+  meta         Json?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

@@ -19,7 +19,10 @@ const col = (label: string, names: string[], required = true): ColumnDef => ({
 
 const date = col('Date', ['date', 'fecha']);
 
-export const SOURCE_FORMATS: Record<Source, Record<string, ColumnDef>> = {
+/** Fuentes que se leen de una hoja: `bank_pdf` pasa por la IA (spec 022). */
+export type FormatSource = Exclude<Source, 'bank_pdf'>;
+
+export const SOURCE_FORMATS: Record<FormatSource, Record<string, ColumnDef>> = {
   // Kiosko por `Asset`. La comisión y el costo, si vienen, se guardan en `meta`.
   parlevel_sales: {
     asset: col('Asset', ['asset']),

@@ -36,6 +36,7 @@ export class ClosingConfirmService {
       throw new AppError('INVALID_TRANSITION', 'Esta carga ya no está en vista previa.');
     }
 
+    if (upload.source === 'bank_pdf') throw new AppError('INVALID_TRANSITION', 'Pendiente (tarea 5).');
     const bytes = await this.storage.get(upload.fileKey);
     const kind = detectSheetType(bytes, upload.fileName);
     if (!kind)

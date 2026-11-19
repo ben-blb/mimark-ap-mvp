@@ -1,4 +1,4 @@
-import { SOURCES, type Month } from '@mimark/contracts/closing-uploads';
+import { SHEET_SOURCES, type Month } from '@mimark/contracts/closing-uploads';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -77,7 +77,7 @@ export function UploadsPage() {
         }}
       >
         {monthValid &&
-          SOURCES.map((source) => (
+          SHEET_SOURCES.map((source) => (
             <SourceCard
               key={`${companyId}-${month}-${source}`}
               source={source}

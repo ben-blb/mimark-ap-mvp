@@ -165,6 +165,7 @@ export const SOURCE_LABELS: Record<Source, string> = {
   parlevel_waste: 'Mermas y robos Parlevel',
   cantaloupe: 'Cantaloupe',
   bank_csv: 'Banco',
+  bank_pdf: 'Banco (PDF)',
   cash: 'Caja',
   payroll: 'Nómina',
 };
@@ -175,6 +176,7 @@ export const SOURCE_HINTS: Record<Source, string> = {
   parlevel_waste: 'Reporte «Waste report» de Parlevel',
   cantaloupe: 'Export diario de Cantaloupe',
   bank_csv: 'Estado de cuenta del banco en CSV o Excel',
+  bank_pdf: 'Estado de cuenta del banco en PDF: la IA propone los movimientos y tú los revisas',
   cash: 'Plantilla de caja: fecha, concepto, monto y entrada/salida',
   payroll: 'Plantilla de nómina: fecha, nombre, monto e IMSS',
 };

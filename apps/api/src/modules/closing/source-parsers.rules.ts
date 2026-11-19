@@ -1,8 +1,7 @@
-import type { Source } from '@mimark/contracts/closing-uploads';
 import { AppError } from '../../common/app-error.js';
 import { centsToMoney } from '../../common/money.js';
 import { normalizeKey } from './closing.rules.js';
-import { SOURCE_FORMATS } from './source-formats.js';
+import { SOURCE_FORMATS, type FormatSource } from './source-formats.js';
 import { cellText, parseAmountCents, parseDate } from './source-values.rules.js';
 
 /**
@@ -35,7 +34,7 @@ export interface ParsedEntry {
 export type RowResult = { entry: ParsedEntry } | { reject: string };
 
 export function detectColumns(
-  source: Source,
+  source: FormatSource,
   header: unknown[],
 ): { columns: Record<string, number>; missing: string[] } {
   const keys = header.map((cell) => normalizeKey(cellText(cell)));
@@ -52,7 +51,7 @@ export function detectColumns(
 const reject = (reason: string): RowResult => ({ reject: reason });
 
 /** Una fila → un movimiento, o el motivo por el que no se puede leer. */
-export function normalizeRow(source: Source, row: unknown[], ctx: RowContext): RowResult {
+export function normalizeRow(source: FormatSource, row: unknown[], ctx: RowContext): RowResult {
   const get = (field: string): unknown => {
     const index = ctx.columns[field];
     return index === undefined ? undefined : row[index];
@@ -207,7 +206,7 @@ const isBlank = (row: unknown[]) => row.every((cell) => cellText(cell) === '');
  * del periodo. Lanza `SOURCE_MISSING_COLUMNS` o `SOURCE_WRONG_MONTH`; las filas sueltas malas solo se rechazan.
  */
 export function analyzeSheet(
-  source: Source,
+  source: FormatSource,
   rows: unknown[][],
   opts: { month: string; kiosks: KioskLookup },
 ): SheetAnalysis {

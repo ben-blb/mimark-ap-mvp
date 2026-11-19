@@ -225,6 +225,19 @@ describe('reportes del cierre (spec 024)', () => {
     await admin.get('/api/reports/uploads/no-existe/file').expect(404);
   });
 
+  it('AC-024-07 un movimiento manual no trae archivo de origen y su id no abre ninguno (404)', async () => {
+    const manual = await entry('RENTAS', '-10.00', { source: 'cash', concept: 'Efectivo' });
+    const url = `/api/reports/edo-res/lines/Rentas/entries?companyId=${companyId}&month=2026-09`;
+    const { items } = (await admin.get(url).expect(200)).body;
+    expect(items[0]).toMatchObject({
+      id: manual.id,
+      uploadId: null,
+      fileName: null,
+      rowNumber: null,
+    });
+    await admin.get(`/api/reports/uploads/${manual.id}/file`).expect(404);
+  });
+
   it('AC-024-08 el detalle de un renglón agrupado trae el subtotal por categoría', async () => {
     await entry('VENTAS', '100.00', { source: 'parlevel_sales' });
     await entry('OTROS_INGRESOS', '5.00');

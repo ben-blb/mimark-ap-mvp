@@ -84,8 +84,11 @@ export class ReportsService {
     };
   }
 
-  async edoRes(query: EdoResQuery): Promise<EdoResDto> {
-    const current = await this.month(query.companyId, query.month);
+  async edoRes(
+    query: EdoResQuery,
+    loaded?: Awaited<ReturnType<ReportsService['month']>>,
+  ): Promise<EdoResDto> {
+    const current = loaded ?? (await this.month(query.companyId, query.month));
     const { rows, counted } = buildEdoRes(current.entries, current.categories);
     let outRows = rows;
     if (query.compareTo) {
@@ -154,8 +157,9 @@ export class ReportsService {
 
   /** El libro de Excel del mes (AC-024-14) y su evento de auditoría. */
   async export(query: EdoResQuery, ctx: Ctx): Promise<{ bytes: Buffer; fileName: string }> {
-    const edo = await this.edoRes(query);
+    // Una sola lectura del mes: todas las hojas salen del mismo conjunto de movimientos.
     const current = await this.month(query.companyId, query.month);
+    const edo = await this.edoRes(query, current);
     const bytes = await this.sheets.write(
       exportSheets({
         edo: edo.rows,

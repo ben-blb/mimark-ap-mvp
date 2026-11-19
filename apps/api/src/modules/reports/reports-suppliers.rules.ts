@@ -37,11 +37,9 @@ export function supplierRows(
     if (lineOf(entry, index) === null || entry.cents >= 0 || !entry.categoryId) continue;
     const category = index.get(entry.categoryId);
     if (category?.code !== SUPPLIER_CATEGORY) continue;
-    const rule = matchRule(
-      entry.concept,
-      rules.filter((r) => r.categoryId === entry.categoryId),
-    );
-    if (!rule) continue;
+    // Gana la regla de mayor prioridad entre todas; si no es de «Costo de lo vendido», no hay proveedor.
+    const rule = matchRule(entry.concept, rules);
+    if (rule?.categoryId !== entry.categoryId) continue;
     const g = groups.get(rule.id) ?? {
       name: rule.pattern,
       total: 0,

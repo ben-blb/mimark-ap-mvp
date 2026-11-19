@@ -83,6 +83,18 @@ describe('EDO RES (spec 024)', () => {
     expect(keys.at(-1)).toBe('net_profit');
   });
 
+  it('AC-024-01 los renglones de operación siguen el sortOrder de la categoría del catálogo', () => {
+    const reordered = categories.map((c) =>
+      c.code === 'FEE_CANTALOUPE' ? { ...c, sortOrder: 0 } : { ...c, sortOrder: c.sortOrder + 10 },
+    );
+    const keys = buildEdoRes([], [...reordered, cat('RENTAS', 'Rentas', 99)]).rows.map(
+      (r) => r.key,
+    );
+    expect(keys.indexOf('Fee Cantaloupe')).toBeLessThan(keys.indexOf('Rentas'));
+    const fixed = buildEdoRes([], categories).rows.map((r) => r.key);
+    expect(fixed.indexOf('Rentas')).toBeLessThan(fixed.indexOf('Fee Cantaloupe'));
+  });
+
   it('AC-024-01 el costo incluye mermas y robos y los gastos restan de la utilidad neta', () => {
     const { rows } = buildEdoRes(
       [
@@ -335,5 +347,13 @@ describe('proveedores (spec 024)', () => {
       { ...rule('r3', 'COCA', 9), active: false },
     ]);
     expect(rows.map((r) => r.name)).toEqual(['BIMBO']);
+  });
+
+  it('AC-024-13 si gana una regla de otra categoría, el pago no se atribuye a ningún proveedor', () => {
+    const { rows } = supplierRows([pay('COCA COLA MERMA', -1000, '2026-09-03')], categories, [
+      rule('r1', 'COCA COLA'),
+      { ...rule('r2', 'MERMA', 5), categoryId: 'MERMAS' },
+    ]);
+    expect(rows).toEqual([]);
   });
 });

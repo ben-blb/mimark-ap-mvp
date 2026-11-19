@@ -150,8 +150,15 @@ export function buildEdoRes(
     amount: centsToMoney(cents),
     percentOfSales: percent(cents, netSales),
   });
+  // Dentro de cada grupo, el orden lo da el `sortOrder` de las categorías del catálogo (desempata el orden fijo).
+  const rank = new Map<EdoResLine, number>();
+  for (const c of categories) {
+    rank.set(c.edoResLine, Math.min(rank.get(c.edoResLine) ?? Infinity, c.sortOrder));
+  }
   const leaves = (lines: readonly EdoResLine[]) =>
-    lines.map((line) => row(line, line, 'line', line, get(line)));
+    [...lines]
+      .sort((a, b) => (rank.get(a) ?? Infinity) - (rank.get(b) ?? Infinity))
+      .map((line) => row(line, line, 'line', line, get(line)));
 
   const rows = [
     ...leaves(NET_SALES_LINES),

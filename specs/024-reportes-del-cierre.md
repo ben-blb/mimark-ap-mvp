@@ -71,7 +71,8 @@ nosniff`, nombre saneado). Id inexistente o movimiento manual sin archivo → 40
   pagos, ticket promedio, % del gasto y primer y último pago, a partir de los egresos clasificados como proveedor.
 - **AC-024-13** · Un proveedor es el patrón de la regla activa de mayor prioridad que coincide con el concepto
   del movimiento (misma normalización que la 023, calculada al leer; no se guarda `ruleId`). Solo cuentan egresos
-  de la categoría «Costo de lo vendido»; los que ninguna regla cubre no aparecen aquí.
+  de la categoría «Costo de lo vendido»; los que ninguna regla cubre, o cuya regla ganadora es de otra categoría,
+  no aparecen aquí.
 
 ### Exportación y permisos
 
@@ -192,3 +193,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
   un mes real conciliado y cerrado ni el EDO RES de la contadora en el repo (ver `docs/pendientes-de-verificar.md`). Tampoco se recorrieron las
   pantallas con `pnpm dev` (teclado, 375 px, tema oscuro): las cubren solo las pruebas de Testing Library y las de integración de la API.
   Se arregló de paso una prueba intermitente de 021 (AC-021-06): generaba el mismo `.xlsx` dos veces y el hash podía diferir.
+- 2026-11-19 · Revisión independiente (spec-revisar): (1) el proveedor se busca entre todas las reglas activas y solo cuenta si la
+  ganadora es de «Costo de lo vendido»; (2) los renglones de cada grupo siguen el `sortOrder` de sus categorías; (3) la exportación
+  lee el mes una sola vez; (4) prueba del movimiento manual sin archivo. Sin resolver: AC-024-19 solo se prueba en jsdom y el mes por
+  defecto («mes anterior») se calcula con la hora del navegador, no con `BUSINESS_TZ`.

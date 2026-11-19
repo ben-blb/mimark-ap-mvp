@@ -53,6 +53,8 @@ export interface ReportCategory {
 
 export interface ReportEntry {
   id: string;
+  /** Número de fila del archivo de origen; `null` en capturas manuales. */
+  rowNumber: number | null;
   date: string;
   source: string;
   kind: 'normal' | 'internal_transfer';
@@ -179,19 +181,19 @@ export function withComparison(
   });
 }
 
-export interface DrillResult {
+export interface DrillResult<E extends ReportEntry> {
   amount: string;
   categories: DrillCategoryDto[];
   /** Movimientos del renglón por fecha y fila, con el signo del renglón. */
-  entries: (ReportEntry & { amountCents: number; categoryCode: string | null })[];
+  entries: (E & { amountCents: number; categoryCode: string | null })[];
 }
 
 /** Los movimientos que forman un renglón y su subtotal por categoría (AC-024-06 y 08). */
-export function drillLine(
+export function drillLine<E extends ReportEntry>(
   line: ReportLine,
-  entries: readonly ReportEntry[],
+  entries: readonly E[],
   categories: readonly ReportCategory[],
-): DrillResult {
+): DrillResult<E> {
   const index = indexCategories(categories);
   const mine = entries
     .filter((e) => lineOf(e, index) === line)
@@ -200,7 +202,12 @@ export function drillLine(
       amountCents: reportAmount(line, e.cents),
       categoryCode: (e.categoryId && index.get(e.categoryId)?.code) || null,
     }))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        (a.rowNumber ?? 0) - (b.rowNumber ?? 0) ||
+        a.id.localeCompare(b.id),
+    );
 
   const byCategory = new Map<string, DrillCategoryDto & { cents: number }>();
   for (const e of mine) {

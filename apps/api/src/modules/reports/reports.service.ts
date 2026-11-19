@@ -1,0 +1,142 @@
+import { Injectable } from '@nestjs/common';
+import {
+  ReportLine,
+  type DrillDto,
+  type DrillQuery,
+  type EdoResDto,
+  type EdoResQuery,
+  type KioskReportDto,
+  type ReportQuery,
+  type SupplierReportDto,
+} from '@mimark/contracts/reports';
+import { AppError } from '../../common/app-error.js';
+import { ClosingRepository } from '../closing/closing.repository.js';
+import { StorageClient } from '../../integrations/storage.client.js';
+import { toDrillEntry, toReportEntry, type DetailedEntry } from './reports.dto.js';
+import { ReportsRepository } from './reports.repository.js';
+import {
+  buildEdoRes,
+  drillLine,
+  kioskRows,
+  reportStatus,
+  supplierRows,
+  withComparison,
+  type ReportCategory,
+  type SupplierRule,
+} from './reports.rules.js';
+import type { EdoResLine } from '@mimark/contracts/closing';
+
+const FILE_TYPES: Record<string, string> = {
+  csv: 'text/csv',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pdf: 'application/pdf',
+};
+
+/** Reportes del cierre (spec 024): solo lee y llama a las reglas; no escribe nada. */
+@Injectable()
+export class ReportsService {
+  constructor(
+    private readonly closing: ClosingRepository,
+    private readonly reports: ReportsRepository,
+    private readonly storage: StorageClient,
+  ) {}
+
+  /** Los movimientos del mes y lo que las reglas necesitan para leerlos. */
+  async month(companyId: string, month: string) {
+    if (!(await this.closing.findCompany(companyId))) {
+      throw new AppError('NOT_FOUND', 'No existe esa empresa.');
+    }
+    const data = await this.reports.loadMonth(companyId, month);
+    const categories: ReportCategory[] = data.categories.map((c) => ({
+      id: c.id,
+      code: c.code,
+      name: c.name,
+      edoResLine: c.edoResLine as EdoResLine,
+      sortOrder: c.sortOrder,
+    }));
+    const rules: SupplierRule[] = data.rules.map((r) => ({
+      id: r.id,
+      pattern: r.pattern,
+      patternKey: r.patternKey,
+      priority: r.priority,
+      active: r.active,
+      categoryId: r.categoryId,
+    }));
+    return {
+      closed: data.period?.status === 'closed',
+      entries: data.entries.map(toReportEntry),
+      categories,
+      rules,
+      kiosks: data.kiosks,
+    };
+  }
+
+  async edoRes(query: EdoResQuery): Promise<EdoResDto> {
+    const current = await this.month(query.companyId, query.month);
+    const { rows, counted } = buildEdoRes(current.entries, current.categories);
+    let outRows = rows;
+    if (query.compareTo) {
+      const before = await this.month(query.companyId, query.compareTo);
+      outRows = withComparison(rows, buildEdoRes(before.entries, before.categories).rows);
+    }
+    return {
+      companyId: query.companyId,
+      month: query.month,
+      status: reportStatus(counted, current.closed),
+      compareTo: query.compareTo ?? null,
+      rows: outRows,
+    };
+  }
+
+  async drill(rawLine: string, query: DrillQuery): Promise<DrillDto> {
+    const parsed = ReportLine.safeParse(rawLine);
+    if (!parsed.success) throw new AppError('NOT_FOUND', 'No existe ese renglón.');
+    const current = await this.month(query.companyId, query.month);
+    const result = drillLine<DetailedEntry>(parsed.data, current.entries, current.categories);
+    const start = (query.page - 1) * query.pageSize;
+    return {
+      line: parsed.data,
+      amount: result.amount,
+      categories: result.categories,
+      items: result.entries.slice(start, start + query.pageSize).map(toDrillEntry),
+      total: result.entries.length,
+      page: query.page,
+      pageSize: query.pageSize,
+    };
+  }
+
+  async kiosks(query: ReportQuery): Promise<KioskReportDto> {
+    const current = await this.month(query.companyId, query.month);
+    const { counted } = buildEdoRes(current.entries, current.categories);
+    return {
+      companyId: query.companyId,
+      month: query.month,
+      status: reportStatus(counted, current.closed),
+      ...kioskRows(current.entries, current.categories, current.kiosks),
+    };
+  }
+
+  async suppliers(query: ReportQuery): Promise<SupplierReportDto> {
+    const current = await this.month(query.companyId, query.month);
+    const { counted } = buildEdoRes(current.entries, current.categories);
+    return {
+      companyId: query.companyId,
+      month: query.month,
+      status: reportStatus(counted, current.closed),
+      ...supplierRows(current.entries, current.categories, current.rules),
+    };
+  }
+
+  /** El archivo de origen de un movimiento, tal como se cargó. */
+  async uploadFile(id: string): Promise<{ bytes: Buffer; mimeType: string; fileName: string }> {
+    const upload = await this.reports.findUpload(id);
+    if (!upload) throw new AppError('NOT_FOUND', 'No encontramos el archivo original.');
+    const extension = upload.fileName.split('.').pop()?.toLowerCase() ?? '';
+    return {
+      bytes: await this.storage.get(upload.fileKey),
+      mimeType: FILE_TYPES[extension] ?? 'application/octet-stream',
+      fileName: upload.fileName,
+    };
+  }
+}
+

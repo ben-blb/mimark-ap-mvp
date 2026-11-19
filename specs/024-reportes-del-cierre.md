@@ -144,7 +144,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
 - [x] 1. Contratos de reportes con pruebas.
 - [x] 2. `reports.rules.ts` con tablas de ejemplos sintéticos: EDO RES, kioskos, proveedores (AC-024-01 a 05, 09,
       11, 12).
-- [ ] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
+- [x] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
 - [ ] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
 - [ ] 5. Permiso `reports:view`, ajuste de `manager`, ruta de descarga de origen y menú (AC-024-07, 15, 16).
 - [ ] 6. Web: EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).

@@ -35,6 +35,7 @@ const categories = [
 let n = 0;
 const entry = (over: Partial<ReportEntry> & { cents: number }): ReportEntry => ({
   id: `e${++n}`,
+  rowNumber: null,
   date: '2026-09-10',
   source: 'bank_csv',
   kind: 'normal',

@@ -16,6 +16,8 @@ export const PERMISSIONS = [
   'users:manage',
   'reports:read',
   'reports:write',
+  /** Spec 024: solo los reportes del cierre (EDO RES, kioskos, proveedores). */
+  'reports:view',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

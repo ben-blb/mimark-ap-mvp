@@ -10,6 +10,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { PayablesModule } from './modules/payables/payables.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
 import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module.js';
 import { SessionGuard } from './modules/session/session.guard.js';
 import { SessionModule } from './modules/session/session.module.js';
@@ -29,6 +30,7 @@ import { UsersModule } from './modules/users/users.module.js';
     PurchaseOrdersModule,
     PayablesModule,
     DashboardModule,
+    ReportsModule,
     AssistantModule,
     ConversationsModule,
   ],

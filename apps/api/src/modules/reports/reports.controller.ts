@@ -1,6 +1,7 @@
 import { Controller, Get, Header, Param, Query, StreamableFile } from '@nestjs/common';
 import { z } from 'zod';
 import { Id } from '@mimark/contracts/common';
+import type { CompanyList } from '@mimark/contracts/closing';
 import {
   DrillQuery,
   EdoResQuery,
@@ -19,6 +20,11 @@ import { ReportsService } from './reports.service.js';
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
+
+  @Get('companies')
+  companies(): Promise<CompanyList> {
+    return this.reports.companies();
+  }
 
   @Get('edo-res')
   edoRes(@Query({ schema: EdoResQuery }) query: EdoResQuery): Promise<EdoResDto> {

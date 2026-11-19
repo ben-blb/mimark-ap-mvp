@@ -3,6 +3,7 @@ import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import EventNoteOutlined from '@mui/icons-material/EventNoteOutlined';
 import InboxOutlined from '@mui/icons-material/InboxOutlined';
 import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
+import AssessmentOutlined from '@mui/icons-material/AssessmentOutlined';
 import PeopleOutlineOutlined from '@mui/icons-material/PeopleOutlineOutlined';
 import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import SpaceDashboardOutlined from '@mui/icons-material/SpaceDashboardOutlined';
@@ -76,6 +77,14 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Cierre',
     short: 'Cierre',
     icon: <EventNoteOutlined />,
+  },
+  {
+    to: '/reportes/edo-res',
+    tour: 'reportes',
+    permission: 'reports:view',
+    label: 'Reportes',
+    short: 'Reportes',
+    icon: <AssessmentOutlined />,
   },
   {
     to: '/asistente',

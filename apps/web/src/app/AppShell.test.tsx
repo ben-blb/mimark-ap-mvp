@@ -169,7 +169,10 @@ describe('AppShell', () => {
     ['warehouse', ['Recepciones']],
     ['purchasing', ['Mi trabajo', 'Órdenes de compra', 'Proveedores', 'Asistente']],
     ['payables', SECTIONS],
-    ['manager', ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Asistente']],
+    [
+      'manager',
+      ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Reportes', 'Asistente'],
+    ],
     [
       'admin',
       [
@@ -180,12 +183,13 @@ describe('AppShell', () => {
         'Proveedores',
         'Tablero',
         'Cierre',
+        'Reportes',
         'Asistente',
         'Usuarios',
       ],
     ],
   ] as const)(
-    'AC-013-25 AC-017-07 AC-020-13 %s ve en la navegación solo sus secciones',
+    'AC-013-25 AC-017-07 AC-020-13 AC-024-16 %s ve en la navegación solo sus secciones',
     (role, expected) => {
       setup(1440, true, 'Ana López', role);
       const nav = screen.getByRole('navigation', { name: 'Principal' });
@@ -210,7 +214,7 @@ describe('AppShell', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Proveedores', 'Tablero', 'Cierre', 'Asistente', 'Usuarios']);
+    ).toEqual(['Proveedores', 'Tablero', 'Cierre', 'Reportes', 'Asistente', 'Usuarios']);
   });
 
   it('AC-017-14 con 5 secciones o menos se muestran todas y no hay «Más»', () => {

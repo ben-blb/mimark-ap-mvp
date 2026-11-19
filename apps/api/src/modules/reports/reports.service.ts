@@ -29,7 +29,8 @@ import {
   type ReportCategory,
   type SupplierRule,
 } from './reports.rules.js';
-import type { EdoResLine } from '@mimark/contracts/closing';
+import type { CompanyList, EdoResLine } from '@mimark/contracts/closing';
+import { toCompany } from '../closing/closing.dto.js';
 
 const FILE_TYPES: Record<string, string> = {
   csv: 'text/csv',
@@ -48,6 +49,11 @@ export class ReportsService {
     private readonly sheets: SpreadsheetClient,
     private readonly audit: AuditRepository,
   ) {}
+
+  /** Las empresas activas, para elegir qué reporte ver (gerencia no tiene `reports:read`). */
+  async companies(): Promise<CompanyList> {
+    return { items: (await this.closing.listCompanies(false)).map(toCompany) };
+  }
 
   /** Los movimientos del mes y lo que las reglas necesitan para leerlos. */
   async month(companyId: string, month: string) {

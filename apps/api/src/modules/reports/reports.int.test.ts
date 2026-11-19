@@ -268,6 +268,14 @@ describe('reportes del cierre (spec 024)', () => {
     await t.http().get(`/api/reports/edo-res?${q}`).expect(401);
   });
 
+  it('AC-024-17 gerencia elige empresa con GET /api/reports/companies: solo las activas', async () => {
+    await t.db.company.create({ data: { name: 'Inactiva', nameKey: 'inactiva', active: false } });
+    const manager = await t.agent('Gerente', 'manager');
+    const res = await manager.get('/api/reports/companies').expect(200);
+    expect(res.body.items.map((c: { name: string }) => c.name)).toEqual(['Quima']);
+    await (await t.agent('CxP', 'payables')).get('/api/reports/companies').expect(403);
+  });
+
   it('AC-024-16 manager lee los reportes pero no el cierre: cargas, revisión, conciliación y catálogo dan 403', async () => {
     const manager = await t.agent('Gerente', 'manager');
     const q = `companyId=${companyId}&month=2026-09`;

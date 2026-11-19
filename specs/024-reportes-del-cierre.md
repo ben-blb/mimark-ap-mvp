@@ -147,7 +147,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
 - [x] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
 - [x] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
 - [x] 5. Permiso `reports:view`, ajuste de `manager` y ruta de descarga de origen (AC-024-07, 15, 16 en API).
-- [ ] 6. Web: menú «Reportes» y enlace desde el Tablero (AC-024-16), EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
+- [x] 6. Web: menú «Reportes» y enlace desde el Tablero (AC-024-16), EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
 - [ ] 7. `pnpm check`, AC-024-20, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones
@@ -183,3 +183,8 @@ como `features/dashboard` (sin librería de gráficas nueva).
   movió a `dependencies` porque la API lo usa en producción. No hay dependencia nueva. `SpreadsheetClient.write` escribe todo texto
   como celda de texto (nunca fórmula) y los importes como números; la hoja «Movimientos» lista también los movimientos que no
   entran a ningún reporte (traspasos, Cantaloupe), marcados «Fuera de los reportes».
+- 2026-11-19 · Web (tarea 6): gerencia ya no tiene `reports:read`, así que la lista de empresas de los reportes sale de la ruta nueva
+  `GET /api/reports/companies` (`reports:view`, solo activas) y no de `/closing/companies`. Empresa y mes viajan en la URL
+  (`?companyId&month`) y las tres pantallas comparten el periodo; el mes por defecto es el anterior (el que se revisa el día 1–2).
+  «Comparar» pide siempre el mes inmediato anterior. Las tablas no se vuelven tarjetas a 375 px: se desplazan dentro de su contenedor.
+  El enlace a Reportes en el Tablero y la entrada «Reportes» del menú salen de `reports:view`.

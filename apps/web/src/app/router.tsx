@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { createBrowserRouter, type RouteObject } from 'react-router';
+import { Navigate, createBrowserRouter, type RouteObject } from 'react-router';
 import { AssistantRoute } from '../features/assistant/AssistantRoute';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ReceiptsPage } from '../features/receipts/ReceiptsPage';
@@ -14,6 +14,9 @@ import { CatalogPage } from '../features/closing/CatalogPage';
 import { ReconciliationPage } from '../features/closing/ReconciliationPage';
 import { ReviewPage } from '../features/closing/ReviewPage';
 import { UploadsPage } from '../features/closing/UploadsPage';
+import { EdoResPage } from '../features/reports/EdoResPage';
+import { KiosksPage } from '../features/reports/KiosksPage';
+import { SuppliersReportPage } from '../features/reports/SuppliersPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
 import { HomeRedirect } from './HomeRedirect';
@@ -125,6 +128,31 @@ export const routes: RouteObject[] = [
         element: (
           <RequirePermission permission="reports:read">
             <ReconciliationPage />
+          </RequirePermission>
+        ),
+      },
+      { path: 'reportes', element: <Navigate to="/reportes/edo-res" replace /> },
+      {
+        path: 'reportes/edo-res',
+        element: (
+          <RequirePermission permission="reports:view">
+            <EdoResPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'reportes/kioskos',
+        element: (
+          <RequirePermission permission="reports:view">
+            <KiosksPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'reportes/proveedores',
+        element: (
+          <RequirePermission permission="reports:view">
+            <SuppliersReportPage />
           </RequirePermission>
         ),
       },

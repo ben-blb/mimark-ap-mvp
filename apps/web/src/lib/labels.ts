@@ -1,6 +1,7 @@
 import type { AccountType, CategoryKind } from '@mimark/contracts/closing';
 import type { CantaloupeStatus, CheckStatus, ReviewReason } from '@mimark/contracts/closing-review';
 import type { Source } from '@mimark/contracts/closing-uploads';
+import type { ReportStatus } from '@mimark/contracts/reports';
 import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
 import type { DOC_TYPES, ExtractedField } from '@mimark/contracts/extraction';
@@ -9,6 +10,12 @@ import type { PoStage, PurchaseOrderDto } from '@mimark/contracts/purchase-order
 import type { Role } from '@mimark/contracts/session';
 
 /** Todas las etiquetas visibles de los valores de contracts. Cada spec agrega las suyas aquí. */
+
+export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+  empty: 'Sin datos',
+  provisional: 'Provisional: el periodo sigue abierto',
+  final: 'Final: el periodo está cerrado',
+};
 
 export const ROLE_LABELS: Record<Role, string> = {
   purchasing: 'Compras',

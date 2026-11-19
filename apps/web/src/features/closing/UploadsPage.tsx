@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { PageHeader } from '../../components/PageHeader';
+import { BankPdfCard } from './BankPdfCard';
 import { SourceCard } from './SourceCard';
 import { useAccounts, useCompanies, useKiosks } from './closing.api';
 import { useUploads } from './uploads.api';
@@ -88,6 +89,15 @@ export function UploadsPage() {
               kioskNames={kioskNames}
             />
           ))}
+        {monthValid && (
+          <BankPdfCard
+            key={`${companyId}-${month}-bank_pdf`}
+            companyId={companyId}
+            month={month}
+            uploads={uploads.data?.items ?? []}
+            accounts={accounts}
+          />
+        )}
       </Box>
     </>
   );

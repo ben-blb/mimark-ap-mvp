@@ -125,7 +125,7 @@ texto y color, tarjeta de saldos con el semáforo de `balanceCheck`, «Confirmar
 - [x] 4. Service/controller: subida, borrador y edición (AC-022-01, 02, 05, 06, 08, 09).
 - [x] 5. Confirmación, reemplazo y auditoría (AC-022-07).
 - [x] 6. Prueba de inyección y enmascarado (AC-022-10, 11).
-- [ ] 7. Web: fuente «Banco (PDF)» en `/cierre/cargas`.
+- [x] 7. Web: fuente «Banco (PDF)» en `/cierre/cargas`.
 - [ ] 8. `pnpm check`, AC-022-12, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones

@@ -5,17 +5,16 @@ import {
   type UploadPreviewDto,
 } from '@mimark/contracts/closing-uploads';
 import { FILE_REJECTION_MESSAGES, MAX_FILE_BYTES } from '@mimark/contracts/payables';
-import CloudUploadOutlined from '@mui/icons-material/CloudUploadOutlined';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { tonal } from '../../app/theme';
 import { ErrorAlert } from '../../components/ErrorAlert';
 import { StatusDot } from '../../components/StatusDot';
 import { formatDate } from '../../lib/format';
 import { SOURCE_HINTS, SOURCE_LABELS } from '../../lib/labels';
+import { FileDropzone } from './FileDropzone';
 import { UploadPreview } from './UploadPreview';
 import { useConfirmUpload, useDiscardUpload, useUploadSource } from './uploads.api';
 
@@ -58,7 +57,6 @@ interface Props {
 export function SourceCard({ source, companyId, month, uploads, accounts, kioskNames }: Props) {
   const [accountChoice, setAccountChoice] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<UploadPreviewDto | null>(null);
   const upload = useUploadSource();
   const confirm = useConfirmUpload();
@@ -120,54 +118,13 @@ export function SourceCard({ source, companyId, month, uploads, accounts, kioskN
           </TextField>
         )}
 
-        <Box
-          component="label"
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            if (!upload.isPending) pick(e.dataTransfer.files[0] ?? null);
-          }}
-          sx={(theme) => ({
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 0.5,
-            p: 2.5,
-            borderRadius: '8px',
-            border: '1.5px dashed',
-            borderColor: dragging ? 'primary.main' : 'divider',
-            textAlign: 'center',
-            cursor: blocked || upload.isPending ? 'default' : 'pointer',
-            opacity: blocked ? 0.6 : 1,
-            ...(dragging ? tonal(theme, 'primary', 0.06) : {}),
-            '&:hover': { borderColor: 'primary.main' },
-            '&:focus-within': { borderColor: 'primary.main' },
-          })}
-        >
-          <CloudUploadOutlined aria-hidden sx={{ fontSize: 28, color: 'primary.main' }} />
-          <Typography sx={{ fontWeight: 600 }}>
-            {upload.isPending ? 'Leyendo el archivo…' : 'Arrastra el archivo aquí'}
-          </Typography>
-          <Typography variant="body2" color="primary">
-            Elegir archivo (.xlsx o .csv, hasta 4 MB)
-          </Typography>
-          <input
-            hidden
-            type="file"
-            aria-label="Archivo"
-            accept=".xlsx,.csv"
-            disabled={blocked || upload.isPending}
-            onChange={(e) => {
-              pick(e.target.files?.[0] ?? null);
-              e.target.value = '';
-            }}
-          />
-        </Box>
+        <FileDropzone
+          accept=".xlsx,.csv"
+          hint="Elegir archivo (.xlsx o .csv, hasta 4 MB)"
+          pending={upload.isPending}
+          blocked={blocked}
+          onPick={pick}
+        />
         {fileError && (
           <Typography variant="body2" color="error" role="alert">
             {fileError}

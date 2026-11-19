@@ -36,6 +36,44 @@ const previewBody = {
   ],
 };
 
+const account = {
+  id: 'a1',
+  companyId: 'co1',
+  name: 'Cheques',
+  type: 'checking',
+  last4: null,
+  active: true,
+  ...stamp,
+};
+const pdfUpload = {
+  ...upload,
+  id: 'u2',
+  source: 'bank_pdf',
+  accountId: 'a1',
+  fileName: 'estado.pdf',
+  month: '2026-10',
+};
+const draftBody = {
+  upload: pdfUpload,
+  openingBalance: '1000.00',
+  closingBalance: '1100.01',
+  rows: [
+    {
+      row: 1,
+      date: '2026-10-02',
+      concept: 'SPEI',
+      withdrawal: null,
+      deposit: '100.00',
+      balance: '1100.00',
+      discarded: false,
+      flags: [],
+    },
+  ],
+  balanceCheck: { ok: false, difference: '0.01' },
+  warnings: [],
+};
+let confirmBody: unknown = null;
+
 let uploads: unknown[] = [];
 const calls: { method: string; url: string }[] = [];
 
@@ -56,12 +94,29 @@ function stubApi() {
         uploads = [upload];
         return json(previewBody, 201);
       }
+      if (method === 'POST' && url === '/api/closing/uploads/bank-pdf') {
+        uploads = [pdfUpload];
+        return json(draftBody, 201);
+      }
+      if (method === 'PATCH' && url === '/api/closing/uploads/u2/draft') {
+        return json({
+          ...draftBody,
+          closingBalance: '1100.00',
+          balanceCheck: { ok: true, difference: '0.00' },
+        });
+      }
+      if (method === 'POST' && url === '/api/closing/uploads/u2/confirm') {
+        confirmBody = JSON.parse(String(init?.body));
+        uploads = [{ ...pdfUpload, status: 'confirmed', entriesCount: 1 }];
+        return json(uploads[0]);
+      }
       if (method === 'POST' && url === '/api/closing/uploads/u1/confirm') {
         uploads = [{ ...upload, status: 'confirmed', entriesCount: 1 }];
         return json(uploads[0]);
       }
       const path = url.split('?')[0] ?? '';
       if (path === '/api/closing/companies') return json({ items: [company] });
+      if (path === '/api/closing/accounts') return json({ items: [account] });
       if (path === '/api/closing/uploads') return json({ items: uploads });
       return json({ items: [] });
     }),
@@ -70,6 +125,7 @@ function stubApi() {
 
 function setup(role: 'admin' | 'manager') {
   uploads = [];
+  confirmBody = null;
   calls.length = 0;
   stubApi();
   setViewport(1440);
@@ -111,12 +167,13 @@ describe('UploadsPage (spec 021)', () => {
       'Mermas y robos Parlevel',
       'Cantaloupe',
       'Banco',
+      'Banco (PDF)',
       'Caja',
       'Nómina',
     ]) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     }
-    expect(screen.getAllByText('Sin cargar')).toHaveLength(6);
+    expect(screen.getAllByText('Sin cargar')).toHaveLength(7);
   });
 
   it('AC-021-01 AC-021-08 sube un archivo, muestra la vista previa y al confirmar queda «Confirmada»', async () => {
@@ -166,5 +223,60 @@ describe('UploadsPage (spec 021)', () => {
     setup('manager');
     expect(screen.getByText('Tu rol no tiene acceso a esta página.')).toBeInTheDocument();
     expect(calls).toHaveLength(0);
+  });
+
+  it('AC-022-01 AC-022-03 sube el PDF, muestra el borrador y confirma aceptando la diferencia de saldos', async () => {
+    const user = setup('admin');
+    await ready();
+    const card = screen.getByRole('region', { name: 'Banco (PDF)' });
+    await waitFor(() => expect(within(card).getByLabelText('Cuenta')).toHaveValue('a1'));
+    await user.upload(
+      within(card).getByLabelText('Archivo'),
+      new File(['%PDF-'], 'estado.pdf', { type: 'application/pdf' }),
+    );
+
+    expect(await within(card).findByLabelText('Concepto fila 1')).toHaveValue('SPEI');
+    expect(within(card).getByText('Borrador pendiente de confirmar')).toBeInTheDocument();
+    const confirm = within(card).getByRole('button', { name: 'Confirmar' });
+    expect(confirm).toBeDisabled();
+
+    await user.click(within(card).getByRole('checkbox', { name: /Acepto la diferencia/ }));
+    await user.click(confirm);
+
+    expect(await within(card).findByText(/Confirmada/)).toBeInTheDocument();
+    expect(confirmBody).toEqual({ acceptDifference: true });
+  });
+
+  it('AC-022-06 editar una fila actualiza el semáforo de saldos con la respuesta de la API', async () => {
+    const user = setup('admin');
+    await ready();
+    const card = screen.getByRole('region', { name: 'Banco (PDF)' });
+    await waitFor(() => expect(within(card).getByLabelText('Cuenta')).toHaveValue('a1'));
+    await user.upload(
+      within(card).getByLabelText('Archivo'),
+      new File(['%PDF-'], 'estado.pdf', { type: 'application/pdf' }),
+    );
+    const concept = await within(card).findByLabelText('Concepto fila 1');
+    await user.clear(concept);
+    await user.type(concept, 'SPEI corregido');
+    await user.tab();
+
+    expect(await within(card).findByText('Los saldos cuadran')).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'PATCH' && c.url.endsWith('/u2/draft'))).toBe(true);
+    expect(within(card).getByRole('button', { name: 'Confirmar' })).toBeEnabled();
+  });
+
+  it('AC-022-01 un archivo que no es PDF se rechaza en el navegador, sin llamar a la API', async () => {
+    const user = setup('admin');
+    await ready();
+    const card = screen.getByRole('region', { name: 'Banco (PDF)' });
+    await waitFor(() => expect(within(card).getByLabelText('Cuenta')).toHaveValue('a1'));
+    await user.upload(
+      within(card).getByLabelText('Archivo'),
+      new File(['x'], 'estado.xlsx', { type: 'application/vnd.ms-excel' }),
+    );
+
+    expect(await within(card).findByText('Solo se aceptan archivos PDF.')).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST')).toBe(false);
   });
 });

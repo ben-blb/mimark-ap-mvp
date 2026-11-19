@@ -58,3 +58,4 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       diferencias deben ser 0.00 o estar explicadas. Al terminar, borrar esta línea y anotarlo en la Bitácora de la 023.
 - [ ] 2026-11-18 · 023 · Recorrer `/cierre/por-revisar` y `/cierre/conciliacion` con `pnpm dev` (teclado y 375 px): no se hizo.
       Correr `pnpm db:seed` en las bases ya sembradas para que exista la categoría `COBRANZA_CANTALOUPE`.
+- [ ] 2026-11-19 · 024 · Confirmar con la contadora la composición del EDO RES: si «Inversiones» y «No deducibles» restan de la utilidad neta, y que Costo de lo vendido incluya Mermas y Robos. Al resolverlo, borrar esta línea y anotarlo en la Bitácora de la 024.

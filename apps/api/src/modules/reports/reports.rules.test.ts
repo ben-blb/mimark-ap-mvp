@@ -12,7 +12,11 @@ import {
   type SupplierRule,
 } from './reports.rules.js';
 
-const cat = (code: string, edoResLine: ReportCategory['edoResLine'], i: number): ReportCategory => ({
+const cat = (
+  code: string,
+  edoResLine: ReportCategory['edoResLine'],
+  i: number,
+): ReportCategory => ({
   id: code,
   code,
   name: code,
@@ -45,8 +49,10 @@ const entry = (over: Partial<ReportEntry> & { cents: number }): ReportEntry => (
   concept: 'x',
   ...over,
 });
-const rowOf = (rows: { key: string; amount: string; percentOfSales: string | null }[], key: string) =>
-  rows.find((r) => r.key === key)!;
+const rowOf = (
+  rows: { key: string; amount: string; percentOfSales: string | null }[],
+  key: string,
+) => rows.find((r) => r.key === key)!;
 
 describe('EDO RES (spec 024)', () => {
   const sample = [
@@ -56,7 +62,10 @@ describe('EDO RES (spec 024)', () => {
 
   it('AC-024-01 el ejemplo sintético da utilidad bruta 182,095.83 (39.25 %)', () => {
     const { rows } = buildEdoRes(sample, categories);
-    expect(rowOf(rows, 'net_sales')).toMatchObject({ amount: '463989.77', percentOfSales: '100.00' });
+    expect(rowOf(rows, 'net_sales')).toMatchObject({
+      amount: '463989.77',
+      percentOfSales: '100.00',
+    });
     expect(rowOf(rows, 'cost').amount).toBe('281893.94');
     expect(rowOf(rows, 'gross_profit')).toMatchObject({
       amount: '182095.83',
@@ -188,7 +197,9 @@ describe('detalle de un renglón (spec 024)', () => {
       entry({ categoryId: 'COBRANZA_CANTALOUPE', cents: 999 }),
     ];
     const r = drillLine('Otros ingresos', otros, categories);
-    expect(r.categories).toEqual([{ code: 'OTROS_INGRESOS', name: 'OTROS_INGRESOS', amount: '1.00', count: 1 }]);
+    expect(r.categories).toEqual([
+      { code: 'OTROS_INGRESOS', name: 'OTROS_INGRESOS', amount: '1.00', count: 1 },
+    ]);
   });
 });
 
@@ -235,13 +246,19 @@ describe('kioskos (spec 024)', () => {
     expect(k.totals.cost).toBe('900.00');
     // utilidad neta = utilidad antes de gastos generales − gastos generales + por clasificar
     const net =
-      Number(k.totals.profitBeforeOverhead) * 100 - Number(k.overhead) * 100 + Number(k.unclassified) * 100;
+      Number(k.totals.profitBeforeOverhead) * 100 -
+      Number(k.overhead) * 100 +
+      Number(k.unclassified) * 100;
     expect(net / 100).toBe(Number(rowOf(edo, 'net_profit').amount));
   });
 
   it('AC-024-10 el margen negativo se marca', () => {
     const { rows } = kioskRows(entries, categories, kiosks);
-    expect(rows[1]).toMatchObject({ margin: '-200.00', marginPercent: '-200.00', negativeMargin: true });
+    expect(rows[1]).toMatchObject({
+      margin: '-200.00',
+      marginPercent: '-200.00',
+      negativeMargin: true,
+    });
   });
 
   it('AC-024-11 los gastos generales no se prorratean: van aparte aunque tengan kiosko', () => {
@@ -313,11 +330,11 @@ describe('proveedores (spec 024)', () => {
   });
 
   it('AC-024-13 gana la regla activa de mayor prioridad y una inactiva no cuenta', () => {
-    const { rows } = supplierRows(
-      [pay('COCA COLA BIMBO', -1000, '2026-09-03')],
-      categories,
-      [rule('r1', 'COCA COLA'), rule('r2', 'BIMBO', 5), { ...rule('r3', 'COCA', 9), active: false }],
-    );
+    const { rows } = supplierRows([pay('COCA COLA BIMBO', -1000, '2026-09-03')], categories, [
+      rule('r1', 'COCA COLA'),
+      rule('r2', 'BIMBO', 5),
+      { ...rule('r3', 'COCA', 9), active: false },
+    ]);
     expect(rows.map((r) => r.name)).toEqual(['BIMBO']);
   });
 });

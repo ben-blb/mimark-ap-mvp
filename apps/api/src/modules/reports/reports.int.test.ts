@@ -1,3 +1,4 @@
+import { readSheet } from 'read-excel-file/node';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from '../../../test/app.js';
@@ -65,7 +66,10 @@ describe('reportes del cierre (spec 024)', () => {
     const keys = res.body.rows.map((r: { key: string }) => r.key);
     expect(keys.indexOf('net_sales')).toBeLessThan(keys.indexOf('cost'));
     expect(keys.at(-1)).toBe('net_profit');
-    expect(row(res.body.rows, 'net_sales')).toMatchObject({ amount: '463989.77', percentOfSales: '100.00' });
+    expect(row(res.body.rows, 'net_sales')).toMatchObject({
+      amount: '463989.77',
+      percentOfSales: '100.00',
+    });
     expect(row(res.body.rows, 'cost')?.amount).toBe('281893.94');
     expect(row(res.body.rows, 'gross_profit')).toMatchObject({
       amount: '182095.83',
@@ -114,9 +118,7 @@ describe('reportes del cierre (spec 024)', () => {
 
   it('AC-024-05 compareTo agrega el importe anterior y la diferencia', async () => {
     await seedExample();
-    const before = (
-      await t.db.reportPeriod.create({ data: { companyId, month: '2026-08' } })
-    ).id;
+    const before = (await t.db.reportPeriod.create({ data: { companyId, month: '2026-08' } })).id;
     await t.db.ledgerEntry.create({
       data: {
         periodId: before,
@@ -130,7 +132,10 @@ describe('reportes del cierre (spec 024)', () => {
     });
     const { rows, compareTo } = (await edo('&compareTo=2026-08').expect(200)).body;
     expect(compareTo).toBe('2026-08');
-    expect(row(rows, 'net_sales')).toMatchObject({ previousAmount: '400000.00', delta: '63989.77' });
+    expect(row(rows, 'net_sales')).toMatchObject({
+      previousAmount: '400000.00',
+      delta: '63989.77',
+    });
     expect((await edo().expect(200)).body.rows[0].previousAmount).toBeUndefined();
   });
 
@@ -252,7 +257,11 @@ describe('reportes del cierre (spec 024)', () => {
 
     it('AC-024-09 trae ventas, costo, margen, mermas, robos, comisiones y la fila «Sin kiosko»', async () => {
       const { body } = await kiosks();
-      expect(body.rows.map((r: { name: string }) => r.name)).toEqual(['Alfa', 'Beta', 'Sin kiosko']);
+      expect(body.rows.map((r: { name: string }) => r.name)).toEqual([
+        'Alfa',
+        'Beta',
+        'Sin kiosko',
+      ]);
       expect(body.rows[0]).toMatchObject({
         sales: '1000.00',
         cost: '600.00',
@@ -297,8 +306,14 @@ describe('reportes del cierre (spec 024)', () => {
     it('AC-024-12 pago total, número, promedio, porcentaje y primer y último pago por proveedor', async () => {
       await rule('COCA COLA');
       await rule('BIMBO');
-      await entry('COSTO_VENDIDO', '-300.00', { concept: 'PAGO COCA COLA FEMSA', date: new Date('2026-09-12') });
-      await entry('COSTO_VENDIDO', '-100.00', { concept: 'COCA COLA', date: new Date('2026-09-03') });
+      await entry('COSTO_VENDIDO', '-300.00', {
+        concept: 'PAGO COCA COLA FEMSA',
+        date: new Date('2026-09-12'),
+      });
+      await entry('COSTO_VENDIDO', '-100.00', {
+        concept: 'COCA COLA',
+        date: new Date('2026-09-03'),
+      });
       await entry('COSTO_VENDIDO', '-100.00', { concept: 'BIMBO SA' });
       const { body } = await suppliers();
       expect(body.totalSpend).toBe('500.00');
@@ -319,6 +334,70 @@ describe('reportes del cierre (spec 024)', () => {
       await entry('RENTAS', '-50.00', { concept: 'COCA COLA' });
       await entry('COSTO_VENDIDO', '-50.00', { concept: 'COCA COLA', kind: 'internal_transfer' });
       expect((await suppliers()).body.rows).toEqual([]);
+    });
+  });
+
+  describe('exportación', () => {
+    const binary = (res: { on: (e: string, f: (...a: never[]) => void) => void }) => {
+      const r = res as unknown as {
+        buffer: boolean;
+        parse: (
+          fn: (res: NodeJS.ReadableStream, cb: (e: Error | null, b: Buffer) => void) => void,
+        ) => void;
+      };
+      r.buffer = true;
+      r.parse((stream, cb) => {
+        const chunks: Buffer[] = [];
+        stream.on('data', (c: Buffer) => chunks.push(c));
+        stream.on('end', () => cb(null, Buffer.concat(chunks)));
+      });
+    };
+    const download = async () => {
+      const req = admin.get(`/api/reports/edo-res/export?companyId=${companyId}&month=2026-09`);
+      binary(req as never);
+      return req.expect(200);
+    };
+
+    it('AC-024-14 devuelve un .xlsx con las hojas EDO RES, Kioskos, Proveedores y Movimientos y audita', async () => {
+      await seedExample();
+      const res = await download();
+      expect(res.headers['content-disposition']).toBe(
+        "attachment; filename*=UTF-8''edo-res-2026-09.xlsx",
+      );
+      expect(res.headers['content-type']).toContain('spreadsheetml.sheet');
+      const bytes = res.body as Buffer;
+      const edoSheet = await readSheet(bytes, 'EDO RES');
+      expect(edoSheet[0]).toEqual(['Renglón', 'Importe', '% de ventas']);
+      expect(edoSheet.find((r) => r[0] === 'Utilidad bruta')).toEqual([
+        'Utilidad bruta',
+        182095.83,
+        39.25,
+      ]);
+      expect((await readSheet(bytes, 'Kioskos'))[0]?.[0]).toBe('Kiosko');
+      expect((await readSheet(bytes, 'Proveedores'))[0]?.[0]).toBe('Proveedor');
+      const moves = await readSheet(bytes, 'Movimientos');
+      expect(moves).toHaveLength(4);
+      const event = await t.db.auditEvent.findFirstOrThrow({
+        where: { action: 'report.exported' },
+      });
+      expect(event).toMatchObject({ entity: 'report', entityId: `${companyId}:2026-09` });
+      expect(event.data).toMatchObject({ companyId, month: '2026-09' });
+    });
+
+    it('AC-024-14 los textos que empiezan con =, +, - o @ quedan como texto, no como fórmulas', async () => {
+      for (const concept of ['=HYPERLINK("http://x")', '+CMD', '-1+1', '@SUM(A1)']) {
+        await entry('RENTAS', '-1.00', { concept });
+      }
+      const moves = await readSheet((await download()).body as Buffer, 'Movimientos');
+      const concepts = moves.slice(1).map((r) => r[1]);
+      expect(concepts).toEqual(['=HYPERLINK("http://x")', '+CMD', '-1+1', '@SUM(A1)']);
+      expect(moves.slice(1).every((r) => typeof r[1] === 'string')).toBe(true);
+    });
+
+    it('AC-024-14 los movimientos fuera de los reportes (traspasos) se listan marcados', async () => {
+      await entry(null, '-50.00', { kind: 'internal_transfer', concept: 'TRASPASO' });
+      const moves = await readSheet((await download()).body as Buffer, 'Movimientos');
+      expect(moves[1]?.[5]).toBe('Fuera de los reportes');
     });
   });
 });

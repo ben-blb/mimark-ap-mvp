@@ -10,6 +10,7 @@ import {
   type KioskReportDto,
   type SupplierReportDto,
 } from '@mimark/contracts/reports';
+import { Ctx } from '../../common/ctx.js';
 import { Requires } from '../session/session.guard.js';
 import { ReportsService } from './reports.service.js';
 
@@ -22,6 +23,20 @@ export class ReportsController {
   @Get('edo-res')
   edoRes(@Query({ schema: EdoResQuery }) query: EdoResQuery): Promise<EdoResDto> {
     return this.reports.edoRes(query);
+  }
+
+  @Get('edo-res/export')
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Cache-Control', 'private, no-store')
+  async export(
+    @Query({ schema: EdoResQuery }) query: EdoResQuery,
+    @Ctx() ctx: Ctx,
+  ): Promise<StreamableFile> {
+    const { bytes, fileName } = await this.reports.export(query, ctx);
+    return new StreamableFile(bytes, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      disposition: `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    });
   }
 
   @Get('edo-res/lines/:line/entries')

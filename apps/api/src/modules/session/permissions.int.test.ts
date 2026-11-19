@@ -83,6 +83,7 @@ const GUARDED: { verb: Verb; path: string; permission: Permission }[] = [
   { verb: 'post', path: '/api/closing/periods/x/reopen', permission: 'reports:write' },
   { verb: 'get', path: '/api/reports/edo-res', permission: 'reports:view' },
   { verb: 'get', path: '/api/reports/edo-res/lines/:line/entries', permission: 'reports:view' },
+  { verb: 'get', path: '/api/reports/edo-res/export', permission: 'reports:view' },
   { verb: 'get', path: '/api/reports/kiosks', permission: 'reports:view' },
   { verb: 'get', path: '/api/reports/suppliers', permission: 'reports:view' },
   { verb: 'get', path: '/api/reports/uploads/x/file', permission: 'reports:view' },

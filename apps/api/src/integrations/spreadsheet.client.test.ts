@@ -1,3 +1,4 @@
+import { readSheet } from 'read-excel-file/node';
 import writeXlsxFile from 'write-excel-file/node';
 import { describe, expect, it } from 'vitest';
 import { SpreadsheetClient, decodeCsv, parseCsv } from './spreadsheet.client.js';
@@ -33,6 +34,30 @@ describe('SpreadsheetClient', () => {
       .read(Buffer.from([0x50, 0x4b, 0x03, 0x04, 1, 2, 3, 4]), 'xlsx')
       .catch((e: unknown) => e);
     expect(error).toMatchObject({ code: 'FILE_TYPE_NOT_ALLOWED' });
+  });
+});
+
+describe('SpreadsheetClient.write', () => {
+  it('AC-024-14 escribe varias hojas; los textos con = + - @ al inicio son texto y los números, números', async () => {
+    const bytes = await client.write([
+      {
+        name: 'Uno',
+        rows: [
+          ['Concepto', 'Importe'],
+          ['=CMD()', 12.5],
+          ['@x', -3],
+          ['-a', null],
+        ],
+      },
+      { name: 'Dos', rows: [['+b']] },
+    ]);
+    expect(await client.read(bytes, 'xlsx')).toEqual([
+      ['Concepto', 'Importe'],
+      ['=CMD()', 12.5],
+      ['@x', -3],
+      ['-a', null],
+    ]);
+    expect(await readSheet(bytes, 'Dos')).toEqual([['+b']]);
   });
 });
 

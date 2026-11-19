@@ -9,6 +9,10 @@ import {
   type ReportQuery,
   type SupplierReportDto,
 } from '@mimark/contracts/reports';
+import type { Ctx } from '../../common/ctx.js';
+import { Db } from '../../common/db.js';
+import { AuditRepository } from '../audit/audit.repository.js';
+import { SpreadsheetClient } from '../../integrations/spreadsheet.client.js';
 import { AppError } from '../../common/app-error.js';
 import { ClosingRepository } from '../closing/closing.repository.js';
 import { StorageClient } from '../../integrations/storage.client.js';
@@ -17,6 +21,7 @@ import { ReportsRepository } from './reports.repository.js';
 import {
   buildEdoRes,
   drillLine,
+  exportSheets,
   kioskRows,
   reportStatus,
   supplierRows,
@@ -36,9 +41,12 @@ const FILE_TYPES: Record<string, string> = {
 @Injectable()
 export class ReportsService {
   constructor(
+    private readonly db: Db,
     private readonly closing: ClosingRepository,
     private readonly reports: ReportsRepository,
     private readonly storage: StorageClient,
+    private readonly sheets: SpreadsheetClient,
+    private readonly audit: AuditRepository,
   ) {}
 
   /** Los movimientos del mes y lo que las reglas necesitan para leerlos. */
@@ -138,5 +146,32 @@ export class ReportsService {
       fileName: upload.fileName,
     };
   }
-}
 
+  /** El libro de Excel del mes (AC-024-14) y su evento de auditoría. */
+  async export(query: EdoResQuery, ctx: Ctx): Promise<{ bytes: Buffer; fileName: string }> {
+    const edo = await this.edoRes(query);
+    const current = await this.month(query.companyId, query.month);
+    const bytes = await this.sheets.write(
+      exportSheets({
+        edo: edo.rows,
+        kiosks: kioskRows(current.entries, current.categories, current.kiosks),
+        suppliers: supplierRows(current.entries, current.categories, current.rules).rows,
+        entries: current.entries,
+        categories: current.categories,
+      }),
+    );
+    await this.db.$transaction((tx) =>
+      this.audit.log(
+        {
+          ...ctx,
+          entity: 'report',
+          entityId: `${query.companyId}:${query.month}`,
+          action: 'report.exported',
+          data: { companyId: query.companyId, month: query.month, rows: edo.rows.length },
+        },
+        tx,
+      ),
+    );
+    return { bytes, fileName: `edo-res-${query.month}.xlsx` };
+  }
+}

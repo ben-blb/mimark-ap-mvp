@@ -145,7 +145,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
 - [x] 2. `reports.rules.ts` con tablas de ejemplos sintéticos: EDO RES, kioskos, proveedores (AC-024-01 a 05, 09,
       11, 12).
 - [x] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
-- [ ] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
+- [x] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
 - [ ] 5. Permiso `reports:view`, ajuste de `manager`, ruta de descarga de origen y menú (AC-024-07, 15, 16).
 - [ ] 6. Web: EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
 - [ ] 7. `pnpm check`, AC-024-20, fila en `specs/README.md`; `hecha`.
@@ -179,3 +179,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
   gastos generales y total. «Por clasificar» = movimientos normales sin categoría (no `cantaloupe`, no traspasos); uno con categoría y
   `needsReview` cuenta en su renglón pero vuelve el reporte `provisional`. «% del gasto» de proveedores es sobre el total de los
   proveedores listados.
+- 2026-11-19 · Exportación (tarea 4): `write-excel-file` ya estaba en el repo como dependencia de desarrollo (pruebas de 021); se
+  movió a `dependencies` porque la API lo usa en producción. No hay dependencia nueva. `SpreadsheetClient.write` escribe todo texto
+  como celda de texto (nunca fórmula) y los importes como números; la hoja «Movimientos» lista también los movimientos que no
+  entran a ningún reporte (traspasos, Cantaloupe), marcados «Fuera de los reportes».

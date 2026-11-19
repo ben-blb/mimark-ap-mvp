@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { readSheet } from 'read-excel-file/node';
+import writeXlsxFile from 'write-excel-file/node';
 import { AppError } from '../common/app-error.js';
 
 /**
@@ -19,6 +20,31 @@ export class SpreadsheetClient {
       );
     }
   }
+
+  /**
+   * Escribe un libro `.xlsx` (spec 024). Todo texto va como celda de texto, nunca como fórmula, aunque empiece
+   * con `=`, `+`, `-` o `@`; los números van como números.
+   */
+  write(sheets: readonly OutputSheet[]): Promise<Buffer> {
+    const toCell = (cell: SheetCell) =>
+      cell === null || cell === ''
+        ? null
+        : typeof cell === 'number'
+          ? { type: Number, value: cell, format: '#,##0.00' }
+          : { type: String, value: cell };
+    return writeXlsxFile(
+      sheets.map((sheet) => ({
+        sheet: sheet.name,
+        data: sheet.rows.map((row) => row.map(toCell)),
+      })),
+    ).toBuffer();
+  }
+}
+
+export type SheetCell = string | number | null;
+export interface OutputSheet {
+  name: string;
+  rows: SheetCell[][];
 }
 
 /** UTF-8 y, si no lo es, Latin-1: muchos bancos exportan así. */

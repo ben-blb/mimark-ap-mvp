@@ -8,6 +8,7 @@ import {
   flagSequenceBreaks,
   maskAccountNumbers,
   openingMismatch,
+  previousMonth,
   toEntries,
   withFlags,
 } from './bank-statement.rules.js';
@@ -152,5 +153,12 @@ describe('openingMismatch', () => {
     expect(openingMismatch('10.00', null)).toBe(false);
     expect(openingMismatch('10.00', '10.0')).toBe(false);
     expect(openingMismatch('10.00', '10.01')).toBe(true);
+  });
+});
+
+describe('previousMonth', () => {
+  it('AC-022-05 resta un mes y cruza el año', () => {
+    expect(previousMonth('2026-10')).toBe('2026-09');
+    expect(previousMonth('2026-01')).toBe('2025-12');
   });
 });

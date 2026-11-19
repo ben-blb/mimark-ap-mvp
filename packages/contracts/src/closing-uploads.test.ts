@@ -123,6 +123,7 @@ describe('contratos del estado de cuenta en PDF (spec 022)', () => {
 
   it('AC-022-03 confirm acepta un cuerpo vacío o con acceptDifference', () => {
     expect(ConfirmUploadInput.parse({})).toEqual({});
+    expect(ConfirmUploadInput.parse(undefined)).toEqual({});
     expect(ConfirmUploadInput.parse({ acceptDifference: true })).toEqual({
       acceptDifference: true,
     });

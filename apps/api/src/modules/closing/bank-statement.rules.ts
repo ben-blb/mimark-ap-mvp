@@ -76,6 +76,12 @@ export function flagSequenceBreaks(rows: BankDraftRow[], openingBalance: string)
   return broken;
 }
 
+/** 'AAAA-MM' del mes anterior. */
+export function previousMonth(month: string): string {
+  const [year, m] = month.split('-').map(Number) as [number, number];
+  return m === 1 ? `${year - 1}-12` : `${year}-${String(m - 1).padStart(2, '0')}`;
+}
+
 export const monthOf = (date: string): string => date.slice(0, 7);
 
 /** Las filas con sus avisos: `UNCERTAIN` (saldo no sigue) y `OUT_OF_MONTH` (AC-022-05). */

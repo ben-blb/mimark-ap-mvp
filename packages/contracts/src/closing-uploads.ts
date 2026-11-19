@@ -225,6 +225,12 @@ export type BankRowEdit = z.infer<typeof BankRowEdit>;
 export const UpdateBankDraftInput = z.object({ rows: z.array(BankRowEdit).min(1).max(2000) });
 export type UpdateBankDraftInput = z.infer<typeof UpdateBankDraftInput>;
 
-/** Cuerpo opcional de `confirm`; `acceptDifference` solo lo usa `bank_pdf` (AC-022-03). */
-export const ConfirmUploadInput = z.object({ acceptDifference: z.boolean().optional() });
+/** Cuerpo opcional de `confirm` (sin cuerpo = `{}`); `acceptDifference` solo lo usa `bank_pdf` (AC-022-03). */
+export const ConfirmUploadInput = z
+  .object({ acceptDifference: z.boolean().optional() })
+  .default({});
 export type ConfirmUploadInput = z.infer<typeof ConfirmUploadInput>;
+
+/** Campos de texto de `POST /closing/uploads/bank-pdf`; la cuenta se valida en el service (AC-021-07). */
+export const BankPdfInput = UploadInput.omit({ source: true });
+export type BankPdfInput = z.infer<typeof BankPdfInput>;

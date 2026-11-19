@@ -120,7 +120,7 @@ texto y color, tarjeta de saldos con el semáforo de `balanceCheck`, «Confirmar
 ## Tareas
 
 - [x] 1. Contratos del borrador y prompt `extract-bank-statement@1` con su evaluación sintética.
-- [ ] 2. `bank-statement.rules.ts` con tablas (AC-022-03, 04, 11).
+- [x] 2. `bank-statement.rules.ts` con tablas (AC-022-03, 04, 11).
 - [ ] 3. `bank-extraction.client.ts` y su `fake`; migración `022-estado-de-cuenta-pdf`.
 - [ ] 4. Service/controller: subida, borrador y edición (AC-022-01, 02, 05, 06, 08, 09).
 - [ ] 5. Confirmación, reemplazo y auditoría (AC-022-07).

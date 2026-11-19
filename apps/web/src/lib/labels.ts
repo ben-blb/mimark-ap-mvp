@@ -1,4 +1,5 @@
 import type { AccountType, CategoryKind } from '@mimark/contracts/closing';
+import type { CantaloupeStatus, CheckStatus, ReviewReason } from '@mimark/contracts/closing-review';
 import type { Source } from '@mimark/contracts/closing-uploads';
 import type { AssistantToolName } from '@mimark/contracts/assistant';
 import type { Currency } from '@mimark/contracts/common';
@@ -179,4 +180,23 @@ export const SOURCE_HINTS: Record<Source, string> = {
   bank_pdf: 'Estado de cuenta del banco en PDF: la IA propone los movimientos y tú los revisas',
   cash: 'Plantilla de caja: fecha, concepto, monto y entrada/salida',
   payroll: 'Plantilla de nómina: fecha, nombre, monto e IMSS',
+};
+
+/** Cola «Por revisar» y cuadres del cierre (spec 023). */
+export const QUEUE_REASON_LABELS: Record<ReviewReason, string> = {
+  unknown_kiosk: 'Kiosko desconocido',
+  no_rule: 'Sin regla',
+};
+
+export const CANTALOUPE_STATUS_LABELS: Record<CantaloupeStatus, string> = {
+  ok: 'Conciliado',
+  warning: 'Con diferencia',
+  missing: 'Sin depósito',
+  orphan: 'Depósito sin ventas',
+};
+
+export const CHECK_STATUS_LABELS: Record<CheckStatus, string> = {
+  ok: 'Cuadra',
+  warning: 'Revisar',
+  error: 'No cuadra',
 };

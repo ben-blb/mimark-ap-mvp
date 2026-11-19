@@ -11,6 +11,8 @@ import { PayablesPage } from '../features/payables/PayablesPage';
 import { PurchaseOrderDetailPage } from '../features/purchase-orders/PurchaseOrderDetailPage';
 import { PurchaseOrdersPage } from '../features/purchase-orders/PurchaseOrdersPage';
 import { CatalogPage } from '../features/closing/CatalogPage';
+import { ReconciliationPage } from '../features/closing/ReconciliationPage';
+import { ReviewPage } from '../features/closing/ReviewPage';
 import { UploadsPage } from '../features/closing/UploadsPage';
 import { SuppliersPage } from '../features/suppliers/SuppliersPage';
 import { AppShell } from './AppShell';
@@ -107,6 +109,22 @@ export const routes: RouteObject[] = [
         element: (
           <RequirePermission permission="reports:write">
             <UploadsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'cierre/por-revisar',
+        element: (
+          <RequirePermission permission="reports:read">
+            <ReviewPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'cierre/conciliacion',
+        element: (
+          <RequirePermission permission="reports:read">
+            <ReconciliationPage />
           </RequirePermission>
         ),
       },

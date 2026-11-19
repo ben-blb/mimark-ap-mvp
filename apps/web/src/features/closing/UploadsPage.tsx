@@ -37,9 +37,17 @@ export function UploadsPage() {
       <PageHeader
         title="Cargas del cierre"
         actions={
-          <Button component={Link} to="/cierre/catalogo" color="inherit">
-            Catálogo
-          </Button>
+          <>
+            <Button component={Link} to="/cierre/por-revisar" color="inherit">
+              Por revisar
+            </Button>
+            <Button component={Link} to="/cierre/conciliacion" color="inherit">
+              Conciliación
+            </Button>
+            <Button component={Link} to="/cierre/catalogo" color="inherit">
+              Catálogo
+            </Button>
+          </>
         }
       />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>

@@ -77,6 +77,11 @@ describe('maskAccountNumbers', () => {
     expect(maskAccountNumbers('CTA 1234-5678-90')).toBe('CTA ****7890');
   });
 
+  it('AC-022-11 también enmascara números pegados a letras', () => {
+    expect(maskAccountNumbers('TARJETA5512345678901234')).toBe('TARJETA****1234');
+    expect(maskAccountNumbers('REF1234567890X')).toBe('REF****7890X');
+  });
+
   it('AC-022-11 no toca folios cortos, fechas ni importes', () => {
     const text = 'REF 0012345 FECHA 2026-09-02 IMPORTE 1,234.50';
     expect(maskAccountNumbers(text)).toBe(text);

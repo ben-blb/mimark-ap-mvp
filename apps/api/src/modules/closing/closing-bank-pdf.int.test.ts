@@ -117,6 +117,15 @@ describe('estado de cuenta en PDF (spec 022)', () => {
     expect(again.body.code).toBe('DUPLICATE_UPLOAD');
   });
 
+  it('AC-022-01 un PDF de más de 4 MB responde 413 antes de guardarse', async () => {
+    const big = Buffer.concat([Buffer.from('%PDF-1.7 '), Buffer.alloc(4 * 1024 * 1024 + 10, 0x61)]);
+    const res = await send('enorme.pdf', big).expect(413);
+
+    expect(res.body.code).toBe('FILE_TOO_LARGE');
+    expect(storage.files.size).toBe(0);
+    expect(ai.calls).toBe(0);
+  });
+
   it('AC-022-02 el borrador trae saldos y filas con fecha AAAA-MM-DD e importes de 2 decimales', async () => {
     const res = await send().expect(201);
 
@@ -164,6 +173,18 @@ describe('estado de cuenta en PDF (spec 022)', () => {
     expect(await actions()).not.toContain('upload.balance-accepted');
   });
 
+  it('AC-022-03 aceptar la diferencia solo vale para esa confirmación: tras editar hay que aceptarla otra vez', async () => {
+    const res = await send('descuadre.pdf').expect(201);
+    const id = res.body.upload.id as string;
+    await edit(id, [{ row: 3, deposit: '25.02' }]).expect(200);
+
+    const blocked = await confirm(id).expect(409);
+
+    expect(blocked.body.code).toBe('REVIEW_REQUIRED');
+    expect(blocked.body.details).toEqual({ difference: '-0.01' });
+    expect(await t.db.ledgerEntry.count()).toBe(0);
+  });
+
   it('AC-022-04 la fila cuyo saldo corrido rompe la secuencia se marca UNCERTAIN', async () => {
     const res = await send('secuencia-rota.pdf').expect(201);
 
@@ -180,6 +201,14 @@ describe('estado de cuenta en PDF (spec 022)', () => {
 
     await confirm(res.body.upload.id).expect(200);
     expect(await t.db.ledgerEntry.count()).toBe(3);
+  });
+
+  it('AC-022-05 si ninguna fila es del mes, la carga queda en failed', async () => {
+    const res = await send('todo-otro-mes.pdf').expect(502);
+
+    expect(res.body.code).toBe('AI_UNAVAILABLE');
+    expect((await t.db.sourceUpload.findFirstOrThrow()).status).toBe('failed');
+    expect(await t.db.ledgerEntry.count()).toBe(0);
   });
 
   it('AC-022-05 avisa OPENING_BALANCE_MISMATCH si el saldo inicial no es el cierre confirmado del mes anterior', async () => {
@@ -300,6 +329,32 @@ describe('estado de cuenta en PDF (spec 022)', () => {
     const retried = await send('estado.pdf', content).expect(201);
 
     expect(retried.body.upload).toMatchObject({ id: upload!.id, status: 'previewed' });
+    expect(await t.db.sourceUpload.count()).toBe(1);
+    expect(storage.files.size).toBe(1);
+    expect(await t.db.auditEvent.count({ where: { action: 'upload.bank-pdf-extracted' } })).toBe(1);
+  });
+
+  it('AC-022-08 la auditoría del fallo guarda la clase del error, no su mensaje', async () => {
+    ai.failNext = 1;
+    await send('estado.pdf', pdf('clase')).expect(502);
+
+    const event = await t.db.auditEvent.findFirstOrThrow({
+      where: { action: 'upload.bank-pdf-failed' },
+    });
+    expect(event.data).toMatchObject({ reason: 'El modelo no respondió (Error)' });
+    expect(JSON.stringify(event.data)).not.toContain('Falla simulada');
+  });
+
+  it('AC-022-08 reenviar el mismo PDF ya en vista previa devuelve esa carga sin otra extracción', async () => {
+    const content = pdf('repetido');
+    const first = await send('estado.pdf', content).expect(201);
+    await edit(first.body.upload.id, [{ row: 1, discarded: true }]).expect(200);
+
+    const again = await send('estado.pdf', content).expect(201);
+
+    expect(again.body.upload.id).toBe(first.body.upload.id);
+    expect(again.body.rows[0].discarded).toBe(true);
+    expect(ai.calls).toBe(1);
     expect(await t.db.sourceUpload.count()).toBe(1);
     expect(storage.files.size).toBe(1);
     expect(await t.db.auditEvent.count({ where: { action: 'upload.bank-pdf-extracted' } })).toBe(1);

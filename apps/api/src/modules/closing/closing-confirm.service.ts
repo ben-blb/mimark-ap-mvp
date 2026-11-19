@@ -45,14 +45,23 @@ export class ClosingConfirmService {
       throw new AppError('INVALID_TRANSITION', 'Esta carga ya no está en vista previa.');
     }
 
-    const { entries, difference, auditData } =
-      upload.source === 'bank_pdf'
-        ? this.fromDraft(upload, input, ctx)
-        : { ...(await this.fromSheet(upload, ctx)), difference: null, auditData: {} };
+    const sheet = upload.source === 'bank_pdf' ? null : await this.fromSheet(upload, ctx);
 
     return this.db.$transaction(async (tx) => {
       const period = await this.uploads.lockPeriod(upload.periodId, tx);
       if (period.status === 'closed') throw new AppError('PERIOD_CLOSED');
+
+      // El borrador se lee ya con el periodo bloqueado: una edición concurrente espera el mismo candado.
+      let fresh = upload;
+      if (!sheet) {
+        fresh = (await this.uploads.findUpload(id, tx)) ?? upload;
+        if (fresh.status !== 'previewed') {
+          throw new AppError('INVALID_TRANSITION', 'Esta carga ya no está en vista previa.');
+        }
+      }
+      const { entries, difference, auditData } = sheet
+        ? { ...sheet, difference: null, auditData: {} }
+        : this.fromDraft(fresh, input, ctx);
 
       const previous = await this.uploads.findConfirmed(
         upload.periodId,

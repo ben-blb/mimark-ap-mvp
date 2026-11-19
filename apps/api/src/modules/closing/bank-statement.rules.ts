@@ -23,7 +23,7 @@ const amountCents = (value: string | null): number => (value === null ? 0 : mone
 /** Números de tarjeta o cuenta (10 o más dígitos, con espacios o guiones) → «****» + últimos 4 dígitos (AC-022-11). */
 export function maskAccountNumbers(text: string): string {
   return text.replace(
-    /\b\d(?:[ -]?\d){9,}\b/g,
+    /(?<!\d)\d(?:[ -]?\d){9,}(?!\d)/g,
     (match) => `****${match.replace(/\D/g, '').slice(-4)}`,
   );
 }

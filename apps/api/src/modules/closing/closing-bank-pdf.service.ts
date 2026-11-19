@@ -71,6 +71,11 @@ export class ClosingBankPdfService {
         );
       }
     }
+    // Reenvío del mismo PDF ya leído: se devuelve esa carga, sin otra extracción ni otra cuota.
+    const pending = period
+      ? await this.uploads.findPreviewed(period.id, 'bank_pdf', accountId, sha256)
+      : null;
+    if (pending) return this.view(pending, BankDraftData.parse(pending.draft));
     await this.checkQuota(ctx.actor);
 
     // Reintento: el mismo PDF que ya falló reutiliza su carga y su original.
@@ -83,9 +88,11 @@ export class ClosingBankPdfService {
     let extraction;
     try {
       extraction = await this.extractor.extract({ bytes: file.buffer, fileName });
-    } catch {
+    } catch (error) {
+      // Solo la clase del error: nunca su mensaje, que podría traer texto del documento.
+      const kind = error instanceof Error ? error.name : 'desconocido';
       return this.fail(
-        'El modelo no respondió',
+        `El modelo no respondió (${kind})`,
         { input, accountId, fileKey, fileName, sha256, failed },
         ctx,
       );
@@ -166,28 +173,27 @@ export class ClosingBankPdfService {
 
   /** Aplica ediciones a las filas del borrador y recalcula saldos y avisos (AC-022-06). */
   async editDraft(id: string, input: UpdateBankDraftInput, ctx: Ctx): Promise<BankStatementDraft> {
-    const upload = await this.uploads.findUpload(id);
-    if (!upload || upload.source !== 'bank_pdf')
+    const found = await this.uploads.findUpload(id);
+    if (!found || found.source !== 'bank_pdf')
       throw new AppError('NOT_FOUND', 'No existe ese borrador.');
-    if (upload.period.status === 'closed') throw new AppError('PERIOD_CLOSED');
-    if (upload.status !== 'previewed') {
-      throw new AppError('CONFLICT', 'Este borrador ya no se puede editar.');
-    }
 
-    const { draft, fieldErrors } = applyEdits(BankDraftData.parse(upload.draft), input.rows);
-    if (Object.keys(fieldErrors).length > 0)
-      throw new AppError('VALIDATION', undefined, { fieldErrors });
+    // Todo con el periodo bloqueado: confirmar y editar se esperan entre sí y nunca se pisan.
+    const { upload, draft } = await this.db.$transaction(async (tx) => {
+      const period = await this.uploads.lockPeriod(found.periodId, tx);
+      if (period.status === 'closed') throw new AppError('PERIOD_CLOSED');
+      const current = (await this.uploads.findUpload(id, tx)) ?? found;
+      if (current.status !== 'previewed') {
+        throw new AppError('CONFLICT', 'Este borrador ya no se puede editar.');
+      }
+      const edited = applyEdits(BankDraftData.parse(current.draft), input.rows);
+      if (Object.keys(edited.fieldErrors).length > 0)
+        throw new AppError('VALIDATION', undefined, { fieldErrors: edited.fieldErrors });
 
-    const counts = countRows(draft, upload.period.month);
-    await this.db.$transaction(async (tx) => {
+      const counts = countRows(edited.draft, current.period.month);
       await this.uploads.saveBankDraft(
         id,
         ['previewed'],
-        {
-          draft,
-          rowsRead: counts.read,
-          rowsRejected: counts.rejected,
-        },
+        { draft: edited.draft, rowsRead: counts.read, rowsRejected: counts.rejected },
         tx,
       );
       await this.audit.log(
@@ -200,8 +206,12 @@ export class ClosingBankPdfService {
         },
         tx,
       );
+      return {
+        upload: { ...current, rowsRead: counts.read, rowsRejected: counts.rejected },
+        draft: edited.draft,
+      };
     });
-    return this.view({ ...upload, rowsRead: counts.read, rowsRejected: counts.rejected }, draft);
+    return this.view(upload, draft);
   }
 
   /** Deja la carga en `failed` (sin movimientos) y avisa que la IA no pudo leer el PDF (AC-022-08). */

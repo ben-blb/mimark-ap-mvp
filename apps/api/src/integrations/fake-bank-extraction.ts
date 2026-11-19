@@ -42,6 +42,12 @@ export function fakeBankExtraction(fileName: string): BankExtraction {
   if (name.includes('secuencia-rota')) {
     return { ...draft, rows: [rows[0]!, { ...rows[1]!, balance: '233000.00' }, rows[2]!] };
   }
+  if (name.includes('todo-otro-mes')) {
+    return {
+      ...draft,
+      rows: rows.map((r) => ({ ...r, date: r.date.replace('2026-10', '2026-11') })),
+    };
+  }
   if (name.includes('otro-mes')) {
     const extra = {
       date: '2026-11-02',

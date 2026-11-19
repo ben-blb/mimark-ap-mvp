@@ -154,3 +154,8 @@ texto y color, tarjeta de saldos con el semáforo de `balanceCheck`, «Confirmar
   fila siguiente; la salida de la IA (ya enmascarada) queda en `SourceUpload.meta.extraction` y las ediciones solo tocan `draft`;
   `SOURCES` incluye `bank_pdf` pero `UploadInput` usa `SHEET_SOURCES`; el borrador no se puede recuperar al recargar la pantalla
   (sin `GET`): seguimiento posible en otra spec.
+- 2026-11-18 · Revisión (`/spec-revisar 022`): editar y confirmar ahora leen el borrador con el periodo bloqueado
+  (`lockPeriod`), así una edición concurrente no puede colarse; el enmascarado usa `(?<!\d)`/`(?!\d)` en lugar de `\b`
+  (cubre `TARJETA5512…`); el fallo del modelo guarda en auditoría solo la clase del error, nunca su mensaje; reenviar un
+  PDF que ya está en vista previa devuelve esa carga (con sus ediciones) sin otra extracción ni cuota. Pruebas nuevas:
+  413 en bank-pdf, todas las filas de otro mes → `failed`, y aceptar la diferencia no sobrevive a una edición.

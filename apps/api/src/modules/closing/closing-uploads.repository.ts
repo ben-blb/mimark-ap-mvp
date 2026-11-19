@@ -95,6 +95,19 @@ export class ClosingUploadsRepository {
     });
   }
 
+  /** Una carga en vista previa con ese mismo archivo: reenviarlo devuelve esa carga en vez de crear otra. */
+  findPreviewed(
+    periodId: string,
+    source: Source,
+    accountId: string | null,
+    sha256: string,
+  ): Promise<UploadRow | null> {
+    return this.db.sourceUpload.findFirst({
+      where: { periodId, source, accountId, sha256, status: 'previewed' },
+      include: { period: true },
+    });
+  }
+
   /** El borrador del estado de cuenta confirmado de esa cuenta en un mes (para comparar saldos, AC-022-05). */
   async findConfirmedBankDraft(
     companyId: string,

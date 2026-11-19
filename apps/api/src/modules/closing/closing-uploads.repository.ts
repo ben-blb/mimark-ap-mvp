@@ -61,6 +61,16 @@ export class ClosingUploadsRepository {
     return tx.reportPeriod.findUniqueOrThrow({ where: { id: periodId } });
   }
 
+  /** Bloquea el periodo y exige que exista y esté abierto (spec 023: clasificar, emparejar y cerrar). */
+  async lockOpenPeriod(periodId: string, tx: Tx): Promise<ReportPeriod> {
+    if (!(await this.findPeriodById(periodId, tx))) {
+      throw new AppError('NOT_FOUND', 'No existe ese periodo.');
+    }
+    const period = await this.lockPeriod(periodId, tx);
+    if (period.status === 'closed') throw new AppError('PERIOD_CLOSED');
+    return period;
+  }
+
   // Cargas
   findUpload(id: string, tx: Tx = this.db): Promise<UploadRow | null> {
     return tx.sourceUpload.findUnique({ where: { id }, include: { period: true } });
@@ -253,5 +263,38 @@ export class ClosingUploadsRepository {
   async markNeedsReview(ids: string[], tx: Tx): Promise<void> {
     if (ids.length === 0) return;
     await tx.ledgerEntry.updateMany({ where: { id: { in: ids } }, data: { needsReview: true } });
+  }
+
+  // Traspasos (spec 023)
+  findTransferGroup(
+    id: string,
+    tx: Tx = this.db,
+  ): Promise<Prisma.TransferGroupGetPayload<{ include: { entries: true } }> | null> {
+    return tx.transferGroup.findUnique({ where: { id }, include: { entries: true } });
+  }
+
+  /** Confirma el traspaso: crea el grupo y marca los dos movimientos, solo si ninguno está ya emparejado. */
+  async pairEntries(ids: [string, string], confirmedBy: string, tx: Tx): Promise<string> {
+    const group = await tx.transferGroup.create({ data: { confirmedBy } });
+    const { count } = await tx.ledgerEntry.updateMany({
+      where: { id: { in: ids }, transferGroupId: null, kind: 'normal' },
+      data: {
+        kind: 'internal_transfer',
+        transferGroupId: group.id,
+        categoryId: null,
+        needsReview: false,
+      },
+    });
+    if (count !== 2) throw new AppError('ALREADY_PAIRED');
+    return group.id;
+  }
+
+  /** Deshace el traspaso: los dos movimientos vuelven a la cola. */
+  async unpairGroup(id: string, tx: Tx): Promise<void> {
+    await tx.ledgerEntry.updateMany({
+      where: { transferGroupId: id },
+      data: { kind: 'normal', transferGroupId: null, needsReview: true },
+    });
+    await tx.transferGroup.delete({ where: { id } });
   }
 }

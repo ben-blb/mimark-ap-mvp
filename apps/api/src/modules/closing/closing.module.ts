@@ -5,6 +5,8 @@ import { ClosingEntriesController } from './closing-entries.controller.js';
 import { ClosingEntriesService } from './closing-entries.service.js';
 import { ClosingReviewController } from './closing-review.controller.js';
 import { ClosingReviewService } from './closing-review.service.js';
+import { ClosingTransfersController } from './closing-transfers.controller.js';
+import { ClosingTransfersService } from './closing-transfers.service.js';
 import { ClosingUploadsController } from './closing-uploads.controller.js';
 import { ClosingUploadsRepository } from './closing-uploads.repository.js';
 import { ClosingUploadsService } from './closing-uploads.service.js';
@@ -21,6 +23,7 @@ import { ClosingService } from './closing.service.js';
     ClosingUploadsController,
     ClosingEntriesController,
     ClosingReviewController,
+    ClosingTransfersController,
   ],
   providers: [
     ClosingService,
@@ -30,6 +33,7 @@ import { ClosingService } from './closing.service.js';
     ClosingConfirmService,
     ClosingEntriesService,
     ClosingReviewService,
+    ClosingTransfersService,
     ClosingUploadsRepository,
     SpreadsheetClient,
     BankExtractionClient,

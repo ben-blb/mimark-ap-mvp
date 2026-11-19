@@ -59,7 +59,8 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   DUPLICATE_UPLOAD: 'Este archivo ya se cargó y confirmó para este mes.',
   PERIOD_CLOSED: 'El periodo está cerrado: ya no admite cargas ni movimientos.',
   ALREADY_PAIRED: 'Ese movimiento ya es parte de un traspaso. Desempárejalo primero.',
-  CLOSE_BLOCKED: 'El periodo no se puede cerrar todavía: revisa los cuadres y los movimientos por revisar.',
+  CLOSE_BLOCKED:
+    'El periodo no se puede cerrar todavía: revisa los cuadres y los movimientos por revisar.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

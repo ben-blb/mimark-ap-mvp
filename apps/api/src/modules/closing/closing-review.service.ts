@@ -13,34 +13,16 @@ import type { LedgerEntryDto } from '@mimark/contracts/closing-uploads';
 import { AppError } from '../../common/app-error.js';
 import type { Ctx } from '../../common/ctx.js';
 import { Db, type Tx } from '../../common/db.js';
-import { fromDbDate } from '../../common/dates.js';
 import { AuditRepository } from '../audit/audit.repository.js';
 import { TRANSFER_OPTIONS } from './cantaloupe.assumptions.js';
-import {
-  categoryForSource,
-  isRuleSource,
-  proposeTransfers,
-  type TransferEntry,
-} from './closing-checks.rules.js';
-import { toPeriodDto } from './closing-review.dto.js';
+import { categoryForSource, isRuleSource, proposeTransfers } from './closing-checks.rules.js';
+import { toPeriodDto, toTransferEntry } from './closing-review.dto.js';
 import { toEntryDto } from './closing-uploads.dto.js';
 import { ClosingUploadsRepository, type EntryWithCategory } from './closing-uploads.repository.js';
 import { ClosingRepository } from './closing.repository.js';
 import { matchRule, normalizeKey, suggestRule } from './closing.rules.js';
 
 const KIOSK_SOURCES = ['parlevel_sales', 'parlevel_waste'];
-
-/** Centavos con signo de un movimiento. */
-const centsOf = (entry: EntryWithCategory) => Math.round(Number(entry.amount) * 100);
-
-export const toTransferEntry = (e: EntryWithCategory): TransferEntry => ({
-  id: e.id,
-  date: fromDbDate(e.date),
-  source: e.source,
-  accountId: e.accountId,
-  amountCents: centsOf(e),
-  rowNumber: e.rowNumber,
-});
 
 /** Clasificación de los movimientos del periodo y la cola «Por revisar» (spec 023). */
 @Injectable()
@@ -60,7 +42,7 @@ export class ClosingReviewService {
   /** AC-023-01: reglas y fuentes sobre lo que no tiene categoría; idempotente y sin pisar lo hecho a mano. */
   classify(periodId: string, ctx: Ctx): Promise<ClassifyResultDto> {
     return this.db.$transaction(async (tx) => {
-      const period = await this.openPeriod(periodId, tx);
+      const period = await this.ledger.lockOpenPeriod(periodId, tx);
       const [rules, categories] = await Promise.all([
         this.closing.listRules(false),
         this.closing.listCategories(),
@@ -238,20 +220,11 @@ export class ClosingReviewService {
   }
 
   // Validaciones compartidas
-  private async openPeriod(periodId: string, tx: Tx) {
-    if (!(await this.ledger.findPeriodById(periodId, tx))) {
-      throw new AppError('NOT_FOUND', 'No existe ese periodo.');
-    }
-    const period = await this.ledger.lockPeriod(periodId, tx);
-    if (period.status === 'closed') throw new AppError('PERIOD_CLOSED');
-    return period;
-  }
-
   /** El movimiento, con su periodo abierto y bloqueado, listo para clasificarse a mano. */
   private async editableEntry(id: string, tx: Tx): Promise<EntryWithCategory> {
     const found = await this.ledger.findEntry(id, tx);
     if (!found) throw new AppError('NOT_FOUND', 'No existe ese movimiento.');
-    await this.openPeriod(found.periodId, tx);
+    await this.ledger.lockOpenPeriod(found.periodId, tx);
     const entry = (await this.ledger.findEntry(id, tx)) ?? found;
     if (entry.kind === 'internal_transfer') throw new AppError('ALREADY_PAIRED');
     if (entry.source === 'cantaloupe') {

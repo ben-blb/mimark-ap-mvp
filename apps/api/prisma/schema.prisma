@@ -269,13 +269,15 @@ enum CategoryKind {
 
 /// Empresa o plaza del cierre mensual (spec 020). Se desactiva, nunca se borra.
 model Company {
-  id        String   @id @default(cuid())
-  name      String
+  id             String   @id @default(cuid())
+  name           String
   /// Nombre normalizado (sin mayúsculas ni acentos): evita duplicados.
-  nameKey   String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  nameKey        String   @unique
+  active         Boolean  @default(true)
+  /// Comisión de Cantaloupe sobre las ventas (spec 023). Supuesto sin validar: se cambia a mano.
+  cantaloupeRate Decimal  @default(0.0340) @db.Decimal(5, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   kiosks   Kiosk[]
   accounts BankAccount[]
@@ -352,6 +354,20 @@ model ClassificationRule {
   @@index([categoryId])
 }
 
+enum EntryKind {
+  normal
+  internal_transfer
+}
+
+/// Dos movimientos de cuentas propias confirmados como un traspaso (spec 023). Solo existen los confirmados.
+model TransferGroup {
+  id          String   @id @default(cuid())
+  confirmedBy String
+  confirmedAt DateTime @default(now())
+
+  entries LedgerEntry[]
+}
+
 enum LedgerSource {
   parlevel_sales
   parlevel_waste
@@ -377,14 +393,17 @@ enum PeriodStatus {
 
 /// Mes de una empresa en el cierre (spec 021). Se crea con la primera carga; `closed` ya no admite cambios.
 model ReportPeriod {
-  id        String       @id @default(cuid())
-  companyId String
-  company   Company      @relation(fields: [companyId], references: [id])
+  id           String       @id @default(cuid())
+  companyId    String
+  company      Company      @relation(fields: [companyId], references: [id])
   /// 'AAAA-MM'.
-  month     String
-  status    PeriodStatus @default(open)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  month        String
+  status       PeriodStatus @default(open)
+  closedBy     String?
+  closedAt     DateTime?
+  reopenReason String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   uploads SourceUpload[]
   entries LedgerEntry[]
@@ -424,28 +443,31 @@ model SourceUpload {
 /// Movimiento del cierre: una fila de un archivo o una captura manual (spec 021). Importe con signo: ingreso +, egreso −.
 /// Las columnas de clasificación y traspaso (`categoryId`, `needsReview`, `transferGroupId`) se llenan en la spec 023.
 model LedgerEntry {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
   periodId        String
-  period          ReportPeriod  @relation(fields: [periodId], references: [id])
-  date            DateTime      @db.Date
+  period          ReportPeriod   @relation(fields: [periodId], references: [id])
+  date            DateTime       @db.Date
   kioskId         String?
-  kiosk           Kiosk?        @relation(fields: [kioskId], references: [id])
+  kiosk           Kiosk?         @relation(fields: [kioskId], references: [id])
   accountId       String?
-  account         BankAccount?  @relation(fields: [accountId], references: [id])
+  account         BankAccount?   @relation(fields: [accountId], references: [id])
   source          LedgerSource
   /// Origen: el archivo y la fila (trazabilidad de la 024). Sin `uploadId` es una captura manual.
   uploadId        String?
-  upload          SourceUpload? @relation(fields: [uploadId], references: [id])
+  upload          SourceUpload?  @relation(fields: [uploadId], references: [id])
   rowNumber       Int?
   concept         String
-  amount          Decimal       @db.Decimal(14, 2)
+  amount          Decimal        @db.Decimal(14, 2)
   categoryId      String?
-  category        Category?     @relation(fields: [categoryId], references: [id])
-  needsReview     Boolean       @default(false)
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  needsReview     Boolean        @default(false)
+  /// `internal_transfer`: parte de un traspaso confirmado entre cuentas propias (spec 023).
+  kind            EntryKind      @default(normal)
   transferGroupId String?
+  transferGroup   TransferGroup? @relation(fields: [transferGroupId], references: [id])
   meta            Json?
   createdBy       String
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime       @default(now())
 
   @@index([periodId, source])
   @@index([kioskId])

@@ -1,7 +1,7 @@
 ---
 id: '023'
 titulo: Clasificación, conciliación y cuadres del cierre
-estado: borrador # borrador | lista | en-progreso | hecha
+estado: en-progreso # borrador | lista | en-progreso | hecha
 depende_de: ['020', '021']
 requisitos: Mini SRS cierre mensual · RF-02, RF-09, RF-11, RF-12
 ---
@@ -28,10 +28,19 @@ pagos del sistema (nunca se ejecutan); IA para clasificar (solo reglas determini
 ### Clasificación
 
 - **AC-023-01** · `POST /api/closing/periods/:id/classify` aplica `matchRule` a todo movimiento sin categoría del
-  periodo. Los que coinciden quedan con `categoryId`; los demás `needsReview=true`. Es idempotente: correrlo dos
-  veces no cambia nada y no pisa categorías puestas a mano.
+  periodo, de cualquier fuente (`matchRule` ya elige una sola regla: mayor prioridad y, a igual prioridad, patrón
+  más largo). Los que coinciden quedan con `categoryId`; los demás `needsReview=true`. Es idempotente: correrlo dos
+  veces no cambia nada y no pisa categorías puestas a mano ni movimientos ya confirmados como traspaso. Las
+  ventas de Parlevel/Cantaloupe, mermas y nómina no traen un concepto útil: se clasifican por **fuente** (no por
+  reglas): `parlevel_sales` → `VENTAS`, `parlevel_waste` según `meta.kind` → `MERMAS` o `ROBOS`, `payroll` →
+  `NOMINAS`; `cantaloupe` no lleva categoría ni entra a la cola (es solo insumo de la conciliación y de ninguna
+  forma ingreso: la venta del reporte sale de Parlevel). Clasificar por fuente no cambia `needsReview` (un kiosko
+  desconocido sigue en la cola hasta que una persona lo confirma con `PATCH`); una coincidencia de regla en
+  `cash`/banco lo apaga y la falta de coincidencia lo enciende.
 - **AC-023-02** · `GET /api/closing/review?periodId` lista los movimientos con `needsReview=true`, con su concepto
-  (como texto) y la sugerencia de regla más cercana si existe.
+  (como texto) y, cuando existe, la categoría de la regla que más se le parece (coincidencia parcial: el patrón
+  comparte al menos una palabra con el concepto). También trae los movimientos marcados por 021 con
+  `UNKNOWN_KIOSK` y los traspasos propuestos (AC-023-06).
 - **AC-023-03** · `PATCH /api/closing/entries/:id` con `categoryId` clasifica a mano (`reports:write`), quita
   `needsReview` y escribe `entry.classified` con la categoría anterior y la nueva.
 - **AC-023-04** · `POST /api/closing/entries/:id/classify-and-rule` con `{ categoryId, pattern }` clasifica el
@@ -41,33 +50,46 @@ pagos del sistema (nunca se ejecutan); IA para clasificar (solo reglas determini
 
 ### Traspasos
 
-- **AC-023-06** · Dos movimientos de cuentas distintas de la misma empresa, de igual monto absoluto, signos
-  opuestos y fechas con diferencia de hasta 2 días hábiles, se proponen como traspaso (`transferGroupId`) y **no
-  se aceptan solos**: quedan en la cola con «Posible traspaso» para confirmarlos.
-- **AC-023-07** · Confirmar un traspaso marca ambos movimientos `internal_transfer`: no entran a ingresos ni a
-  egresos de 024 y su suma neta es 0.00. Desemparejarlo los devuelve a la cola.
+- **AC-023-06** · Dos movimientos **de banco** (`bank_csv`/`bank_pdf`) de cuentas distintas del mismo periodo, de
+  igual monto absoluto, signos opuestos y fechas con diferencia de hasta 2 días hábiles (lunes a viernes; no hay
+  calendario de festivos) se **proponen** como traspaso (solo entre movimientos que siguen sin categoría) y **no se aceptan solos**: la propuesta se calcula al
+  consultar la cola (no se guarda) y se muestra como «Posible traspaso». Si un movimiento tiene varios
+  candidatos, `proposeTransfers` elige de forma determinista (fecha más cercana, luego `rowNumber`) y cada
+  movimiento aparece en una sola propuesta.
+- **AC-023-07** · `POST /api/closing/transfers` con `{ entryIds: [a, b] }` valida la misma regla que la
+  propuesta (400 `VALIDATION` si no cuadra), crea el `TransferGroup` y marca ambos movimientos `kind=internal_transfer`, con
+  `needsReview=false` y sin categoría: no entran a ingresos ni a egresos de 024 y su suma neta es 0.00.
+  `DELETE /api/closing/transfers/:id` (id del grupo) los devuelve a `normal` y a la cola.
 - **AC-023-08** · Un movimiento no puede estar en dos traspasos (409 `ALREADY_PAIRED`).
 
 ### Conciliación Cantaloupe vs banco (RF-12)
 
-- **AC-023-09** · Por día, `cantaloupeReconciliation` calcula `depósito esperado = transacciones − comisión − IVA
-de la comisión` (comisión = tasa del periodo × transacciones; IVA 16 % sobre la comisión) en centavos. Ejemplo
-  con tasa 3.4 %: transacciones 8,336.50 → comisión 283.44, IVA 45.35, esperado 8,007.71.
-- **AC-023-10** · Compara el esperado con el depósito en banco de ese día (movimientos clasificados como cobranza
-  Cantaloupe) y devuelve `difference`. Cuando varios días se depositan juntos (fin de semana), concilia por grupo
-  de días consecutivos y lo indica.
-- **AC-023-11** · Un día con `|difference| ≤ 0.50` es `ok`; mayor es `warning`; depósito ausente es `missing`; un
-  depósito sin transacciones es `orphan`. La tolerancia es una constante del módulo, no configuración.
+- **AC-023-09** · Por día, `cantaloupeReconciliation` calcula `depósito esperado = ventas − comisión − IVA de la
+comisión`, donde «ventas» es la suma de `amount` de los movimientos `cantaloupe` de ese día (todos los
+  kioskos; `meta.transactions` es solo un conteo y no se usa), comisión = `Company.cantaloupeRate` × ventas e
+  IVA = 16 % de la comisión, **cada uno redondeado a centavos (mitad hacia arriba) antes de restar**. Ejemplo con
+  tasa 3.4 %: ventas 8,336.50 → comisión 283.44, IVA 45.35, esperado 8,007.71. (`meta.discountRate` de la fila
+  se ignora en el cálculo.)
+- **AC-023-10** · Compara el esperado con el depósito en banco de ese día (movimientos con la categoría
+  `COBRANZA_CANTALOUPE`, que esta spec agrega al catálogo) y devuelve `difference = depósito − esperado`. Cuando
+  el banco no deposita sábado ni domingo, las ventas y depósitos de sábado y domingo se concilian junto con los
+  del lunes siguiente (un solo renglón con `groupedDays`); un día entre semana sin depósito es `missing`, no se
+  mezcla con otro. Límite conocido: el último fin de semana del mes se concilia con un lunes del mes siguiente.
+- **AC-023-11** · Un día (o grupo) con `|difference| ≤ 0.50` es `ok`; mayor es `warning`; con ventas y sin
+  depósito es `missing`; un depósito sin ventas es `orphan`. La tolerancia vive en `cantaloupe.assumptions.ts` (ver Diseño).
 
 ### Cuadres y cierre
 
 - **AC-023-12** · `GET /api/closing/periods/:id/checks` devuelve semáforos (`ok | warning | error`) para:
-  (a) ventas de Parlevel = ingresos del reporte; (b) saldo inicial + depósitos − egresos − traspasos = saldo final
-  de cada cuenta; (c) movimiento neto de bancos calculado por dos caminos; (d) nómina capturada = nómina en
-  egresos; (e) **ningún egreso sin categoría**; (f) ningún movimiento contado dos veces (mismo origen y fila).
+  (a) ventas de Parlevel = ingresos del reporte (categorías `VENTAS` y `VENTA_DIRECTA`); (b) por cuenta de banco,
+  saldo inicial + suma de movimientos = saldo final, con los saldos del estado de cuenta confirmado (PDF, spec
+  022; sin PDF el cuadre queda `warning` «sin saldos», nunca `ok`); (c) movimiento neto de bancos por dos
+  caminos: suma de todos los movimientos de banco = suma por categoría + traspasos (que suman 0); (d) nómina
+  capturada (suma de `payroll`) = suma de movimientos con categoría `NOMINAS`; (e) **ningún egreso sin
+  categoría**; (f) ningún movimiento contado dos veces (mismo `uploadId` y `rowNumber`).
 - **AC-023-13** · Cada cuadre trae `valueA`, `valueB`, `difference` y un texto en lenguaje llano; los que no
   cuadran enlazan a los movimientos involucrados.
-- **AC-023-14** · `POST /api/closing/periods/:id/close` (solo `admin`, `reports:write`) exige cero errores y cero
+- **AC-023-14** · `POST /api/closing/periods/:id/close` (`reports:write`, que solo tiene `admin`) exige cero errores y cero
   movimientos por revisar; si no, 409 `CLOSE_BLOCKED` con la lista. Al cerrar escribe `period.closed`.
 - **AC-023-15** · Reabrir (`/reopen`) exige motivo y queda en auditoría; mientras está cerrado, ni 021 ni esta
   spec escriben en él.
@@ -90,30 +112,41 @@ de la comisión` (comisión = tasa del periodo × transacciones; IVA 16 % sobre 
 
 Migración `023-clasificacion-y-cuadres`: `LedgerEntry` usa `categoryId`, `needsReview`, `transferGroupId` (ya
 creados en 021) y gana `kind` (`normal | internal_transfer`). Tabla `TransferGroup` (`id`, `confirmedBy`,
-`confirmedAt`). `ReportPeriod` gana `closedBy`, `closedAt`, `reopenReason`. Constante `CANTALOUPE_RATE` por periodo
-(`Company.cantaloupeRate` Decimal(5,4), por omisión 0.0340).
+`confirmedAt`); solo existen grupos confirmados. `ReportPeriod` gana `closedBy`, `closedAt`, `reopenReason`
+(`PeriodStatus` ya es `open | closed`). `Company.cantaloupeRate` Decimal(5,4), por omisión 0.0340: la tasa es de
+la empresa, no del periodo. La semilla y la migración agregan la categoría `COBRANZA_CANTALOUPE`.
+
+**Supuestos de la conciliación, en un solo archivo.** `apps/api/src/modules/closing/cantaloupe.assumptions.ts`
+exporta las únicas constantes sin validar: `CANTALOUPE_VAT_RATE = 0.16` (IVA de la comisión),
+`CANTALOUPE_TOLERANCE_CENTS = 50` y `BANK_BUSINESS_DAYS` (días en que el banco deposita; lunes a viernes). La tasa
+por omisión de 0.0340 vive en la migración (`Company.cantaloupeRate`). Las reglas reciben estos valores como
+parámetros (no los importan), de modo que cambiarlos es editar ese archivo y sus tablas de prueba, sin tocar la
+lógica.
 
 ### Contratos
 
-`closing.ts`: `ReviewItemDto`, `TransferProposalDto`, `CantaloupeDayDto`, `CheckDto`, `CloseResultDto`; errores
-`PERIOD_CLOSED`, `ALREADY_PAIRED`, `CLOSE_BLOCKED`.
+`closing-review.ts`: `PeriodDto`, `ReviewItemDto`, `TransferProposalDto`, `CantaloupeDayDto`, `CheckDto`, `CloseResultDto`; errores
+nuevos `ALREADY_PAIRED` y `CLOSE_BLOCKED` (`PERIOD_CLOSED` ya existe desde 020/021: clasificar y emparejar lo
+validan igual, dentro de la transacción con `lockPeriod`).
 
 ### API
 
 | Método y ruta                                      | Permiso                 | Errores       |
 | -------------------------------------------------- | ----------------------- | ------------- |
 | `POST /api/closing/periods/:id/classify`           | `reports:write`         | 404, 409      |
+| `GET /api/closing/periods?companyId&month`         | `reports:read`          | 403           |
 | `GET /api/closing/review`                          | `reports:read`          | 403           |
-| `PATCH /api/closing/entries/:id`                   | `reports:write`         | 404, 409, 422 |
-| `POST /api/closing/entries/:id/classify-and-rule`  | `reports:write`         | 404, 409, 422 |
+| `PATCH /api/closing/entries/:id`                   | `reports:write`         | 404, 409, 400 |
+| `POST /api/closing/entries/:id/classify-and-rule`  | `reports:write`         | 404, 409, 400 |
 | `POST /api/closing/transfers` · `DELETE …/:id`     | `reports:write`         | 404, 409      |
 | `GET /api/closing/periods/:id/{checks,cantaloupe}` | `reports:read`          | 404           |
-| `POST /api/closing/periods/:id/{close,reopen}`     | `reports:write` (admin) | 404, 409      |
+| `POST /api/closing/periods/:id/{close,reopen}`     | `reports:write` (admin) | 404, 409, 400 |
 
 ### Reglas
 
-`closing-checks.rules.ts` y `cantaloupe.rules.ts` (puras): `proposeTransfers(entries)`, `cantaloupeExpected(tx,
-rate)`, `reconcileDays(cantaloupeDays, bankEntries)`, `runChecks(period)` y `canClose(checks, pending)`.
+`closing-checks.rules.ts` y `cantaloupe.rules.ts` (puras): `proposeTransfers(entries)`, `cantaloupeExpected(sales,
+rate)`, `reconcileDays(cantaloupeDays, bankEntries)`, `runChecks(period)` y `canClose(checks, pending)` y
+`categoryForSource(entry)` (clasificación por fuente). Los días hábiles salen de `common/dates.ts`.
 
 ### UI
 
@@ -127,7 +160,7 @@ color).
 
 ## Tareas
 
-- [ ] 1. Contratos, errores y migración `023-clasificacion-y-cuadres`.
+- [x] 1. Contratos, errores y migración `023-clasificacion-y-cuadres`.
 - [ ] 2. `cantaloupe.rules.ts` con la tabla de ejemplos (AC-023-09 a 11).
 - [ ] 3. `proposeTransfers` y `runChecks` con tablas (AC-023-06, 12, 13).
 - [ ] 4. Clasificación y cola de revisión: service, controller, integración (AC-023-01 a 05).
@@ -140,10 +173,18 @@ color).
 
 - **Solo reglas, nada de IA para clasificar:** la clasificación decide un renglón del reporte; ADR-14 pide que una
   persona decida lo que no es regla (cola «Por revisar»).
-- **Comisión Cantaloupe 3.4 %, IVA 16 %, tolerancia de 0.50:** supuestos tomados del Excel de ejemplo. **A validar
-  con la contadora**, igual que la fecha de depósito (fines de semana) y si Nayax (2.9 %) entra aquí o en su
-  propia conciliación.
+- **Comisión Cantaloupe 3.4 %, IVA 16 %, tolerancia de 0.50:** supuestos tomados del Excel de ejemplo. **Se
+  quedan así por ahora** (decisión del dueño, 2026-11-18), aislados en `cantaloupe.assumptions.ts` para cambiarlos
+  a mano. Siguen pendientes de validar con la contadora (`docs/pendientes-de-verificar.md`), igual que la fecha de
+  depósito (fines de semana) y si Nayax (2.9 %) entra aquí o en su propia conciliación.
 - **Traspasos propuestos, no automáticos:** un falso emparejado esconde ingresos o egresos; por eso se confirman.
+- **Traspasos sin guardar la propuesta:** se recalcula al abrir la cola; solo se persiste lo confirmado.
+- **Cobranza vs ventas (aprobado como supuesto; 024 lo respeta):** las ventas del reporte salen de Parlevel; el
+  export de Cantaloupe y el depósito en banco (`COBRANZA_CANTALOUPE`) solo sirven para conciliar y **no son
+  ingreso** del EDO RES (024 los excluye junto con los traspasos). Si la contadora cuenta las ventas desde otra
+  fuente, cambia 024 y `categoryForSource`, no la conciliación.
+- **Días hábiles = lunes a viernes, sin festivos:** un festivo bancario puede dar un `warning` falso en la
+  conciliación; se acepta en el MVP.
 - **«Los intereses duplicados» del SRS** se cubren con el cuadre (f) y la regla de que un movimiento solo cuenta
   una vez por su origen.
 

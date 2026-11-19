@@ -27,6 +27,8 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   SOURCE_WRONG_MONTH: 422,
   DUPLICATE_UPLOAD: 409,
   PERIOD_CLOSED: 409,
+  ALREADY_PAIRED: 409,
+  CLOSE_BLOCKED: 409,
   INTERNAL: 500,
 };
 
@@ -56,6 +58,8 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   SOURCE_WRONG_MONTH: 'Las fechas del archivo no son del mes elegido.',
   DUPLICATE_UPLOAD: 'Este archivo ya se cargó y confirmó para este mes.',
   PERIOD_CLOSED: 'El periodo está cerrado: ya no admite cargas ni movimientos.',
+  ALREADY_PAIRED: 'Ese movimiento ya es parte de un traspaso. Desempárejalo primero.',
+  CLOSE_BLOCKED: 'El periodo no se puede cerrar todavía: revisa los cuadres y los movimientos por revisar.',
   INTERNAL: 'Ocurrió un error inesperado. Intenta de nuevo; si persiste, comparte la referencia.',
 };
 

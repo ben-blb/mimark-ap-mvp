@@ -29,6 +29,8 @@ export const toEntryDto = (e: EntryRow): LedgerEntryDto => ({
   rowNumber: e.rowNumber,
   concept: e.concept,
   amount: e.amount.toFixed(2),
+  categoryId: e.categoryId,
+  kind: e.kind,
   needsReview: e.needsReview,
   meta: (e.meta as Record<string, unknown> | null) ?? null,
 });

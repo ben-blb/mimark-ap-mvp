@@ -15,6 +15,8 @@ export const CLOSING_CATEGORIES: readonly {
     ['VENTAS', 'Ventas', 'Ventas', 'income'],
     ['VENTA_DIRECTA', 'Venta directa', 'Venta directa', 'income'],
     ['OTROS_INGRESOS', 'Otros ingresos', 'Otros ingresos', 'income'],
+    // Depósito de Cantaloupe en el banco: cobra ventas ya contadas, no es ingreso (spec 023). La 024 la excluye.
+    ['COBRANZA_CANTALOUPE', 'Cobranza Cantaloupe', 'Otros ingresos', 'income'],
     ['ROBOS', 'Robos', 'Robos', 'cost'],
     ['MERMAS', 'Mermas', 'Mermas', 'cost'],
     ['COSTO_VENDIDO', 'Costo de lo vendido', 'Costo de lo vendido', 'cost'],

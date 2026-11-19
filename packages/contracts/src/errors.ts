@@ -29,6 +29,8 @@ export const ERROR_CODES = [
   'SOURCE_WRONG_MONTH',
   'DUPLICATE_UPLOAD',
   'PERIOD_CLOSED',
+  'ALREADY_PAIRED',
+  'CLOSE_BLOCKED',
   'INTERNAL',
 ] as const;
 

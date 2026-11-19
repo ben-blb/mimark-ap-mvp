@@ -48,3 +48,7 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       a `lista`, resolver con la contadora y el jefe: catálogo de categorías y renglón de EDO RES, ID de kiosko por
       fuente, prorrateo de gastos generales, si el banco da CSV/Excel, comisión Cantaloupe 3.4 % / IVA / tolerancia,
       y si el EDO RES queda idéntico o se separa Ventas. Pedir un mes completo de cada export (sintetizarlo para el repo).
+
+- [ ] 2026-11-18 · 023 · Validar con la contadora los supuestos de la conciliación Cantaloupe: comisión 3.4 %, IVA 16 %,
+      tolerancia 0.50, depósito en fin de semana, y si Nayax (2.9 %) tiene su propia conciliación. Se cambian en
+      `apps/api/src/modules/closing/cantaloupe.assumptions.ts` (y la tasa en `Company.cantaloupeRate`).

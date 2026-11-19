@@ -116,6 +116,9 @@ export const LedgerEntryDto = z.object({
   rowNumber: z.number().int().nullable(),
   concept: z.string(),
   amount: SignedMoney,
+  /** Spec 023: categoría puesta por regla o a mano, y si es parte de un traspaso confirmado. */
+  categoryId: Id.nullable(),
+  kind: z.enum(['normal', 'internal_transfer']),
   needsReview: z.boolean(),
   meta: z.record(z.string(), z.unknown()).nullable(),
 });

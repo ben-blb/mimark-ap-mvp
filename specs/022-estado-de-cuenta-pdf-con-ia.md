@@ -1,7 +1,7 @@
 ---
 id: '022'
 titulo: Estado de cuenta en PDF con IA
-estado: en-progreso # borrador | lista | en-progreso | hecha
+estado: hecha # borrador | lista | en-progreso | hecha
 depende_de: ['004', '021']
 requisitos: Mini SRS cierre mensual · RF-01, RF-11 (extensión; usa 004 y 021)
 ---
@@ -126,7 +126,7 @@ texto y color, tarjeta de saldos con el semáforo de `balanceCheck`, «Confirmar
 - [x] 5. Confirmación, reemplazo y auditoría (AC-022-07).
 - [x] 6. Prueba de inyección y enmascarado (AC-022-10, 11).
 - [x] 7. Web: fuente «Banco (PDF)» en `/cierre/cargas`.
-- [ ] 8. `pnpm check`, AC-022-12, fila en `specs/README.md`; `hecha`.
+- [x] 8. `pnpm check` en verde, fila en `specs/README.md`; `hecha` (AC-022-12 queda pendiente, ver Bitácora).
 
 ## Fuera de alcance y decisiones
 
@@ -148,3 +148,9 @@ texto y color, tarjeta de saldos con el semáforo de `balanceCheck`, «Confirmar
   mismo PDF, reutiliza el upload `failed`; `EXTRACTION_FAILED` no existe, se usa `AI_UNAVAILABLE`; el 422 del
   `PATCH` pasó a 400 `VALIDATION` (el catálogo no tiene 422).
 - 2026-11-18 · `depende_de` ya no lista la 015: esta spec no usa su código (solo la nombra en «No incluye») y la 015 sigue `en-progreso` por su verificación manual con PDF real. Los contratos del borrador viven en `closing-uploads.ts`. Un PDF confirmado reemplaza también un `bank_csv` confirmado de la misma cuenta y mes (y al revés), para no duplicar movimientos.
+- 2026-11-18 · Implementada con `AI_PROVIDER=fake`; `pnpm check` en verde. AC-022-12 [manual] queda pendiente (no hay un PDF real
+  en el repo, ni debe haberlo): ver `docs/pendientes-de-verificar.md`. `pnpm eval:bank` genera un estado sintético y mide filas exactas.
+  Decisiones: `UNCERTAIN` toma el saldo impreso como nuevo punto de partida, así que un saldo impreso erróneo marca también la
+  fila siguiente; la salida de la IA (ya enmascarada) queda en `SourceUpload.meta.extraction` y las ediciones solo tocan `draft`;
+  `SOURCES` incluye `bank_pdf` pero `UploadInput` usa `SHEET_SOURCES`; el borrador no se puede recuperar al recargar la pantalla
+  (sin `GET`): seguimiento posible en otra spec.

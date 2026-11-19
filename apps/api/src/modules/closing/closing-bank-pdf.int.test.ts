@@ -9,18 +9,18 @@ import { StorageClient } from '../../integrations/storage.client.js';
 class ControlledExtractor {
   failNext = 0;
   calls = 0;
-  async extract(input: { bytes: Buffer; fileName: string }) {
+  extract(input: { bytes: Buffer; fileName: string }) {
     this.calls += 1;
     if (this.failNext > 0) {
       this.failNext -= 1;
-      throw new Error('Falla simulada');
+      return Promise.reject(new Error('Falla simulada'));
     }
-    return {
+    return Promise.resolve({
       data: fakeBankExtraction(input.fileName),
       model: 'fake',
       promptVersion: 'fake',
       ms: 1,
-    };
+    });
   }
 }
 

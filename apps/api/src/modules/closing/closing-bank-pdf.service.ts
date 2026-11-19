@@ -184,7 +184,7 @@ export class ClosingBankPdfService {
         id,
         ['previewed'],
         {
-          draft: draft as unknown as Prisma.InputJsonValue,
+          draft,
           rowsRead: counts.read,
           rowsRejected: counts.rejected,
         },

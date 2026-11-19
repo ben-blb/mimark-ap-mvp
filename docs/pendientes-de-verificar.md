@@ -28,6 +28,12 @@ línea cada vez que dejan algo sin verificar; formato: `- [ ] AAAA-MM-DD · spec
       (con Device ID) y los archivos de caja y nómina; o decidir que la 021 acepte los acumulados mensuales (Parlevel
       sin Date, Cantaloupe en tabla dinámica). Detalle en la Bitácora de la 021. Después: cargarlos en `/cierre/cargas`,
       comparar totales con el Excel y medir si 45 kioskos caben en 4 MB. Al terminar: borrar esta línea y pasar a `hecha`.
+- [ ] 2026-11-18 · 022 · AC-022-12 [manual]. Con un estado de cuenta real de una cuenta chica (`AI_PROVIDER` real, no
+      `fake`): subir el PDF en `/cierre/cargas` → «Banco (PDF)», comprobar `balanceCheck`, comparar las filas con el
+      Excel de la contadora y anotar % de filas exactas y casos fallidos; medir el tiempo y si un mes grande cabe en 300 s
+      (si no, partir por páginas). Antes, `pnpm eval:bank --url <URL>` con el PDF sintético. Al terminar: borrar esta
+      línea y anotarlo en la Bitácora de la spec 022. Límite conocido: el borrador solo vive en la pantalla; si se
+      recarga, hay que volver a subir el PDF (no hay `GET` del borrador).
 
 ## Decisiones o texto por revisar
 

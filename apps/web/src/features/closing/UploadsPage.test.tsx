@@ -106,7 +106,7 @@ function stubApi() {
         });
       }
       if (method === 'POST' && url === '/api/closing/uploads/u2/confirm') {
-        confirmBody = JSON.parse(String(init?.body));
+        confirmBody = JSON.parse(init?.body as string);
         uploads = [{ ...pdfUpload, status: 'confirmed', entriesCount: 1 }];
         return json(uploads[0]);
       }

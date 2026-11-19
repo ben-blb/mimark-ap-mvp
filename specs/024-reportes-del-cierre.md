@@ -142,7 +142,7 @@ como `features/dashboard` (sin librería de gráficas nueva).
 ## Tareas
 
 - [x] 1. Contratos de reportes con pruebas.
-- [ ] 2. `reports.rules.ts` con tablas de ejemplos sintéticos: EDO RES, kioskos, proveedores (AC-024-01 a 05, 09,
+- [x] 2. `reports.rules.ts` con tablas de ejemplos sintéticos: EDO RES, kioskos, proveedores (AC-024-01 a 05, 09,
       11, 12).
 - [ ] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
 - [ ] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).

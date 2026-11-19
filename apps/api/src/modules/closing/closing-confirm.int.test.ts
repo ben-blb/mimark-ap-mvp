@@ -253,7 +253,7 @@ describe('confirmación y movimientos (spec 021)', () => {
     expect(await t.db.ledgerEntry.count()).toBe(0);
   });
 
-  it('AC-021-13 lista paginada con filtros por fuente y kiosko; gerencia lee y otros roles no', async () => {
+  it('AC-021-13 lista paginada con filtros por fuente y kiosko; admin lee; gerencia (spec 024) y otros roles no', async () => {
     await confirm(await preview(salesRows(['A-1', 'A-2', 'A-1']))).expect(200);
     await admin
       .post('/api/closing/entries')
@@ -273,7 +273,7 @@ describe('confirmación y movimientos (spec 021)', () => {
     );
 
     const manager = await t.agent('Gerente', 'manager');
-    await manager.get(base).expect(200);
+    await manager.get(base).expect(403);
     const payables = await t.agent('CxP', 'payables');
     await payables.get(base).expect(403);
     await t.http().get(base).expect(401);

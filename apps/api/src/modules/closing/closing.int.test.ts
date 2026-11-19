@@ -24,7 +24,7 @@ describe('base del cierre (spec 020)', () => {
   const seedCategories = () => t.db.category.createMany({ data: [...CLOSING_CATEGORIES] });
   const firstCategory = () => t.db.category.findFirstOrThrow({ where: { code: 'SEGURIDAD' } });
 
-  it('AC-020-02 manager lee pero no escribe (403 y nada se guarda); sin sesión, 401', async () => {
+  it('AC-020-02 manager ya no accede al catálogo (spec 024): ni lee ni escribe, 403 y nada se guarda; sin sesión, 401', async () => {
     const company = await newCompany();
     const manager = await t.agent('Gerente', 'manager');
     const eventsBefore = await t.db.auditEvent.count();
@@ -48,9 +48,9 @@ describe('base del cierre (spec 020)', () => {
     expect(await t.db.auditEvent.count()).toBe(eventsBefore);
 
     for (const path of ['companies', 'kiosks', 'accounts', 'categories', 'rules']) {
-      await manager.get(`/api/closing/${path}`).expect(200);
+      await manager.get(`/api/closing/${path}`).expect(403);
     }
-    await manager.post('/api/closing/rules/test').send({ concept: 'ADT' }).expect(200);
+    await manager.post('/api/closing/rules/test').send({ concept: 'ADT' }).expect(403);
     await t.http().get('/api/closing/companies').expect(401);
     await t.http().post('/api/closing/companies').send({ name: 'X' }).expect(401);
   });

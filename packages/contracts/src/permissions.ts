@@ -49,7 +49,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'payables:pay',
     'dashboard:read',
     'assistant:use',
-    'reports:read',
+    // Spec 024: gerencia ve solo los reportes; el cierre (cargas, revisión, conciliación) es de admin.
+    'reports:view',
   ],
   admin: PERMISSIONS,
 };

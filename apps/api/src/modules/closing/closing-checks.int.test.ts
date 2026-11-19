@@ -264,7 +264,7 @@ describe('conciliación, cuadres y cierre (spec 023)', () => {
       .expect(409);
   });
 
-  it('AC-023-16 manager lee checks, cola, conciliación y periodos, pero no clasifica, empareja, cierra ni reabre', async () => {
+  it('AC-023-16 manager (spec 024) no lee checks, cola, conciliación ni periodos, y tampoco clasifica, empareja, cierra ni reabre', async () => {
     await cleanMonth();
     const e = await entry({ amount: '-1.00', needsReview: true });
     const manager = await t.agent('Gerente', 'manager');
@@ -275,7 +275,7 @@ describe('conciliación, cuadres y cierre (spec 023)', () => {
       `/api/closing/review?periodId=${periodId}`,
       `/api/closing/periods?companyId=${companyId}&month=2026-09`,
     ]) {
-      await manager.get(url).expect(200);
+      await manager.get(url).expect(403);
     }
     const attempts = await Promise.all([
       manager.post(`/api/closing/periods/${periodId}/classify`),

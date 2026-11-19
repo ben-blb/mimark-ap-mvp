@@ -238,6 +238,52 @@ describe('reportes del cierre (spec 024)', () => {
     expect(body.amount).toBe('7.50');
   });
 
+  it('AC-024-15 manager y admin leen y exportan; purchasing, warehouse y payables reciben 403', async () => {
+    const q = `companyId=${companyId}&month=2026-09`;
+    const urls = [
+      `/api/reports/edo-res?${q}`,
+      `/api/reports/edo-res/lines/Rentas/entries?${q}`,
+      `/api/reports/kiosks?${q}`,
+      `/api/reports/suppliers?${q}`,
+      `/api/reports/edo-res/export?${q}`,
+    ];
+    for (const role of ['manager', 'admin'] as const) {
+      const agent = await t.agent(`Persona ${role}`, role);
+      for (const url of urls) await agent.get(url).expect(200);
+    }
+    const denied = await Promise.all(
+      (['purchasing', 'warehouse', 'payables'] as const).map(async (role) => ({
+        role,
+        agent: await t.agent(`Persona ${role}`, role),
+      })),
+    );
+    const eventsBefore = await t.db.auditEvent.count();
+    for (const { role, agent } of denied) {
+      for (const url of urls) {
+        const res = await agent.get(url);
+        expect(res.status, `${role} ${url}`).toBe(403);
+      }
+    }
+    expect(await t.db.auditEvent.count()).toBe(eventsBefore);
+    await t.http().get(`/api/reports/edo-res?${q}`).expect(401);
+  });
+
+  it('AC-024-16 manager lee los reportes pero no el cierre: cargas, revisión, conciliación y catálogo dan 403', async () => {
+    const manager = await t.agent('Gerente', 'manager');
+    const q = `companyId=${companyId}&month=2026-09`;
+    await manager.get(`/api/reports/edo-res?${q}`).expect(200);
+    for (const url of [
+      `/api/closing/uploads?${q}`,
+      `/api/closing/review?periodId=${periodId}`,
+      `/api/closing/periods/${periodId}/checks`,
+      `/api/closing/companies`,
+      `/api/closing/entries?${q}`,
+    ]) {
+      await manager.get(url).expect(403);
+    }
+    await manager.post('/api/closing/uploads').expect(403);
+  });
+
   describe('kioskos', () => {
     const kiosks = () =>
       admin.get(`/api/reports/kiosks?companyId=${companyId}&month=2026-09`).expect(200);

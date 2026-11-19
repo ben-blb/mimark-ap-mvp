@@ -110,13 +110,13 @@ Sin tablas nuevas: `reports` es un módulo de **solo lectura** (patrón `dashboa
 
 ### API
 
-| Método y ruta                                  | Permiso        | Salida                | Errores  |
-| ---------------------------------------------- | -------------- | --------------------- | -------- |
-| `GET /api/reports/edo-res`                     | `reports:view` | `EdoResDto`           | 403, 422 |
-| `GET /api/reports/edo-res/lines/:line/entries` | `reports:view` | lista paginada        | 403, 404 |
-| `GET /api/reports/kiosks`                      | `reports:view` | `KioskReportDto`      | 403, 422 |
-| `GET /api/reports/suppliers`                   | `reports:view` | `SupplierReportDto`   | 403, 422 |
-| `GET /api/reports/edo-res/export`              | `reports:view` | `.xlsx`               | 403, 422 |
+| Método y ruta                                  | Permiso        | Salida              | Errores  |
+| ---------------------------------------------- | -------------- | ------------------- | -------- |
+| `GET /api/reports/edo-res`                     | `reports:view` | `EdoResDto`         | 403, 422 |
+| `GET /api/reports/edo-res/lines/:line/entries` | `reports:view` | lista paginada      | 403, 404 |
+| `GET /api/reports/kiosks`                      | `reports:view` | `KioskReportDto`    | 403, 422 |
+| `GET /api/reports/suppliers`                   | `reports:view` | `SupplierReportDto` | 403, 422 |
+| `GET /api/reports/edo-res/export`              | `reports:view` | `.xlsx`             | 403, 422 |
 
 ### Permisos (aclaración 2026-11-18)
 
@@ -146,8 +146,8 @@ como `features/dashboard` (sin librería de gráficas nueva).
       11, 12).
 - [x] 3. Repositorio de solo lectura, service y controller; integración (AC-024-01 a 13).
 - [x] 4. Exportación `.xlsx` con inyección controlada y auditoría (AC-024-14).
-- [ ] 5. Permiso `reports:view`, ajuste de `manager`, ruta de descarga de origen y menú (AC-024-07, 15, 16).
-- [ ] 6. Web: EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
+- [x] 5. Permiso `reports:view`, ajuste de `manager` y ruta de descarga de origen (AC-024-07, 15, 16 en API).
+- [ ] 6. Web: menú «Reportes» y enlace desde el Tablero (AC-024-16), EDO RES con drill-down, Kioskos y Proveedores (AC-024-17 a 19).
 - [ ] 7. `pnpm check`, AC-024-20, fila en `specs/README.md`; `hecha`.
 
 ## Fuera de alcance y decisiones

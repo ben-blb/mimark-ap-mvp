@@ -95,7 +95,8 @@ comisión`, donde «ventas» es la suma de `amount` de los movimientos `cantalou
 - **AC-023-15** · Reabrir (`/reopen`) exige motivo y queda en auditoría; mientras está cerrado, ni 021 ni esta
   spec escriben en él.
 - **AC-023-16** · `manager` puede leer `checks`, `review` y la conciliación (200) pero no clasificar, emparejar,
-  cerrar ni reabrir (403).
+  cerrar ni reabrir (403). _Modificado por la 024 (2026-11-19): `manager` deja de tener `reports:read`; recibe 403
+  también al leer (ve solo los reportes, con `reports:view`)._
 
 ### Web
 

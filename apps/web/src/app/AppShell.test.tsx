@@ -169,10 +169,7 @@ describe('AppShell', () => {
     ['warehouse', ['Recepciones']],
     ['purchasing', ['Mi trabajo', 'Órdenes de compra', 'Proveedores', 'Asistente']],
     ['payables', SECTIONS],
-    [
-      'manager',
-      ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Cierre', 'Asistente'],
-    ],
+    ['manager', ['Órdenes de compra', 'Facturas y pagos', 'Proveedores', 'Tablero', 'Asistente']],
     [
       'admin',
       [

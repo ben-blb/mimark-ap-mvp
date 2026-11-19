@@ -68,7 +68,7 @@ El orden y los nombres de columna de cada tipo viven en `source-formats.ts` (una
   `manual`; solo en periodo abierto y con `reports:write`. La nómina siempre se guarda como egreso (negativo),
   igual que en su archivo; en caja el signo lo decide quien captura.
 - **AC-021-13** · `GET /api/closing/entries?companyId&month&source&kioskId` lista movimientos paginados para
-  `reports:read` (admin y gerencia).
+  `reports:read` (solo admin desde la 024; antes también gerencia).
 
 ### Seguridad
 

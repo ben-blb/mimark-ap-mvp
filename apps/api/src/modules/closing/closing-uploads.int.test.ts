@@ -203,12 +203,13 @@ describe('cargas de fuentes (spec 021)', () => {
     expect(storage.files.size).toBe(0);
   });
 
-  it('AC-021-01 el listado de cargas del mes lo ve gerencia; otros roles no', async () => {
+  it('AC-021-01 el listado de cargas del mes lo ve admin; gerencia (spec 024) y otros roles no', async () => {
     const created = await send(await goodSales(), 'v.xlsx').expect(201);
     const manager = await t.agent('Gerente', 'manager');
-    const res = await manager
+    const res = await admin
       .get(`/api/closing/uploads?companyId=${companyId}&month=2026-09`)
       .expect(200);
+    await manager.get(`/api/closing/uploads?companyId=${companyId}&month=2026-09`).expect(403);
     expect(res.body.items.map((u: { id: string }) => u.id)).toEqual([created.body.upload.id]);
     const payables = await t.agent('CxP', 'payables');
     await payables.get(`/api/closing/uploads?companyId=${companyId}&month=2026-09`).expect(403);

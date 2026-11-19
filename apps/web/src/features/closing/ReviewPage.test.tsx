@@ -237,12 +237,11 @@ describe('ReviewPage (spec 023)', () => {
     ).toBeInTheDocument();
   });
 
-  it('AC-023-16 quien solo lee ve la cola sin controles para clasificar', async () => {
+  it('AC-023-16 gerencia (spec 024) no entra a la cola: ni la ve ni puede clasificar', async () => {
     setup('manager');
-    await ready();
-    expect(await screen.findByText('=CMD() SAMS CLUB')).toBeInTheDocument();
+    expect(await screen.findByText('Tu rol no tiene acceso a esta página.')).toBeInTheDocument();
+    expect(screen.queryByText('=CMD() SAMS CLUB')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Clasificar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Guardar como regla/ })).not.toBeInTheDocument();
   });
 
   it('AC-023-05 un periodo cerrado avisa y no ofrece cambios', async () => {

@@ -210,10 +210,11 @@ describe('ReconciliationPage (spec 023)', () => {
     );
   });
 
-  it('AC-023-16 quien solo lee ve los cuadres sin botón de cierre', async () => {
+  it('AC-023-16 gerencia (spec 024) no entra a los cuadres: sin acceso y sin botón de cierre', async () => {
     checks = [check('sales', 'ok')];
     setup('manager');
-    expect(await screen.findByText('Cuadra')).toBeInTheDocument();
+    expect(await screen.findByText('Tu rol no tiene acceso a esta página.')).toBeInTheDocument();
+    expect(screen.queryByText('Cuadra')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cerrar periodo' })).not.toBeInTheDocument();
   });
 

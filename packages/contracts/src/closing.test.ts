@@ -10,14 +10,14 @@ import {
 } from './closing.js';
 
 describe('permisos del cierre (spec 020)', () => {
-  it('AC-020-01 admin lee y escribe; manager solo lee; el resto no tiene acceso', () => {
-    const read = ROLES.filter((r) => can(r, 'reports:read'));
-    const write = ROLES.filter((r) => can(r, 'reports:write'));
-    expect(read.sort()).toEqual(['admin', 'manager']);
-    expect(write).toEqual(['admin']);
+  it('AC-020-01 AC-024-15 admin lee y escribe el cierre; manager solo ve los reportes; el resto no tiene acceso', () => {
+    expect(ROLES.filter((r) => can(r, 'reports:read'))).toEqual(['admin']);
+    expect(ROLES.filter((r) => can(r, 'reports:write'))).toEqual(['admin']);
+    expect(ROLES.filter((r) => can(r, 'reports:view')).sort()).toEqual(['admin', 'manager']);
     for (const role of ['purchasing', 'warehouse', 'payables'] as const) {
       expect(can(role, 'reports:read')).toBe(false);
       expect(can(role, 'reports:write')).toBe(false);
+      expect(can(role, 'reports:view')).toBe(false);
     }
   });
 });

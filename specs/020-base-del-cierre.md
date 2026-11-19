@@ -31,9 +31,10 @@ nuevos; borrar catálogo (solo se desactiva, como en 013); prorrateo de gastos g
 ### Permisos
 
 - **AC-020-01** · `admin` tiene `reports:read` y `reports:write`; `manager` solo `reports:read`; `purchasing`,
-  `warehouse` y `payables` no tienen ninguno.
+  `warehouse` y `payables` no tienen ninguno. _Modificado por la 024 (2026-11-19): `manager` tiene `reports:view`
+  en lugar de `reports:read`._
 - **AC-020-02** · Con `manager`, cualquier `POST`/`PATCH` del catálogo responde 403 `FORBIDDEN` y no escribe nada;
-  sus `GET` responden 200. Sin sesión, 401.
+  sus `GET` responden 200. Sin sesión, 401. _Modificado por la 024: sus `GET` también responden 403._
 
 ### Empresas, kioskos y cuentas
 
@@ -68,7 +69,7 @@ nuevos; borrar catálogo (solo se desactiva, como en 013); prorrateo de gastos g
 - **AC-020-12** · `/cierre/catalogo` (permiso `reports:read`) tiene pestañas Empresas, Kioskos, Cuentas,
   Categorías y Reglas. Con `reports:write` ofrece «Agregar» y editar; sin él solo lista (sin botones de escritura).
 - **AC-020-13** · El menú muestra «Cierre» solo a quien tiene `reports:read`; para `manager` es la única entrada
-  nueva y no ve acciones de escritura. El tema y el responsive siguen 009/010.
+  nueva y no ve acciones de escritura. _Modificado por la 024: `manager` ve «Reportes» y no «Cierre»._ El tema y el responsive siguen 009/010.
 - **AC-020-14** [manual] · Alta de un kiosko con sus IDs. Cómo verificarlo: `pnpm dev`; como `admin` crear la
   empresa, tres kioskos con IDs de Parlevel y Cantaloupe tomados de un export real (a mano, sin subir el archivo) y
   una regla «ADT SECURITY → ADT»; probarla con un concepto de estado de cuenta real; entrar como `manager` y

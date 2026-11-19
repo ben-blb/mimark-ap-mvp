@@ -29,7 +29,13 @@ describe('contratos de reportes del cierre (spec 024)', () => {
       rows: [
         row,
         { ...row, key: 'Mermas', label: 'Mermas', kind: 'line', line: 'Mermas', amount: '-12.50' },
-        { ...row, key: 'unclassified', kind: 'line', line: UNCLASSIFIED_LINE, percentOfSales: null },
+        {
+          ...row,
+          key: 'unclassified',
+          kind: 'line',
+          line: UNCLASSIFIED_LINE,
+          percentOfSales: null,
+        },
       ],
     };
     expect(EdoResDto.safeParse(dto).success).toBe(true);
@@ -110,8 +116,20 @@ describe('contratos de reportes del cierre (spec 024)', () => {
       month: '2026-09',
       status: 'final',
       rows: [
-        { kioskId: 'k1', name: 'Kiosko 1', ...totals, marginPercent: '39.25', negativeMargin: false },
-        { kioskId: null, name: 'Sin kiosko', ...totals, marginPercent: null, negativeMargin: false },
+        {
+          kioskId: 'k1',
+          name: 'Kiosko 1',
+          ...totals,
+          marginPercent: '39.25',
+          negativeMargin: false,
+        },
+        {
+          kioskId: null,
+          name: 'Sin kiosko',
+          ...totals,
+          marginPercent: null,
+          negativeMargin: false,
+        },
       ],
       overhead: '-5.00',
       unclassified: '0.00',
@@ -140,8 +158,8 @@ describe('contratos de reportes del cierre (spec 024)', () => {
       ],
     };
     expect(SupplierReportDto.safeParse(dto).success).toBe(true);
-    expect(SupplierReportDto.safeParse({ ...dto, rows: [{ ...dto.rows[0], count: 1.5 }] }).success).toBe(
-      false,
-    );
+    expect(
+      SupplierReportDto.safeParse({ ...dto, rows: [{ ...dto.rows[0], count: 1.5 }] }).success,
+    ).toBe(false);
   });
 });
